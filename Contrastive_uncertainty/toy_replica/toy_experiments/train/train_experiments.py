@@ -18,7 +18,7 @@ from Contrastive_uncertainty.toy_replica.toy_general.datamodules.datamodule_dict
 from Contrastive_uncertainty.general.train.train_general import train as general_training
 
 
-def train(base_dict):   
+def train(base_dict, trainer_dict):   
     # Actively choose which modeles to choose in the acceptable models 
     acceptable_single_models = ['Baselines',
     #'CE',
@@ -57,13 +57,13 @@ def train(base_dict):
         for model_k, model_v in model_dict.items():
             # Checks if model is present in the acceptable single models
             if model_k in acceptable_single_models:
-                params = model_dict[model_k]['params']
+                base_params = model_dict[model_k]['params']
                 train_method = model_dict[model_k]['train']
                 model_module = model_dict[model_k]['model_module'] 
                 model_instance_method = model_dict[model_k]['model_instance']
                 model_data_dict = model_dict[model_k]['data_dict']
                 # Try statement to allow the code to continue even if a single run fails
-                train_method(params, model_module, model_instance_method,model_data_dict)
+                train_method(base_params,trainer_dict, model_module, model_instance_method,model_data_dict)
 
     ## SINGLE MODEL
     # Go through a single model on all different datasets

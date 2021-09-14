@@ -22,18 +22,16 @@ def evaluation(run_path, update_dict, model_module, model_function,datamodule_di
     #run = wandb.init(entity="nerdk312",config = params, project= params['project'], reinit=True,group=params['group'], notes=params['notes'])  # Required to have access to wandb config, which is needed to set up a sweep
     wandb_logger = WandbLogger(log_model=True, sync_step=False, commit=False)
     config = previous_config
-    #import ipdb; ipdb.set_trace()
     folder = 'Images'
     if not os.path.exists(folder):
         os.mkdir(folder)
 
     pl.seed_everything(config['seed'])
 
-
     # Obtain checkpoint for the model        
     model_dir = 'Models'
     model_dir = previous_model_directory(model_dir, run_path) # Used to preload the model
-
+    
     # Updates OOD dataset if not manually specified in the update dict
     if 'OOD_dataset' in update_dict:
         pass
@@ -44,19 +42,14 @@ def evaluation(run_path, update_dict, model_module, model_function,datamodule_di
 
     # Update the trainer and the callbacks for a specific test
     
-    
-    new_config_params = ['callbacks','typicality_bootstrap','typicality_batch','num_augmentations','vector_level','label_level']
 
     for update_k, update_v in update_dict.items():
-        if update_k in new_config_params:
+        if update_k == 'epochs':
+            config[update_k] = config[update_k] + update_v    
+        else:
             config[update_k] = update_v
-             
-        if update_k in config:
-            if update_k =='epochs':
-                config[update_k] = config[update_k] + update_v
-            else:
-                config[update_k] = update_v
 
+        
     datamodule = Datamodule_selection(datamodule_dict, config['dataset'],config)
     
     # CHANGE SECTION

@@ -11,7 +11,12 @@ from pytorch_lightning.loggers import WandbLogger
 from Contrastive_uncertainty.general.run.general_run_setup import train_run_name, eval_run_name,callback_dictionary, specific_callbacks, Datamodule_selection
 
 # Train takes in params, a particular training module as well a model_function to instantiate the model
-def train(params,model_module,model_function,datamodule_dict):
+def train(base_params,trainer_params, model_module,model_function,datamodule_dict):
+    params = {}
+    # place base params and trainer params in the dictionary
+    params.update(base_params)
+    params.update(trainer_params)
+
     run = wandb.init(entity="nerdk312",config = params, project= params['project'], reinit=True,group=params['group'], notes=params['notes'])  # Required to have access to wandb config, which is needed to set up a sweep
     wandb_logger = WandbLogger(log_model=True, sync_step=False, commit=False)
     config = wandb.config
@@ -54,4 +59,3 @@ def train(params,model_module,model_function,datamodule_dict):
     
     run.finish()
     return run_path # Output run path for use if I want to perform subsequent evaluation
-

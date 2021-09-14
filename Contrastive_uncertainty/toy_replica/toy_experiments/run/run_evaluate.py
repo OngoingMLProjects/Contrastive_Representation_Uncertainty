@@ -17,6 +17,7 @@ for i in range(len(runs)):
 
 # import ipdb; ipdb.set_trace()
 #run_paths = ['nerdk312/Toy_evaluation/1mutstsx']
-run_paths = ['nerdk312/Toy_evaluation/1f917a5g']
+#run_paths = ['nerdk312/Toy_evaluation/1f917a5g']
 
+run_paths = ['nerdk312/Toy_evaluation/1f1xz0bk']
 evaluate(run_paths, trainer_hparams)
