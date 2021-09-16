@@ -68,7 +68,8 @@ class CIFAR100DataModule(LightningDataModule):
         super().__init__(*args, **kwargs)
         self.dims = (3, 32, 32)
         self.DATASET = CIFAR100
-        self.DATASET_with_indices = dataset_with_indices_hierarchy(self.DATASET, CIFAR100_coarse_labels)
+        #self.DATASET_with_indices = dataset_with_indices_hierarchy(self.DATASET, CIFAR100_coarse_labels)
+        self.DATASET_with_indices = dataset_with_indices(self.DATASET)
         self.val_split = val_split
         self.num_workers = num_workers
         self.batch_size = batch_size
@@ -93,13 +94,7 @@ class CIFAR100DataModule(LightningDataModule):
         """
         return 100
     
-    @property
-    def num_coarse_classes(self):
-        """
-        Return:
-            20
-        """
-        return 20
+    
         
     # Number of data channels
     @property
@@ -110,21 +105,6 @@ class CIFAR100DataModule(LightningDataModule):
         """
         return 3
     
-    @property
-    def num_hierarchy(self):
-        '''
-        Return:
-            number of layers in hierarchy
-        '''
-        return 2 
-    
-    @property
-    def coarse_mapping(self):
-        """
-        Return:
-            mapping to coarse labels
-        """
-        return torch.tensor(CIFAR100_coarse_labels)
     
     @property
     def input_height(self):
@@ -207,16 +187,7 @@ class CIFAR100DataModule(LightningDataModule):
             self.test_dataset.targets = torch.Tensor(self.test_dataset.targets).type(torch.int64) # Need to change into int64 to use in test step 
         elif isinstance(self.test_dataset.targets,np.ndarray):
             self.test_dataset.targets = torch.from_numpy(self.test_dataset.targets).type(torch.int64)
-        
-        multi_transforms = self.default_transforms() if self.multi_transforms is None else self.multi_transforms
-        self.multi_dataset = self.DATASET_with_indices(self.data_dir, train=False, download=False, transform=multi_transforms, **self.extra_args)
-
-        if isinstance(self.multi_dataset.targets, list):
-            self.multi_dataset.targets = torch.Tensor(self.multi_dataset.targets).type(torch.int64) # Need to change into int64 to use in test step 
-        elif isinstance(self.multi_dataset.targets,np.ndarray):
-            self.multi_dataset.targets = torch.from_numpy(self.multi_dataset.targets).type(torch.int64)
-
-
+    
 
     def train_dataloader(self):
         """
@@ -300,21 +271,6 @@ class CIFAR100DataModule(LightningDataModule):
         )
         return loader
     
-    def multi_dataloader(self):
-        """
-        FashionMNIST test set uses the test split
-        """
-
-        loader = DataLoader(
-            self.multi_dataset,
-            batch_size=self.batch_size,
-            shuffle=False,
-            num_workers=self.num_workers,
-            drop_last=True,
-            pin_memory=True
-        )
-        return loader
-
     def default_transforms(self):
         cf100_transforms = transform_lib.Compose([
             transform_lib.ToTensor(),

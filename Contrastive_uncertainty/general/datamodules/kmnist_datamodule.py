@@ -63,7 +63,8 @@ class KMNISTDataModule(LightningDataModule):
         super().__init__(*args, **kwargs)
         self.dims = (1, 28, 28)
         self.DATASET = KMNIST
-        self.DATASET_with_indices = dataset_with_indices_hierarchy(self.DATASET, KMNIST_coarse_labels)
+        self.DATASET_with_indices = dataset_with_indices(self.DATASET)
+        #self.DATASET_with_indices = dataset_with_indices_hierarchy(self.DATASET, KMNIST_coarse_labels)
         self.val_split = val_split
         self.num_workers = num_workers
         self.batch_size = batch_size
@@ -89,21 +90,6 @@ class KMNISTDataModule(LightningDataModule):
         """
         return 10
     
-    @property
-    def num_coarse_classes(self):
-        """
-        Return:
-            6
-        """
-        return 6
-    
-    @property
-    def num_hierarchy(self):
-        '''
-        Return:
-            number of layers in hierarchy
-        '''
-        return 2 
     
     @property
     def num_channels(self):
@@ -121,15 +107,6 @@ class KMNISTDataModule(LightningDataModule):
         """
         return 28
         
-    
-    @property
-    def coarse_mapping(self):
-        """
-        Return:
-            mapping to coarse labels
-        """
-        return torch.tensor(KMNIST_coarse_labels)
-
     def prepare_data(self):
         """
         Saves CIFAR10 files to data_dir
@@ -201,14 +178,6 @@ class KMNISTDataModule(LightningDataModule):
             self.test_dataset.targets = torch.Tensor(self.test_dataset.targets).type(torch.int64) # Need to change into int64 to use in test step 
         elif isinstance(self.test_dataset.targets,np.ndarray):
             self.test_dataset.targets = torch.from_numpy(self.test_dataset.targets).type(torch.int64)
-
-        multi_transforms = self.default_transforms() if self.multi_transforms is None else self.multi_transforms
-        self.multi_dataset = self.DATASET_with_indices(self.data_dir, train=False, download=False, transform=multi_transforms, **self.extra_args)
-                
-        if isinstance(self.multi_dataset.targets, list):
-            self.multi_dataset.targets = torch.Tensor(self.multi_dataset.targets).type(torch.int64) # Need to change into int64 to use in test step 
-        elif isinstance(self.multi_dataset.targets,np.ndarray):
-            self.multi_dataset.targets = torch.from_numpy(self.multi_dataset.targets).type(torch.int64)
 
     def train_dataloader(self):
         """
@@ -283,21 +252,6 @@ class KMNISTDataModule(LightningDataModule):
 
         loader = DataLoader(
             self.test_dataset,
-            batch_size=self.batch_size,
-            shuffle=False,
-            num_workers=self.num_workers,
-            drop_last=True,
-            pin_memory=True
-        )
-        return loader
-    
-    def multi_dataloader(self):
-        """
-        FashionMNIST test set uses the test split
-        """
-
-        loader = DataLoader(
-            self.multi_dataset,
             batch_size=self.batch_size,
             shuffle=False,
             num_workers=self.num_workers,

@@ -275,20 +275,7 @@ class EMNISTDataModule(LightningDataModule):
         )
         return loader
     
-    def multi_dataloader(self):
-        """
-        FashionMNIST test set uses the test split
-        """
-
-        loader = DataLoader(
-            self.multi_dataset,
-            batch_size=self.batch_size,
-            shuffle=False,
-            num_workers=self.num_workers,
-            drop_last=True,
-            pin_memory=True
-        )
-        return loader
+    
 
     def default_transforms(self):
         EMNIST_transforms = transform_lib.Compose([

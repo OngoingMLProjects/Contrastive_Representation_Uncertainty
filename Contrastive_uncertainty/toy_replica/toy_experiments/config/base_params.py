@@ -48,7 +48,6 @@ seed = 26,
 epochs = 1,
 bsz = 64,
 
-
 # Trainer configurations in common
 fast_run = False,
 quick_callback = False,#True,

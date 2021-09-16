@@ -8,6 +8,7 @@ from Contrastive_uncertainty.experiments.config.trainer_params import trainer_hp
 # Code to obtain run paths from a project and group
 run_paths = []
 api = wandb.Api()
+'''
 # Gets the runs corresponding to a specific filter
 # https://github.com/wandb/client/blob/v0.10.31/wandb/apis/public.py
 #https://github.com/wandb/client/blob/v0.12.1/wandb/apis/public.py#L752-L851
@@ -43,8 +44,6 @@ for i in range(len(runs)):
 #"OOD hierarchy baselines"
 
 
-#run_paths = ['nerdk312/evaluation/mtb7idxd']
-'''
 run_paths = ['nerdk312/evaluation/3n5sk5kt',
             'nerdk312/evaluation/3p7vdk47',
             'nerdk312/evaluation/2rv7nnoy',
@@ -60,4 +59,5 @@ run_paths = ['nerdk312/evaluation/3n5sk5kt',
             ]
 '''
 
+run_paths = ['nerdk312/practice/2qldnr34']
 evaluate(run_paths, trainer_hparams)
