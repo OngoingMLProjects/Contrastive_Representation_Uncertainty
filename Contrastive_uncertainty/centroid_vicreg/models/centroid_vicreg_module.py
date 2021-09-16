@@ -126,7 +126,9 @@ class CentroidVICRegModule(pl.LightningModule):
         
         loss_invariance, loss_variance, loss_covariance, preds = self(img_1, img_2,labels)
         acc = min_distance_accuracy(preds,labels)
-        loss = (loss_invariance* self.hparams.invariance_weight) + (loss_variance* self.hparams.variance_weight) + (loss_covariance* self.hparams.covariance_weight)
+        #loss = (loss_invariance* self.hparams.invariance_weight) + (loss_variance* self.hparams.variance_weight) + (loss_covariance* self.hparams.covariance_weight)
+        # Training with the same weight for that specific hyperparameter
+        loss = (loss_invariance* self.hparams.invariance_weight) + (loss_variance* self.hparams.invariance_weight) + (loss_covariance* self.hparams.covariance_weight)
 
         #acc_1, acc_5 = precision_at_k(output, target,top_k=(1,5))
         metrics = {'Loss': loss, 'Invariance Loss': loss_invariance, 'Variance Loss':loss_variance, 'Covariance Loss':loss_covariance, 'Accuracy':acc}

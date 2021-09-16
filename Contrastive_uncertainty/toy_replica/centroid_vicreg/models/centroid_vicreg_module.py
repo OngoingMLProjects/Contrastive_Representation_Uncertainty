@@ -138,7 +138,6 @@ class CentroidVICRegToy(pl.LightningModule):
             torch.Tensor: invariance loss (mean squared error).
         """
         
-        
         centroids = self.mean_vectors[labels]
         return 0.5*(F.mse_loss(z1, centroids) + F.mse_loss(z2, centroids)) 
 
