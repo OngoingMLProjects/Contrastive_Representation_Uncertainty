@@ -16,6 +16,15 @@ def accuracy(preds, labels):
     return acc
 
 
+def min_distance_accuracy(preds, labels):
+    preds = preds.float()
+    min_lgt = torch.min(preds, 1)[1]
+    num_correct = (min_lgt == labels).sum().item()
+    num_correct = torch.tensor(num_correct).float()
+    acc = num_correct / len(labels)
+    return acc
+
+
 def precision_at_k(output, target, top_k=(1,)):
     """Computes the accuracy over the k top predictions for the specified values of k"""
     with torch.no_grad():

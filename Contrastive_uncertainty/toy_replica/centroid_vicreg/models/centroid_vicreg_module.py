@@ -10,7 +10,7 @@ from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from pytorch_lightning.loggers import WandbLogger
 
 from Contrastive_uncertainty.toy_replica.moco.models.encoder_model import Backbone
-from Contrastive_uncertainty.general.utils.pl_metrics import precision_at_k, mean
+from Contrastive_uncertainty.general.utils.pl_metrics import precision_at_k, mean, min_distance_accuracy
 
 
 
@@ -51,6 +51,7 @@ class CentroidVICRegToy(pl.LightningModule):
         )
         # obtain the centroids of the data
         self.mean_vectors= self.load_centroids()
+    
     def load_centroids(self):
         kernel_dict = loadmat('meanvar1_featuredim128_class10.mat') # Nawid - load precomputed centres
         mean_vectors = kernel_dict['mean_logits'] #num_class X num_dense # Nawid - centres
@@ -109,24 +110,22 @@ class CentroidVICRegToy(pl.LightningModule):
         loss_variance = self.variance_loss(z1, z2)
         loss_covariance = self.covariance_loss(z1,z2)
 
-        return loss_invariance, loss_variance, loss_covariance
+
+        preds = self.class_predictions(z1)
+        return loss_invariance, loss_variance, loss_covariance, preds
 
     def loss_function(self, batch):
         (img_1, img_2), *labels, indices = batch
         if isinstance(labels, tuple) or isinstance(labels, list):
             labels, *coarse_labels = labels
         
-        loss_invariance, loss_variance, loss_covariance = self(img_1, img_2,labels)
+        loss_invariance, loss_variance, loss_covariance, preds = self(img_1, img_2,labels)
+        acc = min_distance_accuracy(preds,labels)
         loss = (loss_invariance* self.hparams.loss_weights[0]) +  (loss_variance* self.hparams.loss_weights[1]) + (loss_covariance* self.hparams.loss_weights[2])
-        
-
-
-        #loss = F.cross_entropy(output, target) # Nawid - instance based info NCE loss
-        
-        
+        #loss = F.cross_entropy(output, target) # Nawid - instance based info NCE loss        
         #acc_1, acc_5 = precision_at_k(output, target,top_k=(1,5))
         #metrics = {'Loss': loss, 'Accuracy @1':acc_1,'Accuracy @5':acc_5}
-        metrics = {'Loss': loss, 'Invariance Loss': loss_invariance, 'Variance Loss':loss_variance, 'Covariance Loss':loss_covariance}
+        metrics = {'Loss': loss, 'Invariance Loss': loss_invariance, 'Variance Loss':loss_variance, 'Covariance Loss':loss_covariance, 'Accuracy':acc}
         return metrics
 
 
@@ -140,8 +139,21 @@ class CentroidVICRegToy(pl.LightningModule):
             torch.Tensor: invariance loss (mean squared error).
         """
         
+        
         centroids = self.mean_vectors[labels]
+        
+
+        
         return 0.5*(F.mse_loss(z1, centroids) + F.mse_loss(z2, centroids)) 
+
+    
+    def class_predictions(self,z):
+        diff = [z - self.mean_vectors[class_num] for class_num in range(self.num_classes)]
+        distances = [(diff[class_num]**2).mean(1) for class_num in range(self.num_classes)]
+        y_pred = torch.stack(distances,dim=1)
+        
+        return y_pred
+
 
     def variance_loss(self,z1: torch.Tensor, z2: torch.Tensor) -> torch.Tensor:
         """Computes variance loss given batch of projected features z1 from view 1 and
@@ -180,6 +192,7 @@ class CentroidVICRegToy(pl.LightningModule):
         cov_loss = cov_z1[~diag.bool()].pow_(2).sum() / D + cov_z2[~diag.bool()].pow_(2).sum() / D
         return cov_loss
 
+    
 
     def training_step(self, batch, batch_idx):
         metrics = self.loss_function(batch)
