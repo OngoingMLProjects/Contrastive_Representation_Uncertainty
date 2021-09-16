@@ -16,7 +16,10 @@ OOD_dataset = ['TwoMoons','Diagonal'],
 
 use_mlp = True,
 
-loss_weights = [1,1,1],
+invariance_weight = 1.0,
+variance_weight = 1.0,
+covariance_weight = 1.0,
+
 callbacks = ['Model_saving'],
 
 model_type = 'Centroid_VicReg',

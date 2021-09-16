@@ -16,7 +16,6 @@ dataset = 'MNIST',
 #OOD_dataset = ['SVHN'],
 #OOD_dataset = ['SVHN','CIFAR10'],
 
-
 # Wandb parameters in common
 project = 'practice',
 group = None,
@@ -31,6 +30,10 @@ num_negatives = 512,
 encoder_momentum = 0.999,
 softmax_temperature = 0.07,
 
+# centroid vicreg params
+invariance_weight = 1.0,
+variance_weight = 1.0,
+covariance_weight = 1.0,
 
 single_model = 'Baselines'
 )  # evaluation
@@ -60,3 +63,4 @@ model_saving = 200, # Used to control how often the model is saved
 
 callbacks = ['Model_saving'],
 )
+

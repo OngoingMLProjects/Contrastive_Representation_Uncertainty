@@ -9,12 +9,10 @@ from scipy.io import loadmat
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from pytorch_lightning.loggers import WandbLogger
 
-from Contrastive_uncertainty.toy_replica.moco.models.encoder_model import Backbone
+from Contrastive_uncertainty.moco.models.resnet_models import custom_resnet18,custom_resnet34,custom_resnet50
 from Contrastive_uncertainty.general.utils.pl_metrics import precision_at_k, mean, min_distance_accuracy
 
-
-
-class CentroidVICRegToy(pl.LightningModule):
+class CentroidVICRegModule(pl.LightningModule):
     def __init__(self,
         emb_dim: int = 128,
         num_negatives: int = 65536,
@@ -25,9 +23,11 @@ class CentroidVICRegToy(pl.LightningModule):
         momentum: float = 0.9,
         weight_decay: float = 1e-4,
         datamodule: pl.LightningDataModule = None,
-        invariance_weight: float = 1.0,
-        variance_weight: float = 1.0,
-        covariance_weight: float = 1.0
+        instance_encoder:str = 'resnet50',
+        pretrained_network:str = None,
+        invariance_weight:float = 1.0,
+        variance_weight:float = 1.0,
+        covariance_weight:float = 1.0
         ):
 
         super().__init__()
@@ -40,8 +40,7 @@ class CentroidVICRegToy(pl.LightningModule):
         # create the encoders
         # num_classes is the output fc dimension
         self.encoder = self.init_encoders()
-
-
+        
         self.projector = nn.Sequential(
             nn.Linear(self.hparams.emb_dim, self.hparams.emb_dim),
             nn.BatchNorm1d(self.hparams.emb_dim),
@@ -53,7 +52,7 @@ class CentroidVICRegToy(pl.LightningModule):
         )
         # obtain the centroids of the data
         self.mean_vectors= self.load_centroids()
-    
+        import ipdb; ipdb.set_trace()
     def load_centroids(self):
         kernel_dict = loadmat('meanvar1_featuredim128_class10.mat') # Nawid - load precomputed centres
         mean_vectors = kernel_dict['mean_logits'] #num_class X num_dense # Nawid - centres
@@ -71,10 +70,17 @@ class CentroidVICRegToy(pl.LightningModule):
         """
         Override to add your own encoders
         """
-        encoder = Backbone(20, self.hparams.emb_dim)
+        if self.hparams.instance_encoder == 'resnet18':
+            print('using resnet18')
+            encoder = custom_resnet18(latent_size = self.hparams.emb_dim,num_channels = self.num_channels,num_classes = self.num_classes)
+            
+        elif self.hparams.instance_encoder =='resnet50':
+            print('using resnet50')
+            encoder = custom_resnet50(latent_size = self.hparams.emb_dim,num_channels = self.num_channels,num_classes = self.num_classes)
+        
         return encoder
 
-   
+       
     def callback_vector(self, x): # vector for the representation before using separate branches for the task
         """
         Input:
@@ -86,7 +92,7 @@ class CentroidVICRegToy(pl.LightningModule):
         z = nn.functional.normalize(z, dim=1)
         return z
     
-    
+
     # Pass through the img through 
     def forward(self, img1, img2, labels):
         """
@@ -122,12 +128,10 @@ class CentroidVICRegToy(pl.LightningModule):
         acc = min_distance_accuracy(preds,labels)
         loss = (loss_invariance* self.hparams.invariance_weight) + (loss_variance* self.hparams.variance_weight) + (loss_covariance* self.hparams.covariance_weight)
 
-        #loss = F.cross_entropy(output, target) # Nawid - instance based info NCE loss        
         #acc_1, acc_5 = precision_at_k(output, target,top_k=(1,5))
-        #metrics = {'Loss': loss, 'Accuracy @1':acc_1,'Accuracy @5':acc_5}
         metrics = {'Loss': loss, 'Invariance Loss': loss_invariance, 'Variance Loss':loss_variance, 'Covariance Loss':loss_covariance, 'Accuracy':acc}
         return metrics
-
+    
     def invariance_loss(self, z1: torch.Tensor,z2: torch.Tensor, labels: torch.Tensor) -> torch.Tensor:
         """Computes mse loss given batch of projected features z1 from view 1 and
         projected features z2 from view 2.
@@ -188,6 +192,7 @@ class CentroidVICRegToy(pl.LightningModule):
         cov_loss = cov_z1[~diag.bool()].pow_(2).sum() / D + cov_z2[~diag.bool()].pow_(2).sum() / D
         return cov_loss
 
+
     def training_step(self, batch, batch_idx):
         metrics = self.loss_function(batch)
         for k,v in metrics.items():
@@ -215,3 +220,4 @@ class CentroidVICRegToy(pl.LightningModule):
             optimizer = torch.optim.Adam(self.parameters(), self.hparams.learning_rate,
                                         weight_decay=self.hparams.weight_decay)
         return optimizer
+    

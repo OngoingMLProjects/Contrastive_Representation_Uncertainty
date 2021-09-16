@@ -41,6 +41,10 @@ num_negatives = 4096,
 encoder_momentum = 0.999,
 softmax_temperature = 0.07,
 
+# centroid vicreg params
+invariance_weight = 1.0,
+variance_weight = 1.0,
+covariance_weight = 1.0,
 
 single_model = 'Baselines'
 )  # evaluation
@@ -67,6 +71,8 @@ validation_ratio = 1.0,
 test_ratio = 1.0,
 val_check = 20,
 model_saving = 200, # Used to control how often the model is saved
+
+
 
 callbacks = ['Model_saving'],
 )

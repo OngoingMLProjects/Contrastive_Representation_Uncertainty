@@ -1,0 +1,17 @@
+program: ./Contrastive_uncertainty/toy_replica/toy_experiments/run/run_training.py
+method: grid
+metric:
+  goal: minimize
+  name: loss
+parameters:
+  epochs:
+    values: [10]
+  invariance_weight:
+    values: [1.0,2.0,3.0]
+  covariance_weight:
+    values: [1.0,2.0,3.0]
+early_terminate:
+  type: hyperband
+  s: 2
+  eta: 3
+  max_iter: 27

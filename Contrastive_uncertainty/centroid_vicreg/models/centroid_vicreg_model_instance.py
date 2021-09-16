@@ -5,7 +5,8 @@ def ModelInstance(model_module, config, datamodule):
         softmax_temperature = config['softmax_temperature'],
         optimizer = config['optimizer'],learning_rate = config['learning_rate'],
         momentum = config['momentum'], weight_decay = config['weight_decay'],
-        invariance_weight = config['invariance_weight'], variance_weight = config['variance_weight'],
-        covariance_weight = config['covariance_weight'],datamodule = datamodule)
+        invariance_weight = config['invariance_weight'],variance_weight = config['variance_weight'],
+        covariance_weight = config['covariance_weight'],datamodule = datamodule,
+        instance_encoder = config['instance_encoder'])
 
     return model
