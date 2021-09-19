@@ -27,8 +27,6 @@ from scipy.spatial.distance import cdist # Required for TwoMoons visualisation i
 
 class Visualisation(pl.Callback): # General class for visualisation
     def __init__(self, datamodule, 
-        vector_level: str ='instance',
-        label_level: str ='fine',
         quick_callback:bool = True):
 
         self.datamodule = datamodule
@@ -39,38 +37,21 @@ class Visualisation(pl.Callback): # General class for visualisation
         #self.ood_datamodule.setup()
         # setup data
         self.quick_callback = quick_callback
-
-        self.vector_level = vector_level
-        self.label_level = label_level
-
-        self.num_fine_classes = self.datamodule.num_classes
-        self.num_coarse_classes = self.datamodule.num_coarse_classes
-
     
     def on_test_epoch_end(self, trainer, pl_module):
-        self.vector_dict = {'vector_level':{'instance':pl_module.instance_vector, 'fine':pl_module.fine_vector, 'coarse':pl_module.coarse_vector},
-        'label_level':{'fine':0,'coarse':1},
-        'num_classes':{'fine':self.num_fine_classes,'coarse':self.num_coarse_classes}} 
-
-        num_classes = self.vector_dict['num_classes'][self.label_level]
+        num_classes = self.datamodule.num_classes
 
         # Obtain representations for the normal case as well as the concatenated representations
         representations, labels = self.obtain_representations(pl_module)
         # PCA visalisation
-        self.pca_visualisation(representations, labels, f'inliers: {self.vector_level}: {self.label_level}',num_classes)
+        self.pca_visualisation(representations, labels, f'inliers:',num_classes)
         # T-SNE visualisation
-        self.tsne_visualisation(representations, labels, f'inliers: {self.vector_level}: {self.label_level}',num_classes)
+        self.tsne_visualisation(representations, labels, f'inliers',num_classes)
 
         # +1 in num classes to represent outlier data, *2 represents class specific outliers
         #self.pca_visualisation(concat_representations, concat_labels,config['num_classes']+1,'general')
 
         # Obtain the concatenated representations for the case where the different values can be used for the task
-        '''
-        if not self.quick_callback:
-            concat_representations, concat_labels, class_concat_labels = self.OOD_representations(pl_module) # obtain representations and labels which have both data
-            self.pca_visualisation(concat_representations, class_concat_labels, 'class')
-            self.tsne_visualisation(concat_representations, class_concat_labels, 'class')
-        '''
     
     def obtain_representations(self, pl_module):  # separate from init so that two moons does not make representations automatically using dataloader rather it uses X_vis
         # self.data = self.datamodule.test_dataloader() # instantiate val dataloader
@@ -85,28 +66,7 @@ class Visualisation(pl.Callback): # General class for visualisation
         loader = quickloading(self.quick_callback, dataloader)
         self.representations, self.labels = self.compute_representations(pl_module, loader)
         return self.representations, self.labels
-    '''
-    def OOD_representations(self,pl_module):
-        true_dataset = self.datamodule.test_dataset  #  Test set of the true datamodule
-
-        #ood_datamodule.test_dataset.targets  =  -(ood_datamodule.test_dataset.targets +1)# represent the OOD class with negative values
-        ood_dataset = self.ood_datamodule.test_dataset
-        datasets = [true_dataset, ood_dataset]
-
-        # General level OOD labels and class specific OOD labels
-        concat_labels = torch.cat([true_dataset.targets, torch.zeros_like(self.ood_datamodule.test_dataset.targets).fill_(-1)]) # update the targets to be values of -1 to represent the anomaly that they are anomalous values
-        class_concat_labels = torch.cat([true_dataset.targets, -(self.ood_datamodule.test_dataset.targets +1)]) # Increase values by 1 to get values 1 to 10 and then change negative to prevent overlapping with the real class labels
-
-        concat_datasets = torch.utils.data.ConcatDataset(datasets)
-
-        dataloader = torch.utils.data.DataLoader(
-                concat_datasets, batch_size=200, shuffle=False, num_workers=6, pin_memory=False
-            )
-        loader = quickloading(self.quick_callback, dataloader)
-
-        self.concat_representations, _ = self.compute_representations(pl_module, loader)
-        return self.concat_representations, concat_labels, class_concat_labels
-    '''
+    
     @torch.no_grad()
     def compute_representations(self, pl_module, loader):
         features, collated_labels = [],[]
@@ -118,14 +78,13 @@ class Visualisation(pl.Callback): # General class for visualisation
             
             # Selects the correct label based on the desired label level
             if len(labels) > 1:
-                label_index = self.vector_dict['label_level'][self.label_level]
+                label_index = 0
                 labels = labels[label_index]
             else: # Used for the case of the OOD data
-                labels = labels[0]
+                labels = labels[0] # Obtain feature vector
 
-            # Obtain feature vector
             images = images.to(pl_module.device)  # cuda(non_blocking=True)
-            feature_vector = self.vector_dict['vector_level'][self.vector_level](images) # Performs the callback for the desired level
+            feature_vector = pl_module.callback_vector(images) # Performs the callback for the desired level
 
             features.append(feature_vector.cpu())
             collated_labels.append(labels.cpu())

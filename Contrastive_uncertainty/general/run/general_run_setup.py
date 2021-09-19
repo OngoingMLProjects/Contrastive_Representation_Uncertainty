@@ -2,6 +2,7 @@ from re import search
 
 from pytorch_lightning.core import datamodule
 from Contrastive_uncertainty.general.callbacks.general_callbacks import  ModelSaving
+from Contrastive_uncertainty.general.callbacks.visualisation_callback import Visualisation
 from Contrastive_uncertainty.general.callbacks.ood_callbacks import Mahalanobis_OOD, Class_Mahalanobis_OOD, Mahalanobis_OOD_Fractions
 
 def train_run_name(model_name, config, group=None):
@@ -31,7 +32,8 @@ def Datamodule_selection(data_dict, dataset, config):
 def callback_dictionary(Datamodule,config,data_dict):
     quick_callback = config['quick_callback']
     # Manually added callbacks
-    callback_dict = {'Model_saving':ModelSaving(config['model_saving'],'Models')}
+    callback_dict = {'Model_saving':ModelSaving(config['model_saving'],'Models'),
+                    'Visualisation': Visualisation(Datamodule, quick_callback=quick_callback)}
 
     for ood_dataset in config['OOD_dataset']:
         OOD_Datamodule = Datamodule_selection(data_dict, ood_dataset, config)
