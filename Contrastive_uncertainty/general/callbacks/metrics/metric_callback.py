@@ -79,19 +79,14 @@ def select(metricname, pl_module):
 
 class MetricLogger(pl.Callback):
     def __init__(self, metric_names,datamodule,evaltypes,
-        vector_level: str='instance',
-        label_level:str='fine',
         quick_callback:bool=True):
 
         super().__init__()
         self.metric_names = metric_names # Nawid - names of the metrics to compute
         
-        self.vector_level = vector_level
-        self.label_level = label_level
 
         self.datamodule = datamodule
-        self.num_fine_classes = self.datamodule.num_classes
-        self.num_coarse_classes = self.datamodule.num_coarse_classes
+        
         self.dataloader = self.datamodule.val_dataloader()
         # Separate the val loader into two separate parts
         
@@ -108,13 +103,11 @@ class MetricLogger(pl.Callback):
 
     def compute_standard(self, trainer, pl_module):
 
-        self.vector_dict = {'vector_level':{'instance':pl_module.instance_vector, 'fine':pl_module.fine_vector, 'coarse':pl_module.coarse_vector},
-        'label_level':{'fine':0,'coarse':1},
-        'num_classes':{'fine':self.num_fine_classes,'coarse':self.num_coarse_classes}} 
+        
         
 
         evaltypes = copy.deepcopy(self.evaltypes)
-        n_classes = self.vector_dict['num_classes'][self.label_level]
+        n_classes = self.datamodule.num_classes
 
         pl_module.to(pl_module.device).eval()
 
@@ -134,13 +127,13 @@ class MetricLogger(pl.Callback):
 
                 # Selects the correct label based on the desired label level
                 if len(labels) > 1:
-                    label_index = self.vector_dict['label_level'][self.label_level]
+                    label_index = 0
                     labels = labels[label_index]
                 else: # Used for the case of the OOD data
                     labels = labels[0]
 
                 target_labels.extend(labels.numpy().tolist())  # Nawid- obtain labels
-                out = self.vector_dict['vector_level'][self.vector_level](images.to(pl_module.device))
+                out = pl_module.callback_vector(images.to(pl_module.device))
                 if isinstance(out, tuple): out, *aux_f = out #  Nawid - if the output is a tuple, separate the output
 
                 ### Include embeddings of all output features
@@ -211,8 +204,6 @@ class MetricLogger(pl.Callback):
                 if res is not None: faiss_search_index = faiss.index_cpu_to_gpu(res, 0, faiss_search_index)
                 faiss_search_index.add(centroids_cosine)
                 _, computed_cluster_labels_cosine = faiss_search_index.search(features_cosine, 1)
-
-
 
             """============ Compute Nearest Neighbours ==============="""
             if 'nearest_features' in self.requires:
@@ -293,8 +284,8 @@ class MetricLogger(pl.Callback):
             for eval_metric, hist in histogr_metrics[evaltype].items(): # Nawid - plot the histogram metrics on wandb
                 import wandb, numpy
                                
-                wandb.log({f'{log_key}: {evaltype}: {eval_metric}: {self.vector_level}: {self.label_level}': wandb.Histogram(np_histogram=(list(hist),list(np.arange(len(hist)+1))))}, step=trainer.global_step)
-                wandb.log({f'{log_key}: {evaltype} LOG-{eval_metric}:{self.vector_level}: {self.label_level}': wandb.Histogram(np_histogram=(list(np.log(hist)+20),list(np.arange(len(hist)+1))))}, step=trainer.global_step)
+                wandb.log({f'{log_key}: {evaltype}: {eval_metric}': wandb.Histogram(np_histogram=(list(hist),list(np.arange(len(hist)+1))))}, step=trainer.global_step)
+                wandb.log({f'{log_key}: {evaltype} LOG-{eval_metric}': wandb.Histogram(np_histogram=(list(np.log(hist)+20),list(np.arange(len(hist)+1))))}, step=trainer.global_step)
                 #wandb.log({log_key+': '+evaltype+'_{}'.format(eval_metric): wandb.Histogram(np_histogram=(list(hist),list(np.arange(len(hist)+1))))}, step=trainer.global_step)
                 #wandb.log({log_key+': '+evaltype+'_LOG-{}'.format(eval_metric): wandb.Histogram(np_histogram=(list(np.log(hist)+20),list(np.arange(len(hist)+1))))}, step=trainer.global_step)
 
@@ -302,9 +293,9 @@ class MetricLogger(pl.Callback):
             for eval_metric in numeric_metrics[evaltype].keys():
                 parent_metric = evaltype+'_{}'.format(eval_metric.split('@')[0])
                 if 'dists' in eval_metric or 'rho_spectrum' in eval_metric:
-                    wandb.log({f'{eval_metric}: {self.vector_level}: {self.label_level}':numeric_metrics[evaltype][eval_metric]})
+                    wandb.log({f'{eval_metric}':numeric_metrics[evaltype][eval_metric]})
                 else:
-                    wandb.run.summary[f'{eval_metric}: {self.vector_level}: {self.label_level}'] = numeric_metrics[evaltype][eval_metric]
+                    wandb.run.summary[f'{eval_metric}'] = numeric_metrics[evaltype][eval_metric]
                 #wandb.log({eval_metric:numeric_metrics[evaltype][eval_metric]})
                 #print('parent metric',parent_metric)
 

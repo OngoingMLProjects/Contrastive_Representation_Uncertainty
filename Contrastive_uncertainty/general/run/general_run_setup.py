@@ -3,6 +3,8 @@ from re import search
 from pytorch_lightning.core import datamodule
 from Contrastive_uncertainty.general.callbacks.general_callbacks import  ModelSaving
 from Contrastive_uncertainty.general.callbacks.visualisation_callback import Visualisation
+from Contrastive_uncertainty.general.callbacks.metrics.metric_callback import MetricLogger, evaluation_metrics, evaltypes
+
 from Contrastive_uncertainty.general.callbacks.ood_callbacks import Mahalanobis_OOD, Class_Mahalanobis_OOD, Mahalanobis_OOD_Fractions
 
 def train_run_name(model_name, config, group=None):
@@ -33,12 +35,12 @@ def callback_dictionary(Datamodule,config,data_dict):
     quick_callback = config['quick_callback']
     # Manually added callbacks
     callback_dict = {'Model_saving':ModelSaving(config['model_saving'],'Models'),
+                    'Metrics':MetricLogger(evaluation_metrics,Datamodule,evaltypes, quick_callback=quick_callback),
                     'Visualisation': Visualisation(Datamodule, quick_callback=quick_callback)}
 
     for ood_dataset in config['OOD_dataset']:
         OOD_Datamodule = Datamodule_selection(data_dict, ood_dataset, config)
-        OOD_callback = {                
-                                
+        OOD_callback = {                                                
                 f'Mahalanobis Distance {ood_dataset}': Mahalanobis_OOD(Datamodule,OOD_Datamodule,quick_callback=quick_callback),
                 f'Class Mahalanobis {ood_dataset}': Class_Mahalanobis_OOD(Datamodule,OOD_Datamodule,quick_callback=quick_callback),
                 f'Mahalanobis OOD Fractions {ood_dataset}': Mahalanobis_OOD_Fractions(Datamodule,OOD_Datamodule,quick_callback=quick_callback)}
