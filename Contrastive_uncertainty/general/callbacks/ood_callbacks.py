@@ -57,7 +57,6 @@ class Mahalanobis_OOD(pl.Callback):
 
     # Performs all the computation in the callback
     def forward_callback(self,trainer,pl_module):
-        
         train_loader = self.Datamodule.deterministic_train_dataloader()
         test_loader = self.Datamodule.test_dataloader()
         ood_loader = self.OOD_Datamodule.test_dataloader()
@@ -68,7 +67,6 @@ class Mahalanobis_OOD(pl.Callback):
         features_ood, labels_ood = self.get_features(pl_module, ood_loader)
         # Number of classes obtained from the max label value + 1 ( to take into account counting from zero)
 
-        
         self.get_eval_results(
             np.copy(features_train),
             np.copy(features_test),
@@ -173,32 +171,19 @@ class Mahalanobis_OOD(pl.Callback):
         
         return ftrain, ftest,food
 
-
-
-
-
     
 # Calculates the class wise mahalanobis distances and places the different values in a table
 class Class_Mahalanobis_OOD(Mahalanobis_OOD):
     def __init__(self, Datamodule,OOD_Datamodule,
-        vector_level:str = 'instance',
-        label_level:str = 'fine',
         quick_callback:bool = True):
-
-        super().__init__(Datamodule,OOD_Datamodule,vector_level,label_level,quick_callback)
-    
-    def on_validation_epoch_end(self, trainer, pl_module):
-        pass
+        super().__init__(Datamodule,OOD_Datamodule, quick_callback)
 
     def on_test_epoch_end(self, trainer, pl_module):
         self.forward_callback(trainer,pl_module)
     
     # Performs all the computation in the callback
     def forward_callback(self, trainer, pl_module):
-        self.vector_dict = {'vector_level':{'instance':pl_module.instance_vector, 'fine':pl_module.fine_vector, 'coarse':pl_module.coarse_vector},
-        'label_level':{'fine':0,'coarse':1}} 
-
-        train_loader = self.Datamodule.train_dataloader()
+        train_loader = self.Datamodule.deterministic_train_dataloader()
         test_loader = self.Datamodule.test_dataloader()
         ood_loader = self.OOD_Datamodule.test_dataloader()
 
@@ -225,29 +210,14 @@ class Class_Mahalanobis_OOD(Mahalanobis_OOD):
         # Using actual labels to count the indices
         self.AUROC_saving(dtest, indices_dtest,
             dood,indices_dood,labelstrain,
-            f'Class Wise Mahalanobis {self.vector_level} {self.label_level} OOD {self.OOD_dataname} AUROC',
-            f'Class Wise Mahalanobis {self.vector_level} {self.label_level} OOD {self.OOD_dataname} AUROC Table')
+            f'Class Wise Mahalanobis OOD {self.OOD_dataname} AUROC')
 
 
-        
-        #dtest_class = [dtest[indices_dtest==i] for i in np.unique(indices_dtest)]
-        #dood_class = [dood[indices_dood ==i] for i in np.unique(indices_dtest)] # Make it so that the unique indices are the same for both cases
-        # NEED TO MAKE IT SO THAT THE CLASS WISE VALUES CAN BE OBTAINED FOR THE TASK
-        
-        '''
-        self.AUROC_saving(dtest_class,dood_class,
-        f'Class Wise Mahalanobis {self.vector_level} {self.label_level} OOD {self.OOD_dataname} AUROC',
-        f'Class Wise Mahalanobis {self.vector_level} {self.label_level} OOD {self.OOD_dataname} AUROC Table')
-        '''
-
-
-    def AUROC_saving(self,ID_scores,indices_ID, OOD_scores, indices_OOD,labels,wandb_name, table_name):
+    def AUROC_saving(self,ID_scores,indices_ID, OOD_scores, indices_OOD,labels,wandb_name):
         # NEED TO MAKE IT SO THAT THE CLASS WISE VALUES CAN BE OBTAINED FOR THE TASK as well as the fraction of data points in a particular class
         table_data = {'Class':[], 'AUROC': [], 'ID Samples Fraction':[], 'OOD Samples Fraction':[]}
-        #np.unique(indices_ID)
         class_ID_scores = [ID_scores[indices_ID==i] for i in np.unique(labels)]
         class_OOD_scores = [OOD_scores[indices_OOD==i] for i in np.unique(labels)]
-    
 
         for class_num in range(len(np.unique(labels))):
             if len(class_ID_scores[class_num]) ==0 or len(class_OOD_scores[class_num])==0:
@@ -262,9 +232,6 @@ class Class_Mahalanobis_OOD(Mahalanobis_OOD):
             table_data['ID Samples Fraction'].append(round(class_ID_fraction,2))
             table_data['OOD Samples Fraction'].append(round(class_OOD_fraction,2))
 
-            #import ipdb; ipdb.set_trace()
-        
-        
         # calculate the AUROC for the dataset in general
         All_AUROC = get_roc_sklearn(ID_scores,OOD_scores)
         #table_data['Class'].append(-1)
@@ -277,29 +244,6 @@ class Class_Mahalanobis_OOD(Mahalanobis_OOD):
         #print(table_df)
         table = wandb.Table(dataframe=table_df)
         wandb.log({wandb_name:table})
-        table_saving(table_df,table_name)
-
-    '''
-    def AUROC_saving(self,class_ID_scores, class_OOD_scores,wandb_name, table_name):
-        # NEED TO MAKE IT SO THAT THE CLASS WISE VALUES CAN BE OBTAINED FOR THE TASK
-        table_data = {'Class':[], 'AUROC': []}
-        
-        for class_num in range(len(class_ID_scores)):
-            if len(class_ID_scores[class_num]) ==0 or len(class_OOD_scores[class_num])==0:
-                class_AUROC = -1.0
-            else:  
-                class_AUROC = get_roc_sklearn(class_ID_scores[class_num],class_OOD_scores[class_num])
-            
-            table_data['Class'].append(class_num)
-            table_data['AUROC'].append(round(class_AUROC,2))
-
-        table_df = pd.DataFrame(table_data)
-        #print(table_df)
-        table = wandb.Table(dataframe=table_df)
-        wandb.log({wandb_name:table})
-        table_saving(table_df,table_name)
-    '''
-
 
 # Calculates the fraction of data points placed in each class (including the background class)
 class Mahalanobis_OOD_Fractions(Class_Mahalanobis_OOD):
