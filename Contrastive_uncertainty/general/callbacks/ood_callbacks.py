@@ -247,14 +247,12 @@ class Class_Mahalanobis_OOD(Mahalanobis_OOD):
 
 # Calculates the fraction of data points placed in each class (including the background class)
 class Mahalanobis_OOD_Fractions(Class_Mahalanobis_OOD):
-    def __init__(self, Datamodule, OOD_Datamodule, vector_level: str, label_level: str, quick_callback: bool):
-        super().__init__(Datamodule, OOD_Datamodule, vector_level=vector_level, label_level=label_level, quick_callback=quick_callback)
+    def __init__(self, Datamodule, OOD_Datamodule, quick_callback: bool):
+        super().__init__(Datamodule, OOD_Datamodule, quick_callback=quick_callback)
     
-
     def on_test_epoch_end(self, trainer, pl_module):
         return super().on_test_epoch_end(trainer, pl_module)
     
-
     def on_test_epoch_end(self, trainer, pl_module):
         self.forward_callback(trainer,pl_module)
 
@@ -264,7 +262,7 @@ class Mahalanobis_OOD_Fractions(Class_Mahalanobis_OOD):
     def normalise(self, ftrain, ftest, food):
         return super().normalise(ftrain, ftest, food)
 
-    
+    # Updated to take into account background statistics
     def get_scores(self,ftrain, ftest, food, ypred):
         # Nawid - get all the features which belong to each of the different classes
         xc = [ftrain[ypred == i] for i in np.unique(ypred)] # Nawid - training data which have been predicted to belong to a particular class
@@ -317,13 +315,6 @@ class Mahalanobis_OOD_Fractions(Class_Mahalanobis_OOD):
         self.AUROC_saving(dtest, indices_dtest,
             dood,indices_dood,labelstrain,
             f'Class Wise Mahalanobis Extended OOD {self.OOD_dataname} AUROC')
-
-
-        
-        #dtest_class = [dtest[indices_dtest==i] for i in np.unique(indices_dtest)]
-        #dood_class = [dood[indices_dood ==i] for i in np.unique(indices_dtest)] # Make it so that the unique indices are the same for both cases
-        # NEED TO MAKE IT SO THAT THE CLASS WISE VALUES CAN BE OBTAINED FOR THE TASK
-        
 
 
     def AUROC_saving(self,ID_scores,indices_ID, OOD_scores, indices_OOD,labels,wandb_name):

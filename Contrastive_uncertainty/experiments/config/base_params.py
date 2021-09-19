@@ -73,5 +73,5 @@ val_check = 20,
 model_saving = 200, # Used to control how often the model is saved
 
 
-callbacks = ['Model_saving'],
+callbacks = ['Mahalanobis OOD Fractions'],
 )
