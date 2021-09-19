@@ -1,4 +1,4 @@
-name: MNIST Centroid VICReg Hyperparameter grid search 
+name: MNIST Centroid VICReg Hyperparameter grid search - Third
 description: Performing grid search for Centroid VICReg 
 program: ./Contrastive_uncertainty/experiments/run/run_training.py
 method: grid
@@ -7,8 +7,7 @@ metric:
   name: loss
 parameters:
   invariance_weight:
-    values: [1.0,,3.0, 5.0, 10.0, 15.0, 25.0, 30.0, 35.0, 50.0]
-  covariance_weight:
+    values: [10.0, 15.0, 25.0]
 early_terminate:
   type: hyperband
   s: 2

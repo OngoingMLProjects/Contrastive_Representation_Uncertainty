@@ -52,7 +52,6 @@ class CentroidVICRegModule(pl.LightningModule):
         )
         # obtain the centroids of the data
         self.mean_vectors= self.load_centroids()
-        import ipdb; ipdb.set_trace()
     def load_centroids(self):
         kernel_dict = loadmat('meanvar1_featuredim128_class10.mat') # Nawid - load precomputed centres
         mean_vectors = kernel_dict['mean_logits'] #num_class X num_dense # Nawid - centres
