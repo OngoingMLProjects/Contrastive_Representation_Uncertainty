@@ -181,19 +181,13 @@ class EMNISTDataModule(LightningDataModule):
     def setup_test(self):
         test_transforms = self.default_transforms() if self.test_transforms is None else self.test_transforms
         self.test_dataset = self.DATASET_with_indices(self.data_dir,split='letters',train=False, download=False, transform=test_transforms, **self.extra_args)
-        
 
         if isinstance(self.test_dataset.targets, list):
             self.test_dataset.targets = torch.Tensor(self.test_dataset.targets).type(torch.int64) # Need to change into int64 to use in test step 
         elif isinstance(self.test_dataset.targets,np.ndarray):
             self.test_dataset.targets = torch.from_numpy(self.test_dataset.targets).type(torch.int64)
         
-        multi_transforms = self.default_transforms() if self.multi_transforms is None else self.multi_transforms
-        self.multi_dataset = self.DATASET_with_indices(self.data_dir,split='letters',train=False, download=False,transform=multi_transforms, **self.extra_args)
-        if isinstance(self.multi_dataset.targets, list):
-            self.multi_dataset.targets = torch.Tensor(self.self.multi_dataset.targets).type(torch.int64) # Need to change into int64 to use in test step 
-        elif isinstance(self.multi_dataset.targets, np.ndarray):
-            self.multi_dataset.targets = torch.from_numpy(self.multi_dataset.targets).type(torch.int64)
+    
 
     def train_dataloader(self):
         """

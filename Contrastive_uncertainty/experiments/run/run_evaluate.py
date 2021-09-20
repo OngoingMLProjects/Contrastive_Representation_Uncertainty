@@ -59,5 +59,6 @@ run_paths = ['nerdk312/evaluation/3n5sk5kt',
             ]
 '''
 
-run_paths = ['nerdk312/practice/2qldnr34']
+#run_paths = ['nerdk312/practice/2qldnr34']
+run_paths = ['nerdk312/Contrastive_Representation_Uncertainty-Contrastive_uncertainty_experiments_run/ssqm57tg']
 evaluate(run_paths, trainer_hparams)

@@ -27,11 +27,6 @@ project = 'evaluation',
 group = 'New Model Testing',
 notes = 'Testing whether new models are able to train effectively',  # Add notes to the specific models each time
 
-# VAE specific params
-kl_coeff = 0.1,
-first_conv = False,
-maxpool1 = False,
-enc_out_dim = 128,
 
 # Cross entropy Specific parameters
 label_smoothing = False,
@@ -73,5 +68,24 @@ val_check = 20,
 model_saving = 200, # Used to control how often the model is saved
 
 
-callbacks = ['Mahalanobis OOD Fractions'],
+callbacks = ['Mahalanobis OOD Fractions'], #'Model_saving'
 )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+batch_base_hparams = [base1_hparams, base2_hparams, base3_hparams]
+batch_trainer_hparams = [trainer1_hparams, trainer2_hparams, trainer3_hparams]
+
+assert len(batch_base_hparams) == len(batch_trainer_hparams)

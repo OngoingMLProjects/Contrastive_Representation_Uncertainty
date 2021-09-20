@@ -24,7 +24,7 @@ def train(base_dict, trainer_dict):
     acceptable_single_models = ['Baselines',
     #'CE',
     #'Moco',
-    'CentroidVICReg'
+    'Centroid_VicReg'
     ]
     # Dict for the model name, parameters and specific training loop
     model_dict = {'CE':{'params':cross_entropy_hparams,'model_module':CrossEntropyToy, 
@@ -33,7 +33,7 @@ def train(base_dict, trainer_dict):
                     'Moco':{'params':moco_hparams,'model_module':MocoToy, 
                     'model_instance':MocoModelInstance, 'train':general_training,'data_dict':general_dataset_dict},
 
-                    'CentroidVICReg':{'params':centroid_vicreg_hparams,'model_module':CentroidVICRegToy, 
+                    'Centroid_VicReg':{'params':centroid_vicreg_hparams,'model_module':CentroidVICRegToy, 
                     'model_instance':CentroidVICRegModelInstance, 'train':general_training,'data_dict':general_dataset_dict},   
     }
     
