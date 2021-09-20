@@ -1,43 +1,9 @@
 import wandb
 
-# Import parameters for different training methods
-from Contrastive_uncertainty.toy_replica.cross_entropy.config.cross_entropy_params import cross_entropy_hparams
-from Contrastive_uncertainty.toy_replica.moco.config.moco_params import moco_hparams
-from Contrastive_uncertainty.toy_replica.centroid_vicreg.config.centroid_vicreg_params import centroid_vicreg_hparams
-
-# Importing the different lightning modules for the baselines
-from Contrastive_uncertainty.toy_replica.cross_entropy.models.cross_entropy_module import CrossEntropyToy
-from Contrastive_uncertainty.toy_replica.moco.models.moco_module import MocoToy
-from Contrastive_uncertainty.toy_replica.centroid_vicreg.models.centroid_vicreg_module import CentroidVICRegToy
-
-# Model instances for the different methods
-from Contrastive_uncertainty.toy_replica.cross_entropy.models.cross_entropy_model_instance import ModelInstance as CEModelInstance
-from Contrastive_uncertainty.toy_replica.moco.models.moco_model_instance import ModelInstance as MocoModelInstance
-from Contrastive_uncertainty.toy_replica.centroid_vicreg.models.centroid_vicreg_model_instance import ModelInstance as CentroidVICRegModelInstance
-
-
-# Import training methods 
-from Contrastive_uncertainty.general.train.evaluate_general import evaluation as general_evaluation
-from Contrastive_uncertainty.toy_replica.toy_general.datamodules.datamodule_dict import dataset_dict as general_dataset_dict, OOD_dict as general_OOD_dict
-
-
+from Contrastive_uncertainty.toy_replica.toy_experiments.train.experimental_dict import model_dict
 def evaluate(run_paths,update_dict):    
     
     # Dict for the model name, parameters and specific training loop
-    
-    model_dict = {'CE':{'params':cross_entropy_hparams,'model_module':CrossEntropyToy, 
-                    'model_instance':CEModelInstance, 'evaluate':general_evaluation, 
-                    'data_dict':general_dataset_dict, 'ood_dict':general_OOD_dict},
-
-                    'Moco':{'params':moco_hparams,'model_module':MocoToy, 
-                    'model_instance':MocoModelInstance, 'evaluate':general_evaluation,
-                    'data_dict':general_dataset_dict, 'ood_dict':general_OOD_dict},
-
-                    'Centroid_VicReg':{'params':centroid_vicreg_hparams,'model_module':CentroidVICRegToy, 
-                    'model_instance':CentroidVICRegModelInstance, 'evaluate':general_evaluation,
-                    'data_dict':general_dataset_dict, 'ood_dict':general_OOD_dict}
-    }
-    
 
     # Iterate through the run paths
     for run_path in run_paths:

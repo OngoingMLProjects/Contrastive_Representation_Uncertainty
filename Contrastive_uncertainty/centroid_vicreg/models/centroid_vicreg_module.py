@@ -165,6 +165,7 @@ class CentroidVICRegModule(pl.LightningModule):
         Returns:
             torch.Tensor: variance regularization loss.
         """
+        
 
         eps = 1e-4
         std_z1 = torch.sqrt(z1.var(dim=0) + eps)

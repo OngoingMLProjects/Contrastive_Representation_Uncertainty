@@ -46,7 +46,7 @@ trainer_hparams = dict(
 # Miscellaneous arguments in common
 seed = 26,
 epochs = 1,
-bsz = 64,
+bsz = 128,
 
 # Trainer configurations in common
 fast_run = False,
