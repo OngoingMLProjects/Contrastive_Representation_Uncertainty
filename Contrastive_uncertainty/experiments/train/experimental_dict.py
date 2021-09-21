@@ -2,18 +2,20 @@
 from Contrastive_uncertainty.cross_entropy.config.cross_entropy_params import cross_entropy_hparams
 from Contrastive_uncertainty.moco.config.moco_params import moco_hparams
 from Contrastive_uncertainty.centroid_vicreg.config.centroid_vicreg_params import centroid_vicreg_hparams
-
+from Contrastive_uncertainty.centroid_class_vicreg.config.centroid_class_vicreg_params import centroid_class_vicreg_hparams
 
 # Importing the different lightning modules for the baselines
 from Contrastive_uncertainty.cross_entropy.models.cross_entropy_module import CrossEntropyModule
 from Contrastive_uncertainty.moco.models.moco_module import MocoModule
 from Contrastive_uncertainty.centroid_vicreg.models.centroid_vicreg_module import CentroidVICRegModule
+from Contrastive_uncertainty.centroid_class_vicreg.models.centroid_class_vicreg_module import CentroidClassVICRegModule
 
 
 # Model instances for the different methods
 from Contrastive_uncertainty.cross_entropy.models.cross_entropy_model_instance import ModelInstance as CEModelInstance
 from Contrastive_uncertainty.moco.models.moco_model_instance import ModelInstance as MocoModelInstance
 from Contrastive_uncertainty.centroid_vicreg.models.centroid_vicreg_model_instance import ModelInstance as CentroidVICRegModelInstance
+from Contrastive_uncertainty.centroid_class_vicreg.models.centroid_class_vicreg_model_instance import ModelInstance as CentroidClassVICRegModelInstance
 
 
 # Import evaluate
@@ -40,6 +42,11 @@ model_dict = {'CE':{'params':cross_entropy_hparams,'model_module':CrossEntropyMo
                     'Centroid_VicReg':{'params':centroid_vicreg_hparams,'model_module':CentroidVICRegModule, 
                     'model_instance':CentroidVICRegModelInstance,
                     'train':general_training,'evaluate':general_evaluation, 
-                    'data_dict':general_dataset_dict,'ood_dict':general_OOD_dict}
+                    'data_dict':general_dataset_dict,'ood_dict':general_OOD_dict},
+
+                    'CentroidClassVICReg':{'params':centroid_class_vicreg_hparams,'model_module':CentroidClassVICRegModule,
+                    'model_instance':CentroidClassVICRegModelInstance,
+                    'train': general_training,'evaluate':general_evaluation,
+                    'data_dict':general_dataset_dict, 'ood_dict':general_OOD_dict}
                     
     }

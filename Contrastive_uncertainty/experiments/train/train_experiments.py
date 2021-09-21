@@ -6,7 +6,8 @@ def train(base_dict, trainer_dict):
     acceptable_single_models = ['Baselines',
     #'CE',
     #'Moco',
-    'Centroid_VicReg'
+    #'Centroid_VicReg',
+    'CentroidClassVICReg'
     ]
 
 
