@@ -121,9 +121,6 @@ callbacks = ['Metrics'],#['Model_saving'],
 )
 
 
-
-
-
 base3_hparams = dict(
 # Optimizer parameters in common
 optimizer = 'sgd',

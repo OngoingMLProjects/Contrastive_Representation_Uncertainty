@@ -70,22 +70,3 @@ model_saving = 200, # Used to control how often the model is saved
 
 callbacks = ['Mahalanobis OOD Fractions'], #'Model_saving'
 )
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-batch_base_hparams = [base1_hparams, base2_hparams, base3_hparams]
-batch_trainer_hparams = [trainer1_hparams, trainer2_hparams, trainer3_hparams]
-
-assert len(batch_base_hparams) == len(batch_trainer_hparams)

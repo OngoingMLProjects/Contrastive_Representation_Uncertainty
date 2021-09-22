@@ -4,7 +4,8 @@ def batch_train(batch_base_dict, batch_trainer_dict):
     acceptable_single_models = ['Baselines',
     #'CE',
     #'Moco',
-    'CentroidVICReg'
+    #'CentroidVICReg',
+    'CentroidClassVICReg'
     ]
 
     # Dict for the model name, parameters and specific training loop

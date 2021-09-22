@@ -350,7 +350,10 @@ class Mahalanobis_OOD_Fractions(Class_Mahalanobis_OOD):
         background_class = len(np.unique(labels)) # background class is equal to the number of labels due to labels starting to count from 0 
         excluded_ID_scores = ID_scores[indices_ID !=background_class]
         excluded_OOD_scores = OOD_scores[indices_OOD !=background_class]
-        All_excluded_AUROC = get_roc_sklearn(excluded_ID_scores,excluded_OOD_scores)
+        if len(excluded_ID_scores)==0 or len(excluded_OOD_scores)==0:
+            All_excluded_AUROC = -1.0
+        else:              
+            All_excluded_AUROC = get_roc_sklearn(excluded_ID_scores,excluded_OOD_scores)
         
         table_data['Class'].append('All Background Excluded')
         table_data['AUROC'].append(round(All_excluded_AUROC,2))
@@ -360,7 +363,7 @@ class Mahalanobis_OOD_Fractions(Class_Mahalanobis_OOD):
         table_df = pd.DataFrame(table_data)
         table = wandb.Table(dataframe=table_df)
         wandb.log({wandb_name:table})
-        
+
 
 def get_roc_sklearn(xin, xood):
     labels = [0] * len(xin)  + [1] * len(xood)
