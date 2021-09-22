@@ -1,5 +1,5 @@
 # Import general params
 from Contrastive_uncertainty.toy_replica.toy_experiments.config.batch_params import batch_base_hparams, batch_trainer_hparams
-from Contrastive_uncertainty.toy_replica.toy_experiments.train.batch_train_experiments import batch_train
+from Contrastive_uncertainty.toy_replica.toy_experiments.train.train_experiments import train
 
-batch_train(batch_base_hparams, batch_trainer_hparams)
+train(batch_base_hparams, batch_trainer_hparams)

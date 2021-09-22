@@ -58,3 +58,9 @@ val_check = 1,
 model_saving = 1, # Used to control how often the model is saved
 callbacks = ['Nearest Neighbours'], #['Mahalanobis OOD Fractions'], #['Model_saving'],
 )
+
+
+batch_base_hparams = [base_hparams]
+batch_trainer_hparams = [trainer_hparams]
+
+assert len(batch_base_hparams) == len(batch_trainer_hparams)
