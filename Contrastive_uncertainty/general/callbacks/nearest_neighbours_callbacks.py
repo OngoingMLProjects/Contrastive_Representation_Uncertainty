@@ -146,6 +146,103 @@ class NearestNeighbours(pl.Callback):
         self.datasaving(ID_outlier_percentage, OOD_outlier_percentage,name)
 
 
+# Checks how many of the neighbours (including itself) belong to the same class
+class NearestClassNeighbours(pl.Callback):
+    def __init__(self, Datamodule,
+        quick_callback:bool = True):
+
+        super().__init__()
+        self.Datamodule = Datamodule
+        self.quick_callback = quick_callback # Quick callback used to make dataloaders only use a single batch of the data in order to make the testing process occur quickly      
+        self.K = 10
+
+    def on_test_epoch_end(self, trainer, pl_module):
+        self.forward_callback(trainer=trainer, pl_module=pl_module) 
+
+    def forward_callback(self,trainer,pl_module):
+        train_loader = self.Datamodule.deterministic_train_dataloader()
+        test_loader = self.Datamodule.test_dataloader()
+
+        features_train, labels_train = self.get_features(pl_module, train_loader)
+        features_test, labels_test = self.get_features(pl_module, test_loader)
+
+        self.get_eval_results(
+            np.copy(features_train),
+            np.copy(features_test),
+            np.copy(labels_test))
+
+    def get_features(self, pl_module, dataloader):
+        features, labels = [], []
+        
+        loader = quickloading(self.quick_callback, dataloader)
+        for index, (img, *label, indices) in enumerate(loader):
+            assert len(loader)>0, 'loader is empty'
+            if isinstance(img, tuple) or isinstance(img, list):
+                    img, *aug_img = img # Used to take into accoutn whether the data is a tuple of the different augmentations
+
+            # Selects the correct label based on the desired label level
+            if len(label) > 1:
+                label_index = 0
+                label = label[label_index]
+            else: # Used for the case of the OOD data
+                label = label[0]
+
+            img = img.to(pl_module.device)
+            
+            # Compute feature vector and place in list
+            feature_vector = pl_module.callback_vector(img) # Performs the callback for the desired level
+            
+            features += list(feature_vector.data.cpu().numpy())
+            labels += list(label.data.cpu().numpy())            
+
+        return np.array(features), np.array(labels)
+
+    def normalise(self,ftrain,ftest):
+        # Nawid -normalise the featues for the training, test and ood data
+        # standardize data
+        
+        ftrain /= np.linalg.norm(ftrain, axis=-1, keepdims=True) + 1e-10
+        ftest /= np.linalg.norm(ftest, axis=-1, keepdims=True) + 1e-10
+        # Nawid - calculate the mean and std of the traiing features
+        m, s = np.mean(ftrain, axis=0, keepdims=True), np.std(ftrain, axis=0, keepdims=True)
+        # Nawid - normalise data using the mean and std
+        ftrain = (ftrain - m) / (s + 1e-10)
+        ftest = (ftest - m) / (s + 1e-10)
+        
+        return ftrain, ftest
+
+    # only get the nearest neighbours belonging to the same class
+    def get_nearest_neighbours(self,ftest,labelstest):
+        # Makes a distance matrix for the data
+        distance_matrix = scipy.spatial.distance.cdist(ftest, ftest)
+        
+        bottom_k_indices = np.argsort(distance_matrix,axis=1)[:,:self.K] # shape (num samples,k), get the k nearest neighbours including itself 
+        # Get the labels for the KNN
+        knn_labels = labelstest[bottom_k_indices] 
+        # https://stackoverflow.com/questions/61712303/row-or-column-wise-most-frequent-elements-in-2-d-numpy-array - Calculate the nearest neighbours for the different values
+        values, count = scipy.stats.mode(knn_labels,1)
+        normalized_count = count/self.K
+        
+        return normalized_count
+        
+    def datasaving(self,normalized_count,wandb_name):
+        normalized_count_df = pd.DataFrame(normalized_count)
+        normalized_count_df.columns = ['ID KNN Class Fraction']
+
+        table_data = wandb.Table(data = normalized_count_df)
+        wandb.log({wandb_name:table_data})
+    
+    def get_eval_results(self,ftrain, ftest, labelstest):
+        """
+            None.
+        """
+        ftrain_norm, ftest_norm = self.normalise(ftrain,ftest)
+        # Nawid - obtain the scores for the test data and the OOD data
+        normalized_count = self.get_nearest_neighbours(ftest_norm,labelstest)
+        name = f'K:{self.K} NN Class Fraction'
+        self.datasaving(normalized_count,name)
+
+
 
 # Performs 1D typicality using the nearest neighbours as the batch for the data
 class NearestNeighbours1DTypicality(NearestNeighbours):
@@ -223,8 +320,21 @@ class NearestNeighbours1DTypicality(NearestNeighbours):
         
         knn_OOD_features = knn_collated_features[num_ID:] # get all the features and neighbours for the OOD data
         knn_OOD_features = np.reshape(knn_OOD_features,(knn_OOD_features.shape[0]*knn_OOD_features.shape[1],knn_OOD_features.shape[2]))
+        
+        '''
+        a3D = np.array([[[1, 2], [3, 4]],
+                    [[5, 6], [7, 8]]])
+        reshaped_array = np.reshape(a3D,(a3D.shape[0]*a3D.shape[1],a3D.shape[2])) 
+        
+        array = np.arange(27)
+        basic_reshape = np.reshape(array,(3,3,3))
+        flatten_reshape = np.reshape(basic_reshape,(9,3))
+        
 
-
+        array = np.arange(18)
+        basic_reshape = np.reshape(array,(3,3,2))
+        flatten_reshape = np.reshape(basic_reshape,(9,2))
+        '''    
         # Need to check with a toy example whether the different numbers are placed sequentially in a batch
         return knn_ID_features, knn_OOD_features
 
@@ -268,4 +378,112 @@ class NearestNeighbours1DTypicality(NearestNeighbours):
         AUROC = get_roc_sklearn(din, dood)
         wandb.run.summary[self.summary_key] = AUROC
 
+
+# Performs 1D typicality using the nearest neighbours as the batch for the data, and obtaining specific classes for the data
+class NearestNeighboursClass1DTypicality(NearestNeighbours1DTypicality):
+    def __init__(self, Datamodule,OOD_Datamodule,
+        quick_callback:bool = True):
+
+        super().__init__(Datamodule,OOD_Datamodule, quick_callback)
+        # Used to save the summary value
+        self.K = 10
+        self.summary_key = f'Normalized One Dim Class Typicality KNN - {self.K} OOD - {self.OOD_Datamodule.name}'
+
+    def forward_callback(self, trainer, pl_module):
+        train_loader = self.Datamodule.deterministic_train_dataloader()
+        test_loader = self.Datamodule.test_dataloader()
+        ood_loader = self.OOD_Datamodule.test_dataloader()
+
+        features_train, labels_train = self.get_features(pl_module, train_loader)
+        features_test, labels_test = self.get_features(pl_module, test_loader)
+        features_ood, labels_ood = self.get_features(pl_module, ood_loader)
+
+        self.get_eval_results(
+            np.copy(features_train),
+            np.copy(features_test),
+            np.copy(features_ood),
+            np.copy(labels_train))
+        
+    def get_features(self, pl_module, dataloader):
+        return super().get_features(pl_module, dataloader)
     
+    def normalise(self, ftrain, ftest, food):
+        return super().normalise(ftrain, ftest, food)
+    
+    def get_nearest_neighbours(self, ftest, food):
+        return super().get_nearest_neighbours(ftest, food)
+    
+    # get the features of the data which also has the KNN in either the test set or the OOD dataset
+    def get_knn_features(self, ftest, food, knn_indices):
+        return super().get_knn_features(ftest, food, knn_indices)
+
+    
+    def get_1d_train(self,ftrain, ypred):
+        
+        xc = [ftrain[ypred == i] for i in np.unique(ypred)] # Nawid - training data which have been predicted to belong to a particular class
+        covs = [np.cov(x.T, bias=True) for x in xc] # Cov and means part should be fine
+        means = [np.mean(x,axis=0,keepdims=True) for x in xc] # Calculates mean from (B,embdim) to (1,embdim)
+
+        eigvalues = []
+        eigvectors = []
+        
+        dtrain_1d_mean = [] # 1D mean for each class
+        dtrain_1d_std = [] # 1D std for each class
+        for class_num, class_cov in enumerate(covs):
+            class_eigvals, class_eigvectors = np.linalg.eigh(class_cov) # Each column is a normalised eigenvector of
+            
+            # Reverse order as the eigenvalues and eigenvectors are in ascending order (lowest value first), therefore it would be beneficial to get them in descending order
+            #class_eigvals, class_eigvectors = np.flip(class_eigvals, axis=0), np.flip(class_eigvectors,axis=0)
+            eigvalues.append(np.expand_dims(class_eigvals,axis=1))
+            eigvectors.append(class_eigvectors)
+
+            # Get the distribution of the 1d Scores from the certain class, which involves seeing the one dimensional scores for a specific class and calculating the mean and the standard deviation
+            dtrain_class = np.matmul(eigvectors[class_num].T,(xc[class_num] - means[class_num]).T)**2/eigvalues[class_num]
+            dtrain_1d_mean.append(np.mean(dtrain_class, axis= 1, keepdims=True))
+            dtrain_1d_std.append(np.std(dtrain_class, axis= 1, keepdims=True))        
+        
+        return means, covs, eigvalues, eigvectors, dtrain_1d_mean, dtrain_1d_std
+    
+    def get_thresholds(self, fdata, means, eigvalues, eigvectors, dtrain_1d_mean, dtrain_1d_std):
+        thresholds = []
+        num_batches = len(fdata)//self.K
+        # Currently goes through a single data point at a time which is not very efficient
+        for i in range(num_batches):
+            fdata_batch = fdata[(i*self.K):((i+1)*self.K)]
+            ddata = [np.matmul(eigvectors[class_num].T,(fdata_batch - means[class_num]).T)**2/eigvalues[class_num] for class_num in range(len(means))] # Calculate the 1D scores for all the different classes 
+        
+            # obtain the normalised the scores for the different classes
+            ddata = [ddata[class_num] - dtrain_1d_mean[class_num]/(dtrain_1d_std[class_num]  +1e-10) for class_num in range(len(means))] # shape (dim, batch)
+            
+            # shape (dim) average of all data in batch size
+            ddata = [np.mean(ddata[class_num],axis=1) for class_num in range(len(means))] # shape dim
+
+            # Obtain the sum of absolute normalised scores
+            scores = [np.sum(np.abs(ddata[class_num]),axis=0) for class_num in range(len(means))]
+            # Obtain the scores corresponding to the lowest class
+            ddata = np.min(scores,axis=0)
+
+            
+
+            thresholds.append(ddata)
+
+        return thresholds
+
+    def get_scores(self,ftrain, ftest, food,labelstrain):
+        # Get information related to the train info
+        mean, cov, eigvalues, eigvectors, dtrain_1d_mean, dtrain_1d_std = self.get_1d_train(ftrain,labelstrain)
+        # Inference
+        # Calculate the scores for the in-distribution data and the OOD data
+        knn_indices = self.get_nearest_neighbours(ftest,food)
+        knn_ID_features, knn_OOD_features = self.get_knn_features(ftest, food, knn_indices)
+        
+        din = self.get_thresholds(knn_ID_features, mean, eigvalues,eigvectors, dtrain_1d_mean,dtrain_1d_std)
+        dood = self.get_thresholds(knn_OOD_features, mean, eigvalues,eigvectors, dtrain_1d_mean,dtrain_1d_std)    
+        
+        return din, dood
+    
+    def get_eval_results(self, ftrain, ftest, food,labelstrain):
+        ftrain_norm, ftest_norm, food_norm = self.normalise(ftrain, ftest, food)
+        din, dood = self.get_scores(ftrain_norm,ftest_norm, food_norm,labelstrain)
+        AUROC = get_roc_sklearn(din, dood)
+        wandb.run.summary[self.summary_key] = AUROC

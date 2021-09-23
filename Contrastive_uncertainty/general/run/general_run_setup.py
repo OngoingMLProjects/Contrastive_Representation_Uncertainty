@@ -6,7 +6,8 @@ from Contrastive_uncertainty.general.callbacks.visualisation_callback import Vis
 from Contrastive_uncertainty.general.callbacks.metrics.metric_callback import MetricLogger, evaluation_metrics, evaltypes
 
 from Contrastive_uncertainty.general.callbacks.ood_callbacks import Mahalanobis_OOD, Class_Mahalanobis_OOD, Mahalanobis_OOD_Fractions
-from Contrastive_uncertainty.general.callbacks.nearest_neighbours_callbacks import NearestNeighbours, NearestNeighbours1DTypicality
+from Contrastive_uncertainty.general.callbacks.nearest_neighbours_callbacks import NearestNeighbours, NearestClassNeighbours,\
+NearestNeighbours1DTypicality, NearestNeighboursClass1DTypicality
 
 
 def train_run_name(model_name, config, group=None):
@@ -38,7 +39,8 @@ def callback_dictionary(Datamodule,config,data_dict):
     # Manually added callbacks
     callback_dict = {'Model_saving':ModelSaving(config['model_saving'],'Models'),
                     'Metrics':MetricLogger(evaluation_metrics,Datamodule,evaltypes, quick_callback=quick_callback),
-                    'Visualisation': Visualisation(Datamodule, quick_callback=quick_callback)}
+                    'Visualisation': Visualisation(Datamodule, quick_callback=quick_callback),
+                    'Nearest Class Neighbours':NearestClassNeighbours(Datamodule, quick_callback=quick_callback)}
 
     for ood_dataset in config['OOD_dataset']:
         OOD_Datamodule = Datamodule_selection(data_dict, ood_dataset, config)
@@ -47,7 +49,8 @@ def callback_dictionary(Datamodule,config,data_dict):
                 f'Class Mahalanobis {ood_dataset}': Class_Mahalanobis_OOD(Datamodule,OOD_Datamodule,quick_callback=quick_callback),
                 f'Mahalanobis OOD Fractions {ood_dataset}': Mahalanobis_OOD_Fractions(Datamodule,OOD_Datamodule,quick_callback=quick_callback),
                 f'Nearest Neighbours {ood_dataset}': NearestNeighbours(Datamodule,OOD_Datamodule,quick_callback=quick_callback),
-                f'Nearest Neighbours 1D Typicality {ood_dataset}':NearestNeighbours1DTypicality(Datamodule,OOD_Datamodule,quick_callback=quick_callback)}
+                f'Nearest Neighbours 1D Typicality {ood_dataset}':NearestNeighbours1DTypicality(Datamodule,OOD_Datamodule,quick_callback=quick_callback),
+                f'Nearest Neighbours Class 1D Typicality {ood_dataset}':NearestNeighboursClass1DTypicality(Datamodule,OOD_Datamodule,quick_callback=quick_callback)}
         callback_dict.update(OOD_callback)
     
     return callback_dict
