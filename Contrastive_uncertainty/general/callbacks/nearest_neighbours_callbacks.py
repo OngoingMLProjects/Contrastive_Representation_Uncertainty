@@ -28,7 +28,7 @@ from Contrastive_uncertainty.general.utils.hybrid_utils import OOD_conf_matrix
 #from Contrastive_uncertainty.Contrastive.models.loss_functions import class_discrimination
 from Contrastive_uncertainty.general.callbacks.general_callbacks import quickloading
 from Contrastive_uncertainty.general.utils.pl_metrics import precision_at_k
-
+from Contrastive_uncertainty.general.callbacks.ood_callbacks import get_roc_sklearn
 
 class NearestNeighbours(pl.Callback):
     def __init__(self, Datamodule,OOD_Datamodule,
@@ -146,5 +146,126 @@ class NearestNeighbours(pl.Callback):
         self.datasaving(ID_outlier_percentage, OOD_outlier_percentage,name)
 
 
+
+# Performs 1D typicality using the nearest neighbours as the batch for the data
+class NearestNeighbours1DTypicality(NearestNeighbours):
+    def __init__(self, Datamodule,OOD_Datamodule,
+        quick_callback:bool = True):
+
+        super().__init__(Datamodule,OOD_Datamodule, quick_callback)
+        # Used to save the summary value
+        self.summary_key = f'Normalized One Dim Marginal Typicality KNN - {self.K} OOD - {self.OOD_Datamodule.name}'
+
+    def forward_callback(self, trainer, pl_module):
+        train_loader = self.Datamodule.deterministic_train_dataloader()
+        test_loader = self.Datamodule.test_dataloader()
+        ood_loader = self.OOD_Datamodule.test_dataloader()
+
+        features_train, labels_train = self.get_features(pl_module, train_loader)
+        features_test, labels_test = self.get_features(pl_module, test_loader)
+        features_ood, labels_ood = self.get_features(pl_module, ood_loader)
+
+        self.get_eval_results(
+            np.copy(features_train),
+            np.copy(features_test),
+            np.copy(features_ood))
+        
+    def get_features(self, pl_module, dataloader):
+        return super().get_features(pl_module, dataloader)
+    
+    def normalise(self, ftrain, ftest, food):
+        return super().normalise(ftrain, ftest, food)
+    
+    def get_nearest_neighbours(self, ftest, food):
+        num_ID = len(ftest)
+        collated_features = np.concatenate((ftest, food))
+        # Make a distance matrix for the data
+        distance_matrix = scipy.spatial.distance.cdist(collated_features, collated_features)
+        bottom_k_indices = np.argsort(distance_matrix,axis=1)[:,:self.K] # shape (num samples,k) , each row has the k indices with the smallest values (including itself), so it gets K indices for each data point
+        return bottom_k_indices
+
+
+    # calculate the std of the 1d likelihood scores as well
+    def get_1d_train(self, ftrain):
+        # Nawid - get all the features which belong to each of the different classes
+        cov = np.cov(ftrain.T, bias=True) # Cov and means part should be fine
+        mean = np.mean(ftrain,axis=0,keepdims=True) # Calculates mean from (B,embdim) to (1,embdim)
+        
+        eigvalues, eigvectors = np.linalg.eigh(cov)
+        eigvalues = np.expand_dims(eigvalues,axis=1)
+        
+        dtrain = np.matmul(eigvectors.T,(ftrain - mean).T)**2/eigvalues
+        # calculate the mean and the standard deviations of the different values
+        dtrain_1d_mean = np.mean(dtrain,axis= 1,keepdims=True) # shape (dim,1)
+        dtrain_1d_std = np.std(dtrain,axis=1,keepdims=True) # shape (dim,1)
+        
+        #normalised_dtrain = (dtrain - dtrain_1d_mean)
+        
+        # Value for a particular class
+        # Vector of datapoints(embdim,num_eigenvectors) (each column is eigenvector so the different columns is the number of eigenvectors)
+        # data - means is shape (B, emb_dim), therefore the matrix multiplication needs to be (num_eigenvectors, embdim), (embdim,batch) to give (num eigenvectors, Batch) and then this is divided by (num eigenvectors,1) 
+        # to give (num eigen vectors, batch) different values for 1 dimensional mahalanobis distances 
+        
+        # I believe the first din is the list of size class, where each entry is a vector of size (emb dim, batch) where each entry of the embed dim is the 1 dimensional mahalanobis distance along that dimension, so a vector of (embdim,1) represents the mahalanobis distance of each of the n dimensions for that particular data point
+
+        #Get entropy based on training data (or could get entropy using the validation data)
+        return mean, cov, eigvalues, eigvectors, dtrain_1d_mean, dtrain_1d_std
     
 
+    # get the features of the data which also has the KNN in either the test set or the OOD dataset
+    def get_knn_features(self,ftest,food, knn_indices):
+        num_ID = len(ftest)
+        # collated features to store all the different values for the data 
+        collated_features = np.concatenate((ftest, food))
+        knn_collated_features = collated_features[knn_indices] # shape (num_samples_collated, K, embeddim)
+        knn_ID_features = knn_collated_features[:num_ID] # get all the features and neighbours for the ID data 
+        knn_ID_features = np.reshape(knn_ID_features,(knn_ID_features.shape[0]*knn_ID_features.shape[1],knn_ID_features.shape[2]))
+        
+        knn_OOD_features = knn_collated_features[num_ID:] # get all the features and neighbours for the OOD data
+        knn_OOD_features = np.reshape(knn_OOD_features,(knn_OOD_features.shape[0]*knn_OOD_features.shape[1],knn_OOD_features.shape[2]))
+
+
+        # Need to check with a toy example whether the different numbers are placed sequentially in a batch
+        return knn_ID_features, knn_OOD_features
+
+    def get_thresholds(self, fdata, mean, eigvalues, eigvectors, dtrain_1d_mean, dtrain_1d_std):
+        thresholds = [] # List of threshold values
+        num_batches = len(fdata)//self.K
+
+        for i in range(num_batches):
+            fdata_batch = fdata[(i*self.K):((i+1)*self.K)]
+            ddata = np.matmul(eigvectors.T,(fdata_batch - mean).T)**2/eigvalues  # shape (dim, batch size)
+            # Normalise the data
+            ddata = (ddata - dtrain_1d_mean)/(dtrain_1d_std +1e-10) # shape (dim, batch)
+
+            # shape (dim) average of all data in batch size
+            ddata = np.mean(ddata,axis= 1) # shape : (dim)
+            
+            # Sum of the deviations of each individual dimension
+            ddata_deviation = np.sum(np.abs(ddata))
+
+            thresholds.append(ddata_deviation)
+        
+        return thresholds
+
+    def get_scores(self,ftrain, ftest, food):
+        # Get information related to the train info
+        mean, cov, eigvalues, eigvectors, dtrain_1d_mean, dtrain_1d_std = self.get_1d_train(ftrain)
+        # Inference
+        # Calculate the scores for the in-distribution data and the OOD data
+        knn_indices = self.get_nearest_neighbours(ftest,food)
+        knn_ID_features, knn_OOD_features = self.get_knn_features(ftest, food, knn_indices)
+
+        din = self.get_thresholds(knn_ID_features, mean, eigvalues,eigvectors, dtrain_1d_mean,dtrain_1d_std)
+        dood = self.get_thresholds(knn_OOD_features, mean, eigvalues,eigvectors, dtrain_1d_mean,dtrain_1d_std)    
+
+        return din, dood
+
+
+    def get_eval_results(self, ftrain, ftest, food):
+        ftrain_norm, ftest_norm, food_norm = self.normalise(ftrain, ftest, food)
+        din, dood = self.get_scores(ftrain_norm,ftest_norm, food_norm)
+        AUROC = get_roc_sklearn(din, dood)
+        wandb.run.summary[self.summary_key] = AUROC
+
+    

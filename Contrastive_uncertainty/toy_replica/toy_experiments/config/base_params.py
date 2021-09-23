@@ -56,7 +56,7 @@ validation_ratio = 1.0,
 test_ratio = 1.0,
 val_check = 1,
 model_saving = 1, # Used to control how often the model is saved
-callbacks = ['Nearest Neighbours'], #['Mahalanobis OOD Fractions'], #['Model_saving'],
+callbacks = ['Nearest Neighbours 1D Typicality'], #['Mahalanobis OOD Fractions'], #['Model_saving'],
 )
 
 
