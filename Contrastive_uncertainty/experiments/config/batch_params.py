@@ -15,7 +15,7 @@ weight_decay = 1e-4,
 # Training parameters in common
 emb_dim = 128,
 instance_encoder = 'resnet50', # Use resnet 18 for confusion log probability 
-dataset = 'MNIST',
+dataset = 'CIFAR10',
 #OOD_dataset = ['CIFAR10'],
 #dataset = 'CIFAR100',
 #OOD_dataset = ['SVHN'],
@@ -87,7 +87,7 @@ weight_decay = 1e-4,
 # Training parameters in common
 emb_dim = 128,
 instance_encoder = 'resnet50', # Use resnet 18 for confusion log probability 
-dataset = 'FashionMNIST',
+dataset = 'CIFAR100',
 #OOD_dataset = ['CIFAR10'],
 #dataset = 'CIFAR100',
 #OOD_dataset = ['SVHN'],
@@ -214,7 +214,10 @@ model_saving = 200, # Used to control how often the model is saved
 callbacks = ['Model_saving','Mahalanobis OOD Fractions'], #'Model_saving'
 )
 
+batch_base_hparams = [base1_hparams, base2_hparams]
+batch_trainer_hparams = [trainer1_hparams, trainer2_hparams]
+'''
 batch_base_hparams = [base1_hparams, base2_hparams, base3_hparams]
 batch_trainer_hparams = [trainer1_hparams, trainer2_hparams, trainer3_hparams]
-
+'''
 assert len(batch_base_hparams) == len(batch_trainer_hparams)

@@ -32,7 +32,7 @@ from Contrastive_uncertainty.general.callbacks.ood_callbacks import get_roc_skle
 
 class NearestNeighbours(pl.Callback):
     def __init__(self, Datamodule,OOD_Datamodule,
-        quick_callback:bool = True):
+        quick_callback:bool = True, K:int=10):
 
         super().__init__()
         self.Datamodule = Datamodule
@@ -43,7 +43,7 @@ class NearestNeighbours(pl.Callback):
         
       
         self.OOD_dataname = self.OOD_Datamodule.name
-        self.K = 5
+        self.K = K
 
     def on_test_epoch_end(self, trainer, pl_module):
         self.forward_callback(trainer=trainer, pl_module=pl_module) 
@@ -149,12 +149,12 @@ class NearestNeighbours(pl.Callback):
 # Checks how many of the neighbours (including itself) belong to the same class
 class NearestClassNeighbours(pl.Callback):
     def __init__(self, Datamodule,
-        quick_callback:bool = True):
+        quick_callback:bool = True, K:int= 10):
 
         super().__init__()
         self.Datamodule = Datamodule
         self.quick_callback = quick_callback # Quick callback used to make dataloaders only use a single batch of the data in order to make the testing process occur quickly      
-        self.K = 10
+        self.K = K
 
     def on_test_epoch_end(self, trainer, pl_module):
         self.forward_callback(trainer=trainer, pl_module=pl_module) 
@@ -247,9 +247,9 @@ class NearestClassNeighbours(pl.Callback):
 # Performs 1D typicality using the nearest neighbours as the batch for the data
 class NearestNeighbours1DTypicality(NearestNeighbours):
     def __init__(self, Datamodule,OOD_Datamodule,
-        quick_callback:bool = True):
+        quick_callback:bool = True,K:int = 10):
 
-        super().__init__(Datamodule,OOD_Datamodule, quick_callback)
+        super().__init__(Datamodule,OOD_Datamodule, quick_callback,K)
         # Used to save the summary value
         self.summary_key = f'Normalized One Dim Marginal Typicality KNN - {self.K} OOD - {self.OOD_Datamodule.name}'
 
@@ -382,11 +382,11 @@ class NearestNeighbours1DTypicality(NearestNeighbours):
 # Performs 1D typicality using the nearest neighbours as the batch for the data, and obtaining specific classes for the data
 class NearestNeighboursClass1DTypicality(NearestNeighbours1DTypicality):
     def __init__(self, Datamodule,OOD_Datamodule,
-        quick_callback:bool = True):
+        quick_callback:bool = True,K:int = 10):
 
-        super().__init__(Datamodule,OOD_Datamodule, quick_callback)
+        super().__init__(Datamodule,OOD_Datamodule, quick_callback,K)
         # Used to save the summary value
-        self.K = 10
+        self.K = K
         self.summary_key = f'Normalized One Dim Class Typicality KNN - {self.K} OOD - {self.OOD_Datamodule.name}'
 
     def forward_callback(self, trainer, pl_module):
@@ -463,7 +463,6 @@ class NearestNeighboursClass1DTypicality(NearestNeighbours1DTypicality):
             # Obtain the scores corresponding to the lowest class
             ddata = np.min(scores,axis=0)
 
-            
 
             thresholds.append(ddata)
 
@@ -482,6 +481,66 @@ class NearestNeighboursClass1DTypicality(NearestNeighbours1DTypicality):
         
         return din, dood
     
+    def get_eval_results(self, ftrain, ftest, food,labelstrain):
+        ftrain_norm, ftest_norm, food_norm = self.normalise(ftrain, ftest, food)
+        din, dood = self.get_scores(ftrain_norm,ftest_norm, food_norm,labelstrain)
+        AUROC = get_roc_sklearn(din, dood)
+        wandb.run.summary[self.summary_key] = AUROC
+
+# Oracle situation where the nearest neighbours are always obtained from the same dataset
+class OracleNearestNeighboursClass1DTypicality(NearestNeighboursClass1DTypicality):
+    def __init__(self, Datamodule, OOD_Datamodule, quick_callback: bool, K: int):
+        super().__init__(Datamodule, OOD_Datamodule, quick_callback=quick_callback, K=K)
+    
+        self.summary_key = f'Oracle Normalized One Dim Class Typicality KNN - {self.K} OOD - {self.OOD_Datamodule.name}'
+    
+    def on_test_epoch_end(self, trainer, pl_module):
+        return super().on_test_epoch_end(trainer, pl_module)
+    
+    def forward_callback(self, trainer, pl_module):
+        return super().forward_callback(trainer, pl_module)
+    
+    def get_features(self, pl_module, dataloader):
+        return super().get_features(pl_module, dataloader)
+    
+    def normalise(self, ftrain, ftest, food):
+        return super().normalise(ftrain, ftest, food)
+
+    # obtain the nearest neighbours in the same dataset as it is an oracle version
+    def get_nearest_neighbours(self, fdata):
+        # Make a distance matrix for the data
+        distance_matrix = scipy.spatial.distance.cdist(fdata, fdata)
+        bottom_k_indices = np.argsort(distance_matrix,axis=1)[:,:self.K] # shape (num samples,k) , each row has the k indices with the smallest values (including itself), so it gets K indices for each data point
+        return bottom_k_indices
+
+    # get the features of the data which are in the same dataset as the other situation
+    def get_knn_features(self,fdata, knn_indices):        
+        knn_features = fdata[knn_indices] # shape (num_samples_collated, K, embeddim)
+        knn_features = np.reshape(knn_features,(knn_features.shape[0]*knn_features.shape[1],knn_features.shape[2]))
+            
+        # Need to check with a toy example whether the different numbers are placed sequentially in a batch
+        return knn_features
+
+    def get_1d_train(self, ftrain, ypred):
+        return super().get_1d_train(ftrain, ypred)
+    
+    def get_thresholds(self, fdata, means, eigvalues, eigvectors, dtrain_1d_mean, dtrain_1d_std):
+        return super().get_thresholds(fdata, means, eigvalues, eigvectors, dtrain_1d_mean, dtrain_1d_std)
+
+    def get_scores(self,ftrain, ftest, food,labelstrain):
+        # Get information related to the train info
+        mean, cov, eigvalues, eigvectors, dtrain_1d_mean, dtrain_1d_std = self.get_1d_train(ftrain,labelstrain)
+        
+        # Inference
+        # Calculate the scores for the in-distribution data and the OOD data
+        knn_ID_indices, knn_OOD_indices = self.get_nearest_neighbours(ftest), self.get_nearest_neighbours(food) 
+        knn_ID_features,knn_OOD_features = self.get_knn_features(ftest,knn_ID_indices), self.get_knn_features(food,knn_OOD_indices)
+        
+        din = self.get_thresholds(knn_ID_features, mean, eigvalues,eigvectors, dtrain_1d_mean,dtrain_1d_std)
+        dood = self.get_thresholds(knn_OOD_features, mean, eigvalues,eigvectors, dtrain_1d_mean,dtrain_1d_std)    
+        
+        return din, dood
+
     def get_eval_results(self, ftrain, ftest, food,labelstrain):
         ftrain_norm, ftest_norm, food_norm = self.normalise(ftrain, ftest, food)
         din, dood = self.get_scores(ftrain_norm,ftest_norm, food_norm,labelstrain)

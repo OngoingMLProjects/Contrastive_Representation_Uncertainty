@@ -15,7 +15,7 @@ weight_decay = 1e-4,
 # Training parameters in common
 emb_dim = 128,
 instance_encoder = 'resnet50', # Use resnet 18 for confusion log probability 
-dataset = 'KMNIST',
+dataset = 'CIFAR100',
 #OOD_dataset = ['CIFAR10'],
 #dataset = 'CIFAR100',
 #OOD_dataset = ['SVHN'],
@@ -37,8 +37,8 @@ encoder_momentum = 0.999,
 softmax_temperature = 0.07,
 
 # centroid vicreg params
-invariance_weight = 1.0,
-variance_weight = 1.0,
+invariance_weight = 15.0,
+variance_weight = 15.0,
 covariance_weight = 1.0,
 
 single_model = 'Baselines'
@@ -55,7 +55,7 @@ trainer_hparams = dict(
 
 # Miscellaneous arguments in common
 seed = 42,
-epochs = 200, #300,
+epochs = 500, #300,
 bsz = 256, #512,
 
 # Trainer configurations in common
@@ -68,8 +68,9 @@ val_check = 20,
 model_saving = 200, # Used to control how often the model is saved
 
 
-callbacks = ['Mahalanobis OOD Fractions'], #'Model_saving'
+callbacks = ['Model_saving','Mahalanobis OOD Fractions'], #'Model_saving'
 )
+
 
 
 batch_base_hparams = [base_hparams]

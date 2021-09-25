@@ -53,7 +53,10 @@ class CentroidVICRegModule(pl.LightningModule):
         # obtain the centroids of the data
         self.mean_vectors= self.load_centroids()
     def load_centroids(self):
-        kernel_dict = loadmat('meanvar1_featuredim128_class10.mat') # Nawid - load precomputed centres
+        if self.num_classes == 10:
+            kernel_dict = loadmat('meanvar1_featuredim128_class10.mat') # Nawid - load precomputed centres
+        else: 
+            kernel_dict = loadmat('meanvar1_featuredim128_class100.mat') # Nawid -Used for the case of CIFAR100 training dataset
         mean_vectors = kernel_dict['mean_logits'] #num_class X num_dense # Nawid - centres
         mean_vectors = torch.from_numpy(mean_vectors).type(torch.FloatTensor).detach() # Detach so no gradient is backpropagated for this tensor and make into float32
         mean_vectors = mean_vectors.to(device='cuda' if torch.cuda.is_available() else 'cpu')
@@ -63,7 +66,7 @@ class CentroidVICRegModule(pl.LightningModule):
     @property
     def name(self):
         ''' return name of model'''
-        return 'CentroidVICReg'
+        return 'Centroid_VicReg'
 
     def init_encoders(self):
         """
