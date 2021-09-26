@@ -8,6 +8,7 @@ import torchvision
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from pytorch_lightning.loggers import WandbLogger
 
+from Contrastive_uncertainty.toy_replica.toy_experiments.train.names_dict import model_names_dict
 from Contrastive_uncertainty.toy_replica.moco.models.encoder_model import Backbone
 from Contrastive_uncertainty.general.utils.pl_metrics import precision_at_k, mean
 
@@ -52,7 +53,7 @@ class MocoToy(pl.LightningModule):
     @property
     def name(self):
         ''' return name of model'''
-        return 'Moco'
+        return model_names_dict['Moco']
 
     def init_encoders(self):
         """

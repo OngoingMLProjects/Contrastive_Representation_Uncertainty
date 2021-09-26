@@ -1,3 +1,5 @@
+from Contrastive_uncertainty.toy_replica.toy_experiments.train.names_dict import model_names_dict
+
 cross_entropy_hparams = dict(
 emb_dim = 128,
 instance_encoder = 'resnet50',
@@ -15,7 +17,7 @@ label_smoothing =False,
 use_mlp = True,
 pretrained_network = None,#'Pretrained_models/finetuned_network.pt',
 
-model_type = 'CE',
+model_type = model_names_dict['CE'],
 project = 'toy_replica',  # evaluation, Moco_training
 group = None,
 notes = None,

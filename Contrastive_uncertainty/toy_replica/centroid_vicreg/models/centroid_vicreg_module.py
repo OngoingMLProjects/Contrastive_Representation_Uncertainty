@@ -11,6 +11,7 @@ from pytorch_lightning.loggers import WandbLogger
 
 from Contrastive_uncertainty.toy_replica.moco.models.encoder_model import Backbone
 from Contrastive_uncertainty.general.utils.pl_metrics import precision_at_k, mean, min_distance_accuracy
+from Contrastive_uncertainty.toy_replica.toy_experiments.train.names_dict import model_names_dict
 
 
 
@@ -65,7 +66,7 @@ class CentroidVICRegToy(pl.LightningModule):
     @property
     def name(self):
         ''' return name of model'''
-        return 'CentroidVICReg'
+        return model_names_dict['Centroid_VicReg']
 
     def init_encoders(self):
         """

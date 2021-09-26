@@ -1,3 +1,5 @@
+from Contrastive_uncertainty.toy_replica.toy_experiments.train.names_dict import model_names_dict
+
 centroid_vicreg_hparams = dict(
 emb_dim = 128,
 num_negatives = 65536,
@@ -22,7 +24,7 @@ covariance_weight = 1.0,
 
 callbacks = ['Model_saving'],
 
-model_type = 'Centroid_VicReg',
+model_type = model_names_dict['Centroid_VicReg'],
 project = 'toy_replica',# evaluation, Moco_training
 group = None,
 notes = None,

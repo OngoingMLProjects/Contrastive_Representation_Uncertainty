@@ -11,6 +11,8 @@ from pytorch_lightning.loggers import WandbLogger
 import torch.distributed as dist
 from typing import List, Tuple
 
+
+from Contrastive_uncertainty.toy_replica.toy_experiments.train.names_dict import model_names_dict
 from Contrastive_uncertainty.toy_replica.moco.models.encoder_model import Backbone
 from Contrastive_uncertainty.general.utils.pl_metrics import precision_at_k, mean
 
@@ -19,8 +21,7 @@ from Contrastive_uncertainty.general.utils.pl_metrics import precision_at_k, mea
 class NNCLRToy(pl.LightningModule):
     def __init__(self,
         emb_dim: int = 128,
-        num_negatives: int = 65536,
-        encoder_momentum: float = 0.999,
+        queue_size: int = 65536,
         softmax_temperature: float = 0.07,
         optimizer:str = 'sgd',
         learning_rate: float = 0.03,
@@ -42,35 +43,35 @@ class NNCLRToy(pl.LightningModule):
 
         # projector
         self.projector = nn.Sequential(
-            nn.Linear(self.features_dim, proj_hidden_dim),
-            nn.BatchNorm1d(proj_hidden_dim),
+            nn.Linear(self.hparams.emb_dim, self.hparams.emb_dim),
+            nn.BatchNorm1d(self.hparams.emb_dim),
             nn.ReLU(),
-            nn.Linear(proj_hidden_dim, proj_hidden_dim),
-            nn.BatchNorm1d(proj_hidden_dim),
+            nn.Linear(self.hparams.emb_dim, self.hparams.emb_dim),
+            nn.BatchNorm1d(self.hparams.emb_dim),
             nn.ReLU(),
-            nn.Linear(proj_hidden_dim, proj_output_dim),
-            nn.BatchNorm1d(proj_output_dim),
+            nn.Linear(self.hparams.emb_dim, self.hparams.emb_dim),
+            nn.BatchNorm1d(self.hparams.emb_dim),
         )
 
         # predictor
         self.predictor = nn.Sequential(
-            nn.Linear(proj_output_dim, pred_hidden_dim),
-            nn.BatchNorm1d(pred_hidden_dim),
+            nn.Linear(self.hparams.emb_dim, self.hparams.emb_dim),
+            nn.BatchNorm1d(self.hparams.emb_dim),
             nn.ReLU(),
-            nn.Linear(pred_hidden_dim, proj_output_dim),
+            nn.Linear(self.hparams.emb_dim, self.hparams.emb_dim),
         )
         
 
         # queue
-        self.register_buffer("queue", torch.randn(self.queue_size, proj_output_dim))
-        self.register_buffer("queue_y", -torch.ones(self.queue_size, dtype=torch.long))
+        self.register_buffer("queue", torch.randn(self.hparams.queue_size, self.hparams.emb_dim))
+        self.register_buffer("queue_y", -torch.ones(self.hparams.queue_size, dtype=torch.long))
         self.queue = F.normalize(self.queue, dim=1)
         self.register_buffer("queue_ptr", torch.zeros(1, dtype=torch.long))
 
     @property
     def name(self):
         ''' return name of model'''
-        return 'Moco'
+        return model_names_dict['NNCLR']
 
     def init_encoders(self):
         """
@@ -95,11 +96,11 @@ class NNCLRToy(pl.LightningModule):
         batch_size = z.shape[0]
 
         ptr = int(self.queue_ptr)  # type: ignore
-        assert self.queue_size % batch_size == 0
+        assert self.hparams.queue_size % batch_size == 0
 
         self.queue[ptr : ptr + batch_size, :] = z
         self.queue_y[ptr : ptr + batch_size] = y  # type: ignore
-        ptr = (ptr + batch_size) % self.queue_size
+        ptr = (ptr + batch_size) % self.hparams.queue_size
 
         self.queue_ptr[0] = ptr  # type: ignore
 

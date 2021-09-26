@@ -1,7 +1,8 @@
-moco_hparams = dict(
+from Contrastive_uncertainty.toy_replica.toy_experiments.train.names_dict import model_names_dict
+
+nnclr_hparams = dict(
 emb_dim = 128,
-num_negatives = 65536,
-encoder_momentum = 0.999,
+queue_size = 65536,
 softmax_temperature = 0.07,
 instance_encoder = 'resnet50',
 
@@ -14,13 +15,9 @@ weight_decay = 1e-4,
 dataset = 'Blobs',
 OOD_dataset = ['TwoMoons','Diagonal'],
 
-use_mlp = True,
-
-pretrained_network = None,#'Pretrained_models/finetuned_network.pt',
-
 callbacks = ['Model_saving','MMD_instance','Metrics','Visualisation','Mahalanobis'],
 
-model_type = 'Moco',
+model_type = model_names_dict['NNCLR'],
 project = 'toy_replica',# evaluation, Moco_training
 group = None,
 notes = None,

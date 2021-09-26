@@ -11,7 +11,7 @@ from pytorch_lightning.loggers import WandbLogger
 from Contrastive_uncertainty.toy_replica.cross_entropy.models.encoder_model import Backbone
 from Contrastive_uncertainty.general.utils.hybrid_utils import label_smoothing, LabelSmoothingCrossEntropy 
 from Contrastive_uncertainty.general.utils.pl_metrics import precision_at_k, mean
-
+from Contrastive_uncertainty.toy_replica.toy_experiments.train.names_dict import model_names_dict
 
 
 
@@ -46,7 +46,7 @@ class CrossEntropyToy(pl.LightningModule):
     @property
     def name(self):
         ''' return name of model'''
-        return 'CrossEntropy'
+        return model_names_dict['CE']
 
     def init_encoders(self):
         """
