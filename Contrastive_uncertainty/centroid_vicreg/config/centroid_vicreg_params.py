@@ -1,3 +1,5 @@
+from Contrastive_uncertainty.general.run.general_run_setup import model_names_dict
+
 centroid_vicreg_hparams = dict(
 
 emb_dim = 128,
@@ -19,7 +21,7 @@ invariance_weight = 1.0,
 variance_weight = 1.0,
 covariance_weight = 1.0,
 
-model_type = 'Centroid_VicReg',
+model_type = model_names_dict['Centroid_VicReg'],
 project = 'evaluation',# evaluation, Moco_training
 group = None,
 notes = None,

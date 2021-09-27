@@ -1,4 +1,5 @@
-from Contrastive_uncertainty.toy_replica.toy_experiments.train.names_dict import model_names_dict
+from Contrastive_uncertainty.general.run.general_run_setup import model_names_dict
+
 
 nnclr_hparams = dict(
 emb_dim = 128,

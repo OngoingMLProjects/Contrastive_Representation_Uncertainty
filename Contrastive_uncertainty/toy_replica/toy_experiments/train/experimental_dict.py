@@ -21,7 +21,7 @@ from Contrastive_uncertainty.toy_replica.centroid_class_vicreg.models.centroid_c
 from Contrastive_uncertainty.toy_replica.nnclr.models.nnclr_model_instance import ModelInstance as NNCLRModelInstance
 
 # Import training methods 
-from Contrastive_uncertainty.toy_replica.toy_experiments.train.names_dict import model_names_dict
+from Contrastive_uncertainty.general.run.general_run_setup import model_names_dict
 
 from Contrastive_uncertainty.general.train.train_general import train as general_training
 from Contrastive_uncertainty.general.train.evaluate_general import evaluation as general_evaluation

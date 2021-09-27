@@ -1,12 +1,13 @@
 # Import parameters for different training methods
 from Contrastive_uncertainty.experiments.train.experimental_dict import model_dict
+from Contrastive_uncertainty.general.run.general_run_setup import model_names_dict
 
 def train(batch_base_dict, batch_trainer_dict):   
     acceptable_single_models = ['Baselines',
-    #'CE',
-    #'Moco',
-    'Centroid_VicReg',
-    #'CentroidClassVICReg'
+    #model_names_dict['CE'],
+    #model_names_dict['Moco'],
+    #model_names_dict['Centroid_VicReg'],
+    model_names_dict['NNCLR']
     ]
 
     # Dict for the model name, parameters and specific training loop

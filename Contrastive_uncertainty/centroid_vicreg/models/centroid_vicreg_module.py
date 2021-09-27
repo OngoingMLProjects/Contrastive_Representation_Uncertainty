@@ -11,6 +11,7 @@ from pytorch_lightning.loggers import WandbLogger
 
 from Contrastive_uncertainty.moco.models.resnet_models import custom_resnet18,custom_resnet34,custom_resnet50
 from Contrastive_uncertainty.general.utils.pl_metrics import precision_at_k, mean, min_distance_accuracy
+from Contrastive_uncertainty.general.run.general_run_setup import model_names_dict
 
 class CentroidVICRegModule(pl.LightningModule):
     def __init__(self,
@@ -52,6 +53,7 @@ class CentroidVICRegModule(pl.LightningModule):
         )
         # obtain the centroids of the data
         self.mean_vectors= self.load_centroids()
+    
     def load_centroids(self):
         if self.num_classes == 10:
             kernel_dict = loadmat('meanvar1_featuredim128_class10.mat') # Nawid - load precomputed centres
@@ -66,7 +68,7 @@ class CentroidVICRegModule(pl.LightningModule):
     @property
     def name(self):
         ''' return name of model'''
-        return 'Centroid_VicReg'
+        return model_names_dict['Centroid_VicReg']
 
     def init_encoders(self):
         """

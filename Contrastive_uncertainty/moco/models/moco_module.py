@@ -11,6 +11,8 @@ from pytorch_lightning.loggers import WandbLogger
 from Contrastive_uncertainty.moco.models.resnet_models import custom_resnet18,custom_resnet34,custom_resnet50
 from Contrastive_uncertainty.general.utils.pl_metrics import precision_at_k, mean
 
+from Contrastive_uncertainty.general.run.general_run_setup import model_names_dict
+
 class MocoModule(pl.LightningModule):
     def __init__(self,
         emb_dim: int = 128,
@@ -51,7 +53,7 @@ class MocoModule(pl.LightningModule):
     @property
     def name(self):
         ''' return name of model'''
-        return 'Moco'
+        return model_names_dict['Moco']
 
     def init_encoders(self):
         """

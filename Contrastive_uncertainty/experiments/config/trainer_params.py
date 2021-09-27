@@ -12,7 +12,8 @@ training_ratio = 1.0,
 validation_ratio = 1.0,
 test_ratio = 1.0,
 val_check = 1,  # evaluation, Moco_training
-callbacks = ['Oracle Nearest 10 Neighbours Class 1D Typicality'],
+#callbacks = ['Oracle Nearest 10 Neighbours Class 1D Typicality'],
+callbacks = ['Nearest'],
 #callbacks = ['Nearest','Class Mahalanobis','Mahalanobis Distance'],
 #callbacks = ['Nearest Neighbours Class 1D Typicality'],
 

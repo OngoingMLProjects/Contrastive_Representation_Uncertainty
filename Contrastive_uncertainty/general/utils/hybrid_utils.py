@@ -6,6 +6,10 @@ import numpy as np
 import wandb
 import re
 
+
+import torch.distributed as dist
+from typing import List, Tuple
+
 # Obtained from https://github.com/eladhoffer/utils.pytorch/blob/master/cross_entropy.py
 def binary_cross_entropy(inputs, target, weight=None, reduction='mean', smooth_eps=None, from_logits=False):
     """cross entropy loss, with support for label smoothing https://arxiv.org/abs/1512.00567"""
@@ -186,3 +190,32 @@ def previous_model_directory(model_dir, run_path):
     
     model_dir = os.path.join(model_dir,specific_model)
     return model_dir
+
+
+#https://github.com/vturrisi/solo-learn/blob/b2feabdfdfadb0a6e6945cc7c2972d2dafd0d06f/solo/utils/misc.py#L192
+class GatherLayer(torch.autograd.Function):
+    """Gathers tensors from all processes, supporting backward propagation."""
+
+    @staticmethod
+    def forward(ctx, input):
+        ctx.save_for_backward(input)
+        if dist.is_available() and dist.is_initialized():
+            output = [torch.zeros_like(input) for _ in range(dist.get_world_size())]
+            dist.all_gather(output, input)
+        else:
+            output = [input]
+        return tuple(output)
+
+    @staticmethod
+    def backward(ctx, *grads):
+        (input,) = ctx.saved_tensors
+        if dist.is_available() and dist.is_initialized():
+            grad_out = torch.zeros_like(input)
+            grad_out[:] = grads[dist.get_rank()]
+        else:
+            grad_out = grads[0]
+        return grad_out
+        
+def gather(X, dim=0):
+    """Gathers tensors from all processes, supporting backward propagation."""
+    return torch.cat(GatherLayer.apply(X), dim=dim)

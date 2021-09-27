@@ -1,3 +1,6 @@
+from Contrastive_uncertainty.general.run.general_run_setup import model_names_dict
+
+
 moco_hparams = dict(
 
 emb_dim = 128,
@@ -15,7 +18,7 @@ weight_decay = 1e-4,
 dataset = 'MNIST',
 OOD_dataset = ['FashionMNIST'],
 
-model_type = 'Moco',
+model_type = model_names_dict['Moco'],
 project = 'evaluation',# evaluation, Moco_training
 group = None,
 notes = None,

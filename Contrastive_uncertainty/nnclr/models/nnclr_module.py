@@ -8,17 +8,12 @@ import torchvision
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from pytorch_lightning.loggers import WandbLogger
 
-import torch.distributed as dist
-from typing import List, Tuple
-
-
 from Contrastive_uncertainty.general.run.general_run_setup import model_names_dict
-from Contrastive_uncertainty.toy_replica.moco.models.encoder_model import Backbone
+from Contrastive_uncertainty.moco.models.resnet_models import custom_resnet18,custom_resnet34,custom_resnet50
 from Contrastive_uncertainty.general.utils.pl_metrics import precision_at_k, mean
 from Contrastive_uncertainty.general.utils.hybrid_utils import gather
 
-
-class NNCLRToy(pl.LightningModule):
+class NNCLRModule(pl.LightningModule):
     def __init__(self,
         emb_dim: int = 128,
         queue_size: int = 65536,
@@ -28,6 +23,7 @@ class NNCLRToy(pl.LightningModule):
         momentum: float = 0.9,
         weight_decay: float = 1e-4,
         datamodule: pl.LightningDataModule = None,
+        instance_encoder:str = 'resnet50',
         ):
 
         super().__init__()
@@ -60,7 +56,7 @@ class NNCLRToy(pl.LightningModule):
             nn.ReLU(),
             nn.Linear(self.hparams.emb_dim, self.hparams.emb_dim),
         )
-        
+
         # queue
         self.register_buffer("queue", torch.randn(self.hparams.queue_size, self.hparams.emb_dim))
         self.register_buffer("queue_y", -torch.ones(self.hparams.queue_size, dtype=torch.long))
@@ -76,10 +72,15 @@ class NNCLRToy(pl.LightningModule):
         """
         Override to add your own encoders
         """
-        encoder = Backbone(20, self.hparams.emb_dim)
+        if self.hparams.instance_encoder == 'resnet18':
+            print('using resnet18')
+            encoder = custom_resnet18(latent_size = self.hparams.emb_dim,num_channels = self.num_channels,num_classes = self.num_classes)
+        elif self.hparams.instance_encoder =='resnet50':
+            print('using resnet50')
+            encoder = custom_resnet50(latent_size = self.hparams.emb_dim,num_channels = self.num_channels,num_classes = self.num_classes)        
         return encoder
 
-    
+
     @torch.no_grad()
     def dequeue_and_enqueue(self, z: torch.Tensor, y: torch.Tensor):
         """Adds new samples and removes old samples from the queue in a fifo manner. Also stores
@@ -102,7 +103,6 @@ class NNCLRToy(pl.LightningModule):
         ptr = (ptr + batch_size) % self.hparams.queue_size
 
         self.queue_ptr[0] = ptr  # type: ignore
-
     
     @torch.no_grad()
     def find_nn(self, z: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
@@ -118,8 +118,6 @@ class NNCLRToy(pl.LightningModule):
         nn = self.queue[idx]
         return idx, nn
 
-    
-
        
     def callback_vector(self, x): # vector for the representation before using separate branches for the task
         """
@@ -132,8 +130,6 @@ class NNCLRToy(pl.LightningModule):
         z = nn.functional.normalize(z, dim=1)
         return z
     
-
-
     def forward(self, im_1, im_2, targets):
         """
         Input:
@@ -162,8 +158,7 @@ class NNCLRToy(pl.LightningModule):
 
         
         return z1, z2, p1, p2, nn1, nn2, nn_acc
-
-
+    
     def nnclr_loss_func(self, nn: torch.Tensor, p: torch.Tensor) -> torch.Tensor:
         """Computes NNCLR's loss given batch of nearest-neighbors nn from view 1 and
         predicted features p from view 2.
@@ -187,7 +182,6 @@ class NNCLRToy(pl.LightningModule):
         loss = F.cross_entropy(logits, labels)
         return loss
 
-
     def loss_function(self, batch):
         (img_1, img_2), *labels, indices = batch
         if isinstance(labels, tuple) or isinstance(labels, list):
@@ -201,6 +195,7 @@ class NNCLRToy(pl.LightningModule):
         metrics = {'Loss': loss, 'NN Accuracy':nn_acc}
                 
         return metrics
+
 
     def training_step(self, batch, batch_idx):
         metrics = self.loss_function(batch)
@@ -228,3 +223,4 @@ class NNCLRToy(pl.LightningModule):
             optimizer = torch.optim.Adam(self.parameters(), self.hparams.learning_rate,
                                         weight_decay=self.hparams.weight_decay)
         return optimizer
+    
