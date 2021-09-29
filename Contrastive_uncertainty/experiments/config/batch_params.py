@@ -67,7 +67,7 @@ val_check = 20,
 model_saving = 200, # Used to control how often the model is saved
 
 
-callbacks = ['Model_saving','Mahalanobis OOD Fractions'], #'Model_saving'
+callbacks = ['Model_saving','Nearest'], #'Model_saving'
 )
 
 
@@ -140,7 +140,7 @@ val_check = 20,
 model_saving = 200, # Used to control how often the model is saved
 
 
-callbacks = ['Model_saving','Mahalanobis OOD Fractions'], #'Model_saving'
+callbacks = ['Model_saving','Nearest'], #'Model_saving'
 )
 
 
@@ -159,7 +159,7 @@ weight_decay = 1e-4,
 # Training parameters in common
 emb_dim = 128,
 instance_encoder = 'resnet50', # Use resnet 18 for confusion log probability 
-dataset = 'KMNIST',
+dataset = 'CIFAR100',
 #OOD_dataset = ['CIFAR10'],
 #dataset = 'CIFAR100',
 #OOD_dataset = ['SVHN'],
@@ -198,7 +198,7 @@ trainer3_hparams = dict(
 
 # Miscellaneous arguments in common
 seed = 42,
-epochs = 300, #300,
+epochs = 500, #300,
 bsz = 256, #512,
 
 # Trainer configurations in common
@@ -211,13 +211,13 @@ val_check = 20,
 model_saving = 200, # Used to control how often the model is saved
 
 
-callbacks = ['Model_saving','Mahalanobis OOD Fractions'], #'Model_saving'
+callbacks = ['Model_saving','Nearest'], #'Model_saving'
 )
-
+'''
 batch_base_hparams = [base1_hparams, base2_hparams]
 batch_trainer_hparams = [trainer1_hparams, trainer2_hparams]
 '''
 batch_base_hparams = [base1_hparams, base2_hparams, base3_hparams]
 batch_trainer_hparams = [trainer1_hparams, trainer2_hparams, trainer3_hparams]
-'''
+
 assert len(batch_base_hparams) == len(batch_trainer_hparams)

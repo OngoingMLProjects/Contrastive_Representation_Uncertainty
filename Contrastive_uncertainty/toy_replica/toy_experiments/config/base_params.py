@@ -57,7 +57,8 @@ test_ratio = 1.0,
 val_check = 1,
 model_saving = 1, # Used to control how often the model is saved
 
-callbacks =['Oracle Nearest 10 Neighbours Class 1D Typicality'],
+#callbacks =['Oracle Nearest 10 Neighbours Class 1D Typicality'],
+callbacks = ['Different K Nearest Neighbours Class'],
 #callbacks = ['Nearest'],
 #callbacks = ['Nearest Neighbours Class 1D Typicality'],
 #callbacks = ['Nearest Class Neighbours'], #['Mahalanobis OOD Fractions'], #['Model_saving'],

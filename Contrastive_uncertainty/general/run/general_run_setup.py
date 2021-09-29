@@ -7,7 +7,7 @@ from Contrastive_uncertainty.general.callbacks.metrics.metric_callback import Me
 
 from Contrastive_uncertainty.general.callbacks.ood_callbacks import Mahalanobis_OOD, Class_Mahalanobis_OOD, Mahalanobis_OOD_Fractions
 from Contrastive_uncertainty.general.callbacks.nearest_neighbours_callbacks import NearestNeighbours, NearestClassNeighbours,\
-NearestNeighbours1DTypicality, NearestNeighboursClass1DTypicality, OracleNearestNeighboursClass1DTypicality
+NearestNeighbours1DTypicality, NearestNeighboursClass1DTypicality, OracleNearestNeighboursClass1DTypicality, DifferentKNNClass1DTypicality
 
 
 def train_run_name(model_name, config, group=None):
@@ -54,8 +54,8 @@ def callback_dictionary(Datamodule,config,data_dict):
                 f'Nearest 10 Neighbours Class 1D Typicality {ood_dataset}':NearestNeighboursClass1DTypicality(Datamodule,OOD_Datamodule,quick_callback=quick_callback,K=10),
                 f'Nearest 5 Neighbours 1D Typicality {ood_dataset}':NearestNeighbours1DTypicality(Datamodule,OOD_Datamodule,quick_callback=quick_callback,K=5),
                 f'Nearest 5 Neighbours Class 1D Typicality {ood_dataset}':NearestNeighboursClass1DTypicality(Datamodule,OOD_Datamodule,quick_callback=quick_callback,K=5),
-                f'Oracle Nearest 10 Neighbours Class 1D Typicality {ood_dataset}': OracleNearestNeighboursClass1DTypicality(Datamodule,OOD_Datamodule,quick_callback=quick_callback,K=10)}
-
+                f'Oracle Nearest 10 Neighbours Class 1D Typicality {ood_dataset}': OracleNearestNeighboursClass1DTypicality(Datamodule,OOD_Datamodule,quick_callback=quick_callback,K=10),
+                f'Different K Nearest Neighbours Class 1D Typicality {ood_dataset}':DifferentKNNClass1DTypicality(Datamodule,OOD_Datamodule,quick_callback=quick_callback)}
         callback_dict.update(OOD_callback)
     
     return callback_dict

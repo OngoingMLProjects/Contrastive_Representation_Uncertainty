@@ -546,3 +546,95 @@ class OracleNearestNeighboursClass1DTypicality(NearestNeighboursClass1DTypicalit
         din, dood = self.get_scores(ftrain_norm,ftest_norm, food_norm,labelstrain)
         AUROC = get_roc_sklearn(din, dood)
         wandb.run.summary[self.summary_key] = AUROC
+
+
+
+
+
+# Performs 1D typicality using the different K values and saves them in a table
+class DifferentKNNClass1DTypicality(NearestNeighboursClass1DTypicality):
+    def __init__(self, Datamodule,OOD_Datamodule,
+        quick_callback:bool = True,K:int = 10):
+
+        super().__init__(Datamodule,OOD_Datamodule, quick_callback,K)
+        # Used to save the summary value
+
+    def on_test_epoch_end(self, trainer, pl_module):
+        return super().on_test_epoch_end(trainer, pl_module)
+
+    def forward_callback(self, trainer, pl_module):
+         return super().forward_callback(trainer, pl_module)
+    
+        
+    def get_features(self, pl_module, dataloader):
+        return super().get_features(pl_module, dataloader)
+    
+    def normalise(self, ftrain, ftest, food):
+        return super().normalise(ftrain, ftest, food)
+    
+    def get_nearest_neighbours(self, ftest, food):
+        return super().get_nearest_neighbours(ftest, food)
+
+
+    def get_nearest_neighbours(self, ftest, food,K):
+        num_ID = len(ftest)
+        collated_features = np.concatenate((ftest, food))
+        # Make a distance matrix for the data
+        distance_matrix = scipy.spatial.distance.cdist(collated_features, collated_features)
+        bottom_k_indices = np.argsort(distance_matrix,axis=1)[:,:K] # shape (num samples,k) , each row has the k indices with the smallest values (including itself), so it gets K indices for each data point
+        return bottom_k_indices
+    
+    # get the features of the data which also has the KNN in either the test set or the OOD dataset
+    def get_knn_features(self, ftest, food, knn_indices):
+        return super().get_knn_features(ftest, food, knn_indices)
+
+    def get_1d_train(self, ftrain, ypred):
+        return super().get_1d_train(ftrain, ypred)
+    
+    def get_thresholds(self, fdata, means, eigvalues, eigvectors, dtrain_1d_mean, dtrain_1d_std,K):
+        thresholds = []
+        num_batches = len(fdata)//K
+        # Currently goes through a single data point at a time which is not very efficient
+        for i in range(num_batches):
+            fdata_batch = fdata[(i*K):((i+1)*K)]
+            ddata = [np.matmul(eigvectors[class_num].T,(fdata_batch - means[class_num]).T)**2/eigvalues[class_num] for class_num in range(len(means))] # Calculate the 1D scores for all the different classes 
+        
+            # obtain the normalised the scores for the different classes
+            ddata = [ddata[class_num] - dtrain_1d_mean[class_num]/(dtrain_1d_std[class_num]  +1e-10) for class_num in range(len(means))] # shape (dim, batch)
+            
+            # shape (dim) average of all data in batch size
+            ddata = [np.mean(ddata[class_num],axis=1) for class_num in range(len(means))] # shape dim
+
+            # Obtain the sum of absolute normalised scores
+            scores = [np.sum(np.abs(ddata[class_num]),axis=0) for class_num in range(len(means))]
+            # Obtain the scores corresponding to the lowest class
+            ddata = np.min(scores,axis=0)
+
+
+            thresholds.append(ddata)
+
+        return thresholds
+
+    def get_eval_results(self, ftrain, ftest, food,labelstrain):
+        ftrain_norm, ftest_norm, food_norm = self.normalise(ftrain, ftest, food)
+        name = f'Different K Normalized One Dim Class Typicality KNN OOD - {self.OOD_Datamodule.name}'
+        self.datasaving(ftrain_norm,ftest_norm,food_norm,labelstrain,name)
+        
+    
+    def datasaving(self,ftrain,ftest, food,labelstrain,wandb_name):
+        K_values = [1,5,10,15,20,25]
+        mean, cov, eigvalues, eigvectors, dtrain_1d_mean, dtrain_1d_std = self.get_1d_train(ftrain,labelstrain)
+        table_data = {'K Value':[], 'AUROC':[]}
+        for k in K_values:
+            knn_indices = self.get_nearest_neighbours(ftest,food,k)
+            knn_ID_features, knn_OOD_features = self.get_knn_features(ftest, food, knn_indices)
+            din = self.get_thresholds(knn_ID_features, mean, eigvalues,eigvectors, dtrain_1d_mean,dtrain_1d_std,k)
+            dood = self.get_thresholds(knn_OOD_features, mean, eigvalues,eigvectors, dtrain_1d_mean,dtrain_1d_std,k)
+            AUROC = get_roc_sklearn(din, dood)
+
+            table_data['K Value'].append(k)
+            table_data['AUROC'].append(round(AUROC,3))
+
+        table_df = pd.DataFrame(table_data)
+        table = wandb.Table(dataframe=table_df)
+        wandb.log({wandb_name:table})

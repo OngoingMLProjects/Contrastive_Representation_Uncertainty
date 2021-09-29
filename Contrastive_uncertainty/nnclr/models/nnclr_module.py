@@ -8,10 +8,14 @@ import torchvision
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from pytorch_lightning.loggers import WandbLogger
 
+import torch.distributed as dist
+from typing import List, Tuple
+
 from Contrastive_uncertainty.general.run.general_run_setup import model_names_dict
 from Contrastive_uncertainty.moco.models.resnet_models import custom_resnet18,custom_resnet34,custom_resnet50
 from Contrastive_uncertainty.general.utils.pl_metrics import precision_at_k, mean
 from Contrastive_uncertainty.general.utils.hybrid_utils import gather
+
 
 class NNCLRModule(pl.LightningModule):
     def __init__(self,

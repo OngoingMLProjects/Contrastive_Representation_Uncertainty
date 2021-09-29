@@ -64,3 +64,7 @@ model_saving = 200, # Used to control how often the model is saved
 callbacks = ['Model_saving'],
 )
 
+batch_practice_base_hparams = [practice_base_hparams]
+batch_practice_trainer_hparams = [practice_trainer_hparams]
+
+assert len(batch_practice_base_hparams) == len(batch_practice_trainer_hparams)
