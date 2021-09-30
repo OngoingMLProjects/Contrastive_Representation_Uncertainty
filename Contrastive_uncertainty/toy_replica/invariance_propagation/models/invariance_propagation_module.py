@@ -58,8 +58,13 @@ class MemoryBank_v1(object):
     def get_all_dot_products(self, points):
         assert len(points.size()) == 2
         return torch.matmul(points, torch.transpose(self.points, 1, 0))
+'''
+TODO:
+Make it so that I can access the current epoch to enable ramping up the invariance loss term
+Change the name of the function using model name dict
+Make it so that all the nearest neighbours belong to the same class
 
-
+'''
 class InvariancePropagationToy(pl.LightningModule):
     def __init__(self,
         emb_dim: int = 128,
