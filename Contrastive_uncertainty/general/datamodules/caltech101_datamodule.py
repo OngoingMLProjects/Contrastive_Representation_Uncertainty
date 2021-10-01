@@ -3,7 +3,12 @@ from typing import Optional, Sequence
 import numpy as np
 from pytorch_lightning.core import datamodule
 import torch
+from torchvision.datasets.caltech import Caltech101
+
+#import datalad
+#import patoolib
 from pytorch_lightning import LightningDataModule
+from torch.utils import data
 from torch.utils.data import DataLoader, random_split
 
 
@@ -11,21 +16,21 @@ from warnings import warn
 
 
 from torchvision import transforms as transform_lib
-from torchvision.datasets import STL10
+from torchvision.datasets import Caltech101
 
 from Contrastive_uncertainty.general.datamodules.dataset_normalizations import stl10_normalization
 from Contrastive_uncertainty.general.datamodules.datamodule_transforms import dataset_with_indices
 
 
 
-class STL10DataModule(LightningDataModule):
+class Caltech101DataModule(LightningDataModule):
 
-    name = 'stl10'
+    name = 'caltech101'
     extra_args = {}
 
     def __init__(
             self,
-            data_dir: str = None,
+            data_dir: str = './',
             val_split: int = 500,
             num_workers: int = 16,
             batch_size: int = 32,
@@ -68,7 +73,7 @@ class STL10DataModule(LightningDataModule):
         """
         super().__init__(*args, **kwargs)
         self.dims = (3, 96, 96)
-        self.DATASET = STL10
+        self.DATASET = Caltech101
         self.DATASET_with_indices = dataset_with_indices(self.DATASET)
         self.val_split = val_split
         self.num_workers = num_workers
@@ -90,9 +95,9 @@ class STL10DataModule(LightningDataModule):
     def num_classes(self):
         """
         Return:
-            10
+            101
         """
-        return 10
+        return 101
     
     @property
     def num_channels(self):
@@ -115,8 +120,13 @@ class STL10DataModule(LightningDataModule):
         """
         Saves CIFAR10 files to data_dir
         """
-        self.DATASET(self.data_dir, split ='train', download=True,transform=transform_lib.ToTensor())
-        self.DATASET(self.data_dir, split ='test', download=True,transform=transform_lib.ToTensor())
+        url = 'https://s3-eu-west-1.amazonaws.com/pfigshare-u-files/12855005/Caltech101ImageDataset.rar'
+        # download#
+        
+        datalad.download_url(url, self.data_dir)
+        patoolib.extract_archive("Caltech101ImageDataset.rar", outdir = self.data_dir)
+        
+        #self.DATASET(self.data_dir,  download=True,transform=transform_lib.ToTensor())
 
     def setup(self):
         ''' 
@@ -128,7 +138,7 @@ class STL10DataModule(LightningDataModule):
 
         # Obtain class indices
         train_transforms = self.default_transforms() if self.train_transforms is None else self.train_transforms
-        dataset = self.DATASET_with_indices(self.data_dir, split ='train', download=False, transform=train_transforms, **self.extra_args)
+        dataset = self.DATASET_with_indices(self.data_dir, download=False, transform=train_transforms, **self.extra_args)
         self.idx2class = {i:f'class {i}' for i in range(max(dataset.labels)+1)}
         #self.idx2class = {v:f'{i} - {k}'for i, (k, v) in zip(range(len(dataset.class_to_idx)),dataset.class_to_idx.items())}
         # Need to change key and value around to get in the correct order
@@ -136,7 +146,8 @@ class STL10DataModule(LightningDataModule):
 
     def setup_train(self):
         train_transforms = self.default_transforms() if self.train_transforms is None else self.train_transforms
-        dataset = self.DATASET_with_indices(self.data_dir, split ='train', download=False, transform=train_transforms, **self.extra_args)
+        dataset = self.DATASET_with_indices(self.data_dir, download=False, transform=train_transforms, **self.extra_args)
+        import ipdb; ipdb.set_trace()
         train_length = len(dataset)
         self.train_dataset, _ = random_split(
             dataset,
@@ -273,10 +284,6 @@ class STL10DataModule(LightningDataModule):
         ])
         return stl10_transforms
 
-'''
-datamodule = STL10DataModule()
-#datamodule.prepare_data()
-datamodule.setup()
-deterministic_train_loader = datamodule.deterministic_train_dataloader()
-for i in deterministic_train_loader:
-'''
+
+datamodule = Caltech101DataModule()
+datamodule.prepare_data()

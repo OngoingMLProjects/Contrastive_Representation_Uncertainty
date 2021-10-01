@@ -80,7 +80,9 @@ OOD_dict = {'MNIST':['FashionMNIST','KMNIST','EMNIST'],
             'FashionMNIST':['MNIST','KMNIST','EMNIST'],
             'KMNIST':['MNIST','FashionMNIST','EMNIST'],
             'EMNIST':['MNIST','FashionMNIST','KMNIST'],
-
-            'CIFAR10':['CIFAR100','SVHN'],
-            'CIFAR100':['CIFAR10','SVHN'],
+            
+            'CIFAR10':['STL10'],
+            'CIFAR100':['STL10'],
+            #'CIFAR10':['CIFAR100','SVHN'],
+            #'CIFAR100':['CIFAR10','SVHN'],
             'SVHN':['CIFAR10','CIFAR100']}

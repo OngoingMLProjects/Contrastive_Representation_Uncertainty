@@ -4,6 +4,7 @@ import numpy as np
 from pytorch_lightning.core import datamodule
 import torch
 from pytorch_lightning import LightningDataModule
+from torch.utils import data
 from torch.utils.data import DataLoader, random_split
 
 
@@ -11,22 +12,22 @@ from warnings import warn
 
 
 from torchvision import transforms as transform_lib
-from torchvision.datasets import STL10
+from torchvision.datasets import LSUN
 
-from Contrastive_uncertainty.general.datamodules.dataset_normalizations import stl10_normalization
-from Contrastive_uncertainty.general.datamodules.datamodule_transforms import dataset_with_indices
+from Contrastive_uncertainty.general.datamodules.dataset_normalizations import svhn_normalization
+from Contrastive_uncertainty.general.datamodules.datamodule_transforms import dataset_with_indices, dataset_with_indices_SVHN
 
 
 
-class STL10DataModule(LightningDataModule):
+class LSUNDataModule(LightningDataModule):
 
-    name = 'stl10'
+    name = 'lsun'
     extra_args = {}
 
     def __init__(
             self,
             data_dir: str = None,
-            val_split: int = 500,
+            val_split: int = 5000,
             num_workers: int = 16,
             batch_size: int = 32,
             seed: int = 42,
@@ -67,24 +68,25 @@ class STL10DataModule(LightningDataModule):
             batch_size: number of examples per training/eval step
         """
         super().__init__(*args, **kwargs)
-        self.dims = (3, 96, 96)
-        self.DATASET = STL10
+        #self.dims = (3, 32, 32)
+        self.DATASET = LSUN
         self.DATASET_with_indices = dataset_with_indices(self.DATASET)
+        #self.DATASET_with_indices = dataset_with_indices_SVHN(self.DATASET)
         self.val_split = val_split
         self.num_workers = num_workers
         self.batch_size = batch_size
         self.seed = seed
         self.data_dir = data_dir if data_dir is not None else os.getcwd()
-        self.num_samples = 5000 - val_split
+        self.num_samples = 60000 - val_split
 
 
     @property
     def total_samples(self):
         """
         Return:
-            5000
+            630_420
         """
-        return 5000
+        return 630_420
         
     @property
     def num_classes(self):
@@ -101,34 +103,36 @@ class STL10DataModule(LightningDataModule):
             3
         """
         return 3
-    
-    @property
-    def input_height(self):
-        """
-        Return:
-            96
-        """
-        return 96
-        
 
     def prepare_data(self):
         """
         Saves CIFAR10 files to data_dir
         """
-        self.DATASET(self.data_dir, split ='train', download=True,transform=transform_lib.ToTensor())
-        self.DATASET(self.data_dir, split ='test', download=True,transform=transform_lib.ToTensor())
+        self.DATASET(self.data_dir, classes ='train', transform=transform_lib.ToTensor())
+        self.DATASET(self.data_dir, classes ='val',  transform=transform_lib.ToTensor())
+        self.DATASET(self.data_dir, classes ='test', transform=transform_lib.ToTensor())
+    
+    @property
+    def input_height(self):
+        """
+        Return:
+            32
+        """
+        return 32
+        
 
     def setup(self):
         ''' 
         Sets up the train, val and test datasets
         '''
         self.setup_train()
-        self.setup_val()
-        self.setup_test()
+        #self.setup_val()
+        #self.setup_test()
 
         # Obtain class indices
+        # Obtain class indices
         train_transforms = self.default_transforms() if self.train_transforms is None else self.train_transforms
-        dataset = self.DATASET_with_indices(self.data_dir, split ='train', download=False, transform=train_transforms, **self.extra_args)
+        dataset = self.DATASET_with_indices(self.data_dir, classes ='train',  transform=train_transforms)#, **self.extra_args)
         self.idx2class = {i:f'class {i}' for i in range(max(dataset.labels)+1)}
         #self.idx2class = {v:f'{i} - {k}'for i, (k, v) in zip(range(len(dataset.class_to_idx)),dataset.class_to_idx.items())}
         # Need to change key and value around to get in the correct order
@@ -136,16 +140,25 @@ class STL10DataModule(LightningDataModule):
 
     def setup_train(self):
         train_transforms = self.default_transforms() if self.train_transforms is None else self.train_transforms
-        dataset = self.DATASET_with_indices(self.data_dir, split ='train', download=False, transform=train_transforms, **self.extra_args)
+        self.train_dataset = self.DATASET_with_indices(self.data_dir, classes ='train',  transform=train_transforms, **self.extra_args)
+        
+        '''
+        if isinstance(dataset.labels, list):
+            dataset.labels = torch.Tensor(dataset.labels).type(torch.int64) # Need to change into int64 to use in test step 
+        elif isinstance(dataset.labels,np.ndarray):
+            dataset.labels = torch.from_numpy(dataset.labels).type(torch.int64)
+
+        dataset.targets = dataset.labels
+        
         train_length = len(dataset)
         self.train_dataset, _ = random_split(
             dataset,
             [train_length - self.val_split, self.val_split],
             generator=torch.Generator().manual_seed(self.seed)
         )
-
+        '''
     def setup_val(self):
-
+        
         '''
         val_transforms = self.default_transforms() if self.val_transforms is None else self.val_transforms
         dataset = self.DATASET(self.data_dir, train=True, download=False, transform=val_transforms, **self.extra_args)
@@ -156,9 +169,16 @@ class STL10DataModule(LightningDataModule):
             generator=torch.Generator().manual_seed(self.seed)
         )
         '''
+        
         val_train_transforms = self.default_transforms() if self.train_transforms is None else self.train_transforms
         val_train_dataset = self.DATASET_with_indices(self.data_dir, split ='train', download=False, transform=val_train_transforms, **self.extra_args)
-        
+
+        if isinstance(val_train_dataset.labels, list):
+            val_train_dataset.labels = torch.Tensor(val_train_dataset.labels).type(torch.int64) # Need to change into int64 to use in test step 
+        elif isinstance(val_train_dataset.labels,np.ndarray):
+            val_train_dataset.labels = torch.from_numpy(val_train_dataset.labels).type(torch.int64)
+
+        val_train_dataset.targets = val_train_dataset.labels
         train_length = len(val_train_dataset)
         _, self.val_train_dataset = random_split(
             val_train_dataset,
@@ -169,11 +189,20 @@ class STL10DataModule(LightningDataModule):
         val_test_transforms = self.default_transforms() if self.test_transforms is None else self.test_transforms
         val_test_dataset = self.DATASET_with_indices(self.data_dir, split ='train', download=False, transform=val_test_transforms, **self.extra_args)
         
+        if isinstance(val_test_dataset.labels, list):
+            val_test_dataset.labels = torch.Tensor(val_test_dataset.labels).type(torch.int64) # Need to change into int64 to use in test step 
+        elif isinstance(val_test_dataset.labels,np.ndarray):
+            val_test_dataset.labels = torch.from_numpy(val_test_dataset.labels).type(torch.int64)
+
+        val_test_dataset.targets = val_test_dataset.labels
+
+
         _, self.val_test_dataset = random_split(
             val_test_dataset,
             [train_length - self.val_split, self.val_split],
             generator=torch.Generator().manual_seed(self.seed)
         )
+    
 
     def setup_test(self):
         test_transforms = self.default_transforms() if self.test_transforms is None else self.test_transforms
@@ -205,7 +234,6 @@ class STL10DataModule(LightningDataModule):
         FashionMNIST train set removes a subset to use for validation
         """
 
-        
         loader = DataLoader(
             self.train_dataset,
             batch_size=self.batch_size,
@@ -267,16 +295,12 @@ class STL10DataModule(LightningDataModule):
         return loader
 
     def default_transforms(self):
-        stl10_transforms = transform_lib.Compose([
+        svhn_transforms = transform_lib.Compose([
             transform_lib.ToTensor(),
-            stl10_normalization()
+            svhn_normalization()
         ])
-        return stl10_transforms
+        return svhn_transforms
 
-'''
-datamodule = STL10DataModule()
-#datamodule.prepare_data()
-datamodule.setup()
-deterministic_train_loader = datamodule.deterministic_train_dataloader()
-for i in deterministic_train_loader:
-'''
+
+Datamodule = LSUNDataModule()
+Datamodule.setup()
