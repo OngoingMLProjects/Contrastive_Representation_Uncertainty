@@ -39,3 +39,19 @@ def emnist_normalization():
 def svhn_normalization():
     normalize = transforms.Normalize(mean = [0.4380,0.440,0.4730], std = [0.1751,0.1771,0.1744])
     return normalize
+
+# Obtained from https://pretagteam.com/question/pytorch-lightning-get-models-output-on-full-train-data-during-training
+def caltech101_normalization():
+    normalize = transforms.Normalize(mean = [0.485, 0.456, 0.406], std = [0.229, 0.224, 0.225])
+    return normalize
+
+# calculated manually using the procedure described in https://discuss.pytorch.org/t/about-normalization-using-pre-trained-vgg16-networks/23560/6
+def celeba_normalization():
+    normalize = transforms.Normalize(mean = [0.5060, 0.4254, 0.3828], std = [0.2650, 0.2441, 0.2402])
+    return normalize
+
+
+# calculated manually using the procedure described in https://discuss.pytorch.org/t/about-normalization-using-pre-trained-vgg16-networks/23560/6
+def widerface_normalization():
+    normalize = transforms.Normalize(mean = [0.4696, 0.4345, 0.4078], std = [0.2488, 0.2387, 0.2390])
+    return normalize

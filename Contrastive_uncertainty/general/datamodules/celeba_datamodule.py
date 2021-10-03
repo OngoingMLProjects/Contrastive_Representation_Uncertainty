@@ -4,12 +4,12 @@ import numpy as np
 from pytorch_lightning.core import datamodule
 import torch
 import torchvision
-from torchvision.datasets import caltech
-from torchvision.datasets.caltech import Caltech101
+
+from torchvision.datasets import CelebA
 
 
-from datalad.api import download_url
-import patoolib
+#from datalad.api import download_url
+#import patoolib
 
 from pytorch_lightning import LightningDataModule
 from torch.utils import data
@@ -20,16 +20,15 @@ import copy
 
 
 from torchvision import transforms as transform_lib
-from torchvision.datasets import Caltech101
 from torchvision.transforms import transforms
 
-from Contrastive_uncertainty.general.datamodules.dataset_normalizations import caltech101_normalization
+from Contrastive_uncertainty.general.datamodules.dataset_normalizations import celeba_normalization
 from Contrastive_uncertainty.general.datamodules.datamodule_transforms import dataset_with_indices
 
 # based on https://pretagteam.com/question/pytorch-lightning-get-models-output-on-full-train-data-during-training
-class Caltech101DataModule(LightningDataModule):
+class CelebADataModule(LightningDataModule):
 
-    name = 'caltech101'
+    name = 'celeba'
     extra_args = {}
 
     def __init__(
@@ -42,41 +41,10 @@ class Caltech101DataModule(LightningDataModule):
             *args,
             **kwargs,
     ):
-        """
-        .. figure:: https://3qeqpr26caki16dnhd19sv6by6v-wpengine.netdna-ssl.com/wp-content/uploads/2019/01/
-            Plot-of-a-Subset-of-Images-from-the-CIFAR-10-Dataset.png
-            :width: 400
-            :alt: CIFAR-10
-        Specs:
-            - 10 classes (1 per class)
-            - Each image is (3 x 32 x 32)
-        Standard CIFAR10, train, val, test splits and transforms
-        Transforms::
-            mnist_transforms = transform_lib.Compose([
-                transform_lib.ToTensor(),
-                transforms.Normalize(
-                    mean=[x / 255.0 for x in [125.3, 123.0, 113.9]],
-                    std=[x / 255.0 for x in [63.0, 62.1, 66.7]]
-                )
-            ])
-        Example::
-            from pl_bolts.datamodules import CIFAR10DataModule
-            dm = CIFAR10DataModule(PATH)
-            model = LitModel()
-            Trainer().fit(model, dm)
-        Or you can set your own transforms
-        Example::
-            dm.train_transforms = ...
-            dm.test_transforms = ...
-            dm.val_transforms  = ...
-        Args:
-            data_dir: where to save/load the data
-            val_split: how many of the training images to use for the validation split
-            num_workers: how many workers to use for loading data
-            batch_size: number of examples per training/eval step
-        """
         super().__init__(*args, **kwargs)
-        
+        # https://paperswithcode.com/dataset/celeba
+        self.dims = (3, 178, 218)
+        self.DATASET = CelebA
         self.val_split = val_split
         self.num_workers = num_workers
         self.batch_size = batch_size
@@ -97,9 +65,9 @@ class Caltech101DataModule(LightningDataModule):
     def num_classes(self):
         """
         Return:
-            102
+            1
         """
-        return 102
+        return 1
     
     @property
     def num_channels(self):
@@ -113,41 +81,39 @@ class Caltech101DataModule(LightningDataModule):
     def input_height(self):
         """
         Return:
-            200
+            178
         """
-        return 200
+        return 178
         
     
     def prepare_data(self):
         """
-        Saves CIFAR10 files to data_dir
+        Saves CelebA files to data_dir
         """
-        #import ipdb; ipdb.set_trace()
-        url = 'https://s3-eu-west-1.amazonaws.com/pfigshare-u-files/12855005/Caltech101ImageDataset.rar'
-        # download#
-        if os.path.isfile('Caltech101 Image Dataset.rar'):
-            print('data present')
-        else:
-            print('data not present')
-            download_url(url, self.data_dir)
-            patoolib.extract_archive('Caltech101 Image Dataset.rar', outdir = self.data_dir)
+        #torchvision.datasets.CelebA(self.data_dir)
+        pass # Using pass as I need to download the data directly as there does seem to be errors in the downloading of the data
+        #self.DATASET(self.data_dir, split ='all', download=True,transform=transform_lib.ToTensor())
+        #self.DATASET(self.data_dir, split ='test', download=True,transform=transform_lib.ToTensor())
+        
     
     def setup(self):
-        
+        data_path = 'celeba/'
         Indices_ImageFolder =dataset_with_indices(torchvision.datasets.ImageFolder)
-        train_transforms = self.default_transforms() if self.train_transforms is None else self.train_transforms
-        caltech_dataset = Indices_ImageFolder('Caltech101',transform = train_transforms)
-        self.idx2class = {i:f'class {i}' for i in range(max(caltech_dataset.targets)+1)}
-        #self.class2idx = caltech_dataset.class_to_idx 
+
+        celeba_dataset = Indices_ImageFolder(
+            root=data_path,
+        transform=torchvision.transforms.ToTensor())
         
-        if isinstance(caltech_dataset.targets, list):
-            caltech_dataset.targets = torch.Tensor(caltech_dataset.targets).type(torch.int64) # Need to change into int64 to use in test step 
-        elif isinstance(caltech_dataset.targets,np.ndarray):
-            caltech_dataset.targets = torch.from_numpy(caltech_dataset.targets).type(torch.int64)  
-        
-        train_dataset, val_dataset, test_dataset = random_split(caltech_dataset, [6500, 1000, 1645],generator=torch.Generator().manual_seed(self.seed)
+        self.idx2class = {i:f'class {i}' for i in range(max(celeba_dataset.targets)+1)}
+        if isinstance(celeba_dataset.targets, list):
+            celeba_dataset.targets = torch.Tensor(celeba_dataset.targets).type(torch.int64) # Need to change into int64 to use in test step 
+        elif isinstance(celeba_dataset.targets,np.ndarray):
+            celeba_dataset.targets = torch.from_numpy(celeba_dataset.targets).type(torch.int64)
+
+        # Same validataion and test set size as CIFAR10
+        train_dataset, val_dataset, test_dataset = random_split(celeba_dataset, [187599, 5000, 10000],generator=torch.Generator().manual_seed(self.seed)
         )
-        
+
         train_transforms = self.default_transforms() if self.train_transforms is None else self.train_transforms
         test_transforms = self.default_transforms() if self.test_transforms is None else self.test_transforms
         
@@ -163,22 +129,6 @@ class Caltech101DataModule(LightningDataModule):
 
         self.val_train_dataset.dataset.transform = train_transforms
         self.val_test_dataset.dataset.transform = test_transforms
-
-
-    '''    
-    def setup(self):
-        self.setup_train()
-        self.setup_val()
-        self.setup_test()
-
-        # Obtain class indices
-        train_transforms = self.default_transforms() if self.train_transforms is None else self.train_transforms
-        dataset = self.DATASET_with_indices(self.data_dir, download=False, transform=train_transforms, **self.extra_args)
-        self.idx2class = {i:f'class {i}' for i in range(max(dataset.labels)+1)}
-        #self.idx2class = {v:f'{i} - {k}'for i, (k, v) in zip(range(len(dataset.class_to_idx)),dataset.class_to_idx.items())}
-        # Need to change key and value around to get in the correct order
-        #self.idx2class = {k:v for k,v in self.idx2class.items() if k < self.num_classes}  
-    '''
     
     def train_dataloader(self):
         """
@@ -249,20 +199,39 @@ class Caltech101DataModule(LightningDataModule):
         return loader
 
     def default_transforms(self):
-        caltech101_transforms = transform_lib.Compose([
-            transforms.Resize(size = (256,256)),
+        celeba_transforms = transform_lib.Compose([
+            transforms.Resize(size = (178,178)),
             transform_lib.ToTensor(),
-            caltech101_normalization()
+            #celeba_normalization()
         ])
-        return caltech101_transforms
+        return celeba_transforms
 
 '''
-datamodule = Caltech101DataModule()
-#datamodule.prepare_data()
+datamodule = CelebADataModule()
 datamodule.setup()
-
 test_loader = datamodule.test_dataloader()
 train_loader = datamodule.deterministic_train_dataloader()
+'''
+
+'''
 for i,k in zip(train_loader,test_loader):
     import ipdb; ipdb.set_trace()
+'''
+
+
+
+'''
+mean = 0.
+std = 0.
+nb_samples = 0.
+for data in train_loader:
+    batch_samples = data[0].size(0)
+    data = data[0].view(batch_samples, data[0].size(1), -1)
+    mean += data.mean(2).sum(0)
+    std += data.std(2).sum(0)
+    nb_samples += batch_samples
+
+mean /= nb_samples
+std /= nb_samples
+import ipdb; ipdb.set_trace()
 '''

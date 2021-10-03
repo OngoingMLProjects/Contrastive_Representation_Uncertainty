@@ -13,7 +13,7 @@ emb_dim = 128,
 instance_encoder = 'resnet18',
 
 dataset ='CIFAR10',
-OOD_dataset =['STL10'],
+#OOD_dataset =['STL10'],
 #dataset = 'MNIST',
 #OOD_dataset = ['SVHN'],
 #OOD_dataset = ['SVHN','CIFAR10'],
@@ -52,7 +52,7 @@ practice_trainer_hparams = dict(
 # Miscellaneous arguments in common
 seed = 26,
 epochs = 300,
-bsz = 8,
+bsz = 2,
 
 # Trainer configurations in common
 fast_run = True,

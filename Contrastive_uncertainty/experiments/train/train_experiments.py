@@ -6,8 +6,9 @@ def train(batch_base_dict, batch_trainer_dict):
     acceptable_single_models = ['Baselines',
     #model_names_dict['CE'],
     #model_names_dict['Moco'],
+    model_names_dict['SupCon'],
     #model_names_dict['Centroid_VicReg'],
-    model_names_dict['NNCLR']
+    #model_names_dict['NNCLR']
     ]
 
     # Dict for the model name, parameters and specific training loop

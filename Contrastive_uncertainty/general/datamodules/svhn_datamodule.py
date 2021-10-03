@@ -290,14 +290,9 @@ class SVHNDataModule(LightningDataModule):
         )
         return loader
 
-    
-    
-
     def default_transforms(self):
         svhn_transforms = transform_lib.Compose([
             transform_lib.ToTensor(),
             svhn_normalization()
         ])
         return svhn_transforms
-
-

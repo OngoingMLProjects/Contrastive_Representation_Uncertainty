@@ -27,3 +27,7 @@ cifar-100-python
 media
 run_data
 Scatter_Plots
+*.rar
+Caltech101
+widerface
+celeba

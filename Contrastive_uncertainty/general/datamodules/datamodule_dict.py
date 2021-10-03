@@ -6,7 +6,11 @@ from Contrastive_uncertainty.general.datamodules.kmnist_datamodule import KMNIST
 from Contrastive_uncertainty.general.datamodules.emnist_datamodule import EMNISTDataModule
 from Contrastive_uncertainty.general.datamodules.svhn_datamodule import SVHNDataModule
 from Contrastive_uncertainty.general.datamodules.stl10_datamodule import STL10DataModule
+from Contrastive_uncertainty.general.datamodules.caltech101_datamodule import Caltech101DataModule
+from Contrastive_uncertainty.general.datamodules.celeba_datamodule import CelebADataModule
+from Contrastive_uncertainty.general.datamodules.widerface_datamodule import WIDERFaceDataModule
 from Contrastive_uncertainty.general.datamodules.emnist_datamodule import EMNISTDataModule
+
 
 
 from Contrastive_uncertainty.general.datamodules.datamodule_transforms import  Moco2TrainCIFAR10Transforms, Moco2EvalCIFAR10Transforms,Moco2MultiCIFAR10Transforms,\
@@ -14,6 +18,9 @@ Moco2TrainCIFAR100Transforms, Moco2EvalCIFAR100Transforms,Moco2MultiCIFAR100Tran
 Moco2TrainFashionMNISTTransforms,Moco2EvalFashionMNISTTransforms, Moco2MultiFashionMNISTTransforms, \
 Moco2TrainMNISTTransforms, Moco2EvalMNISTTransforms,Moco2MultiMNISTTransforms,\
 Moco2TrainSVHNTransforms, Moco2EvalSVHNTransforms,Moco2MultiSVHNTransforms,\
+Moco2TrainCaltech101Transforms,Moco2EvalCaltech101Transforms,\
+Moco2TrainCelebATransforms, Moco2EvalCelebATransforms,\
+Moco2TrainWIDERFaceTransforms, Moco2EvalWIDERFaceTransforms,\
 Moco2TrainKMNISTTransforms,Moco2EvalKMNISTTransforms,Moco2MultiKMNISTTransforms, \
 Moco2TrainSTL10Transforms, Moco2EvalSTL10Transforms, Moco2TrainEMNISTTransforms, Moco2EvalEMNISTTransforms, Moco2MultiEMNISTTransforms
 
@@ -41,8 +48,17 @@ dataset_dict = {'MNIST':{'module':MNISTDataModule,'train_transform':Moco2TrainMN
                 'val_transform':Moco2EvalSTL10Transforms(),'test_transform':Moco2EvalSTL10Transforms()},
 
                 'SVHN':{'module':SVHNDataModule,'train_transform':Moco2TrainSVHNTransforms(),
-                'val_transform':Moco2EvalSVHNTransforms(),'test_transform':Moco2EvalSVHNTransforms(), 'multi_transform':Moco2MultiSVHNTransforms}
+                'val_transform':Moco2EvalSVHNTransforms(),'test_transform':Moco2EvalSVHNTransforms(), 'multi_transform':Moco2MultiSVHNTransforms},
                 
+                'Caltech101':{'module': Caltech101DataModule,'train_transform':Moco2TrainCaltech101Transforms(),
+                'val_transform':Moco2EvalCaltech101Transforms(),'test_transform':Moco2EvalCaltech101Transforms()},
+
+                'CelebA':{'module': CelebADataModule,'train_transform':Moco2TrainCelebATransforms(),
+                'val_transform':Moco2EvalCelebATransforms(),'test_transform':Moco2EvalCelebATransforms()},
+
+                'WIDERFace':{'module': WIDERFaceDataModule,'train_transform':Moco2TrainWIDERFaceTransforms(),
+                'val_transform':Moco2EvalWIDERFaceTransforms(),'test_transform':Moco2EvalWIDERFaceTransforms()},
+
                 }
 
 
@@ -81,8 +97,8 @@ OOD_dict = {'MNIST':['FashionMNIST','KMNIST','EMNIST'],
             'KMNIST':['MNIST','FashionMNIST','EMNIST'],
             'EMNIST':['MNIST','FashionMNIST','KMNIST'],
             
-            'CIFAR10':['STL10'],
-            'CIFAR100':['STL10'],
+            'CIFAR10':['Caltech101','CelebA','WIDERFace'],
+            'CIFAR100':['Caltech101','CelebA','WIDERFace'],
             #'CIFAR10':['CIFAR100','SVHN'],
             #'CIFAR100':['CIFAR10','SVHN'],
             'SVHN':['CIFAR10','CIFAR100']}

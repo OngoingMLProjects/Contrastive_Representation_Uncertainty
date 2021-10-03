@@ -4,6 +4,7 @@ from Contrastive_uncertainty.toy_replica.moco.config.moco_params import moco_hpa
 from Contrastive_uncertainty.toy_replica.centroid_vicreg.config.centroid_vicreg_params import centroid_vicreg_hparams
 from Contrastive_uncertainty.toy_replica.centroid_class_vicreg.config.centroid_class_vicreg_params import centroid_class_vicreg_hparams
 from Contrastive_uncertainty.toy_replica.nnclr.config.nnclr_params import nnclr_hparams
+from Contrastive_uncertainty.toy_replica.supcon.config.sup_con_params import sup_con_hparams
 
 #from Contrastive_uncertainty.toy_replica.nnclr.config.nnclr_params import 
 # Importing the different lightning modules for the baselines
@@ -12,6 +13,7 @@ from Contrastive_uncertainty.toy_replica.moco.models.moco_module import MocoToy
 from Contrastive_uncertainty.toy_replica.centroid_vicreg.models.centroid_vicreg_module import CentroidVICRegToy
 from Contrastive_uncertainty.toy_replica.centroid_class_vicreg.models.centroid_class_vicreg_module import CentroidClassVICRegToy
 from Contrastive_uncertainty.toy_replica.nnclr.models.nnclr_module import NNCLRToy
+from Contrastive_uncertainty.toy_replica.supcon.models.sup_con_module import SupConToy
 
 # Model instances for the different methods
 from Contrastive_uncertainty.toy_replica.cross_entropy.models.cross_entropy_model_instance import ModelInstance as CEModelInstance
@@ -19,6 +21,7 @@ from Contrastive_uncertainty.toy_replica.moco.models.moco_model_instance import 
 from Contrastive_uncertainty.toy_replica.centroid_vicreg.models.centroid_vicreg_model_instance import ModelInstance as CentroidVICRegModelInstance
 from Contrastive_uncertainty.toy_replica.centroid_class_vicreg.models.centroid_class_vicreg_model_instance import ModelInstance as CentroidClassVICRegModelInstance
 from Contrastive_uncertainty.toy_replica.nnclr.models.nnclr_model_instance import ModelInstance as NNCLRModelInstance
+from Contrastive_uncertainty.toy_replica.supcon.models.sup_con_model_instance import ModelInstance as SupConModelInstance
 
 # Import training methods 
 from Contrastive_uncertainty.general.run.general_run_setup import model_names_dict
@@ -35,6 +38,11 @@ model_dict = {model_names_dict['CE']:{'params':cross_entropy_hparams,'model_modu
 
                     model_names_dict['Moco']:{'params':moco_hparams,'model_module':MocoToy, 
                     'model_instance':MocoModelInstance, 
+                    'train': general_training,'evaluate':general_evaluation,
+                    'data_dict':general_dataset_dict, 'ood_dict':general_OOD_dict},
+
+                    model_names_dict['SupCon']:{'params':sup_con_hparams,'model_module':SupConToy, 
+                    'model_instance':SupConModelInstance, 
                     'train': general_training,'evaluate':general_evaluation,
                     'data_dict':general_dataset_dict, 'ood_dict':general_OOD_dict},
 

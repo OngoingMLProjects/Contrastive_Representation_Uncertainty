@@ -1,9 +1,10 @@
+from PIL.Image import Image
 import numpy as np
 import random
 from warnings import warn
 from Contrastive_uncertainty.general.datamodules.dataset_normalizations import cifar10_normalization,\
     cifar100_normalization, fashionmnist_normalization, mnist_normalization, kmnist_normalization,\
-    svhn_normalization, stl10_normalization, emnist_normalization
+    svhn_normalization, stl10_normalization, caltech101_normalization,celeba_normalization,widerface_normalization, emnist_normalization
     
 import torch
 
@@ -58,6 +59,9 @@ class Moco2TrainCIFAR10Transforms:
     """
     def __init__(self, height=32):
         # image augmentation functions
+        # Used to resize images which are different
+        self.resize = transforms.Resize(size = (height,height))
+
         self.train_transform = transforms.Compose([
             transforms.RandomResizedCrop(height, scale=(0.2, 1.)),
             transforms.RandomApply([
@@ -71,6 +75,11 @@ class Moco2TrainCIFAR10Transforms:
         ])
 
     def __call__(self, inp):
+        if isinstance(inp, Image):
+            inp = self.resize(inp)
+        elif inp.shape[1] !=32:  
+            inp = self.resize(inp)
+        
         q = self.train_transform(inp)
         k = self.train_transform(inp)
         return q, k
@@ -82,6 +91,8 @@ class Moco2EvalCIFAR10Transforms:
     https://arxiv.org/pdf/2003.04297.pdf
     """
     def __init__(self, height=32):
+        self.resize = transforms.Resize(size = (height,height))
+
         self.test_transform = transforms.Compose([
             transforms.Resize(height + 12),
             transforms.CenterCrop(height),
@@ -90,6 +101,10 @@ class Moco2EvalCIFAR10Transforms:
         ])
 
     def __call__(self, inp):
+        if isinstance(inp, Image):
+            inp = self.resize(inp)
+        elif inp.shape[1] !=32:  
+            inp = self.resize(inp)
         q = self.test_transform(inp)
         k = self.test_transform(inp)
         return q, k
@@ -103,6 +118,8 @@ class Moco2MultiCIFAR10Transforms:
     def __init__(self,num_augmentations, height=32):
         self.num_augmentations = num_augmentations
         # image augmentation functions
+        self.resize = transforms.Resize(height)
+
         self.multi_transform = transforms.Compose([
             transforms.RandomResizedCrop(height, scale=(0.2, 1.)),
             transforms.RandomApply([
@@ -116,6 +133,10 @@ class Moco2MultiCIFAR10Transforms:
         ])
 
     def __call__(self, inp):
+        if isinstance(inp, Image):
+            inp = self.resize(inp)
+        elif inp.shape[1] !=32:  
+            inp = self.resize(inp)
         multiple_aug_inp = [self.multi_transform(inp) for i in range(self.num_augmentations)]
         return multiple_aug_inp
 
@@ -127,6 +148,7 @@ class Moco2TrainCIFAR100Transforms:
     """
     def __init__(self, height=32):
         # image augmentation functions
+        self.resize = transforms.Resize(size = (height,height))
         self.train_transform = transforms.Compose([
             transforms.RandomResizedCrop(height, scale=(0.2, 1.)),
             transforms.RandomApply([
@@ -140,6 +162,10 @@ class Moco2TrainCIFAR100Transforms:
         ])
 
     def __call__(self, inp):
+        if isinstance(inp, Image):
+            inp = self.resize(inp)
+        elif inp.shape[1] !=32:  
+            inp = self.resize(inp)
         q = self.train_transform(inp)
         k = self.train_transform(inp)
         return q, k
@@ -151,6 +177,8 @@ class Moco2EvalCIFAR100Transforms:
     https://arxiv.org/pdf/2003.04297.pdf
     """
     def __init__(self, height=32):
+        self.resize = transforms.Resize(size = (height,height))
+
         self.test_transform = transforms.Compose([
             transforms.Resize(height + 12),
             transforms.CenterCrop(height),
@@ -159,6 +187,9 @@ class Moco2EvalCIFAR100Transforms:
         ])
 
     def __call__(self, inp):
+        if inp.shape[1] !=32:
+            inp = self.resize(inp)
+
         q = self.test_transform(inp)
         k = self.test_transform(inp)
         return q, k
@@ -172,6 +203,7 @@ class Moco2MultiCIFAR100Transforms:
     def __init__(self,num_augmentations, height=32):
         # image augmentation functions
         self.num_augmentations = num_augmentations
+        self.resize = transforms.Resize(size = (height,height))
         self.multi_transform = transforms.Compose([
             transforms.RandomResizedCrop(height, scale=(0.2, 1.)),
             transforms.RandomApply([
@@ -185,6 +217,10 @@ class Moco2MultiCIFAR100Transforms:
         ])
 
     def __call__(self, inp):
+        if isinstance(inp, Image):
+            inp = self.resize(inp)
+        elif inp.shape[1] !=32:  
+            inp = self.resize(inp)
         multiple_aug_inp = [self.multi_transform(inp) for i in range(self.num_augmentations)]
         return multiple_aug_inp
 
@@ -195,6 +231,7 @@ class Moco2TrainSVHNTransforms:
     """
     def __init__(self, height=32):
         # image augmentation functions
+        self.resize = transforms.Resize(size = (height,height))
         self.train_transform = transforms.Compose([
             transforms.RandomResizedCrop(height, scale=(0.2, 1.)),
             transforms.RandomApply([
@@ -208,6 +245,10 @@ class Moco2TrainSVHNTransforms:
         ])
 
     def __call__(self, inp):
+        if isinstance(inp, Image):
+            inp = self.resize(inp)
+        elif inp.shape[1] !=32:  
+            inp = self.resize(inp)
         q = self.train_transform(inp)
         k = self.train_transform(inp)
         return q, k
@@ -219,6 +260,7 @@ class Moco2EvalSVHNTransforms:
     https://arxiv.org/pdf/2003.04297.pdf
     """
     def __init__(self, height=32):
+        self.resize = transforms.Resize(size = (height,height))
         self.test_transform = transforms.Compose([
             transforms.Resize(height + 12),
             transforms.CenterCrop(height),
@@ -227,6 +269,8 @@ class Moco2EvalSVHNTransforms:
         ])
 
     def __call__(self, inp):
+        if inp.shape[1] !=32 or isinstance(inp, Image):
+            inp = self.resize(inp)
         q = self.test_transform(inp)
         k = self.test_transform(inp)
         return q, k
@@ -239,6 +283,7 @@ class Moco2MultiSVHNTransforms:
     def __init__(self,num_augmentations, height=32):
         # image augmentation functions
         self.num_augmentations = num_augmentations
+        self.resize = transforms.Resize(size = (height,height))
         self.multi_transform = transforms.Compose([
             transforms.RandomResizedCrop(height, scale=(0.2, 1.)),
             transforms.RandomApply([
@@ -252,17 +297,25 @@ class Moco2MultiSVHNTransforms:
         ])
 
     def __call__(self, inp):
+        if isinstance(inp, Image):
+            inp = self.resize(inp)
+        elif inp.shape[1] !=32:  
+            inp = self.resize(inp)
         multiple_aug_inp = [self.multi_transform(inp) for i in range(self.num_augmentations)]
         return multiple_aug_inp
 
+# Changed STL10 height to the same height as the CIFAR10 datasets
 class Moco2TrainSTL10Transforms:
     """
     Moco 2 augmentation:
     https://arxiv.org/pdf/2003.04297.pdf
     """
-    def __init__(self, height=96):
+    def __init__(self, height=32):
         # image augmentation functions
+
+        self.resize = transforms.Resize(size = (height,height))
         self.train_transform = transforms.Compose([
+            transforms.Resize(height),
             transforms.RandomResizedCrop(height, scale=(0.2, 1.)),
             transforms.RandomApply([
                 transforms.ColorJitter(0.4, 0.4, 0.4, 0.1)  # not strengthened
@@ -275,6 +328,10 @@ class Moco2TrainSTL10Transforms:
         ])
 
     def __call__(self, inp):
+        if isinstance(inp, Image):
+            inp = self.resize(inp)
+        elif inp.shape[1] !=32:  
+            inp = self.resize(inp)
         q = self.train_transform(inp)
         k = self.train_transform(inp)
         return q, k
@@ -284,7 +341,8 @@ class Moco2EvalSTL10Transforms:
     Moco 2 augmentation:
     https://arxiv.org/pdf/2003.04297.pdf
     """
-    def __init__(self, height=96):
+    def __init__(self, height=32):
+        self.resize = transforms.Resize(size = (height,height))
         self.test_transform = transforms.Compose([
             transforms.Resize(height + 12),
             transforms.CenterCrop(height),
@@ -293,12 +351,186 @@ class Moco2EvalSTL10Transforms:
         ])
 
     def __call__(self, inp):
+        if isinstance(inp, Image):
+            inp = self.resize(inp)
+        elif inp.shape[1] !=32:  
+            inp = self.resize(inp)
         q = self.test_transform(inp)
         k = self.test_transform(inp)
         return q, k
 
 
+class Moco2TrainCaltech101Transforms:
+    
+    """
+    Moco 2 augmentation:
+    https://arxiv.org/pdf/2003.04297.pdf
+    """
 
+    def __init__(self, height=32):
+        # image augmentation functions
+
+        self.resize = transforms.Resize(size = (height,height))
+        self.train_transform = transforms.Compose([
+            transforms.Resize(height),
+            transforms.RandomResizedCrop(height, scale=(0.2, 1.)),
+            transforms.RandomApply([
+                transforms.ColorJitter(0.4, 0.4, 0.4, 0.1)  # not strengthened
+            ], p=0.8),
+            transforms.RandomGrayscale(p=0.2),
+            transforms.RandomApply([GaussianBlur([.1, 2.])], p=0.5),
+            transforms.RandomHorizontalFlip(),
+            transforms.ToTensor(),
+            caltech101_normalization()
+        ])
+
+    def __call__(self, inp):
+        if isinstance(inp, Image):
+            inp = self.resize(inp)
+        elif inp.shape[1] !=32:  
+            inp = self.resize(inp)
+        q = self.train_transform(inp)
+        k = self.train_transform(inp)
+        return q, k
+    
+
+class Moco2EvalCaltech101Transforms:
+    """
+    Moco 2 augmentation:
+    https://arxiv.org/pdf/2003.04297.pdf
+    """
+    def __init__(self, height=32):
+        self.resize = transforms.Resize(size = (height,height))
+        self.test_transform = transforms.Compose([
+            transforms.Resize(height + 12),
+            transforms.CenterCrop(height),
+            transforms.ToTensor(),
+            caltech101_normalization(),
+        ])
+
+    def __call__(self, inp):
+        if isinstance(inp, Image):
+            inp = self.resize(inp)
+        elif inp.shape[1] !=32:  
+            inp = self.resize(inp)
+        q = self.test_transform(inp)
+        k = self.test_transform(inp)
+        return q, k
+
+class Moco2TrainCelebATransforms:
+    
+    """
+    Moco 2 augmentation:
+    https://arxiv.org/pdf/2003.04297.pdf
+    """
+
+    def __init__(self, height=32):
+        # image augmentation functions
+
+        self.resize = transforms.Resize(size = (height,height))
+        self.train_transform = transforms.Compose([
+            transforms.Resize(height),
+            transforms.RandomResizedCrop(height, scale=(0.2, 1.)),
+            transforms.RandomApply([
+                transforms.ColorJitter(0.4, 0.4, 0.4, 0.1)  # not strengthened
+            ], p=0.8),
+            transforms.RandomGrayscale(p=0.2),
+            transforms.RandomApply([GaussianBlur([.1, 2.])], p=0.5),
+            transforms.RandomHorizontalFlip(),
+            transforms.ToTensor(),
+            celeba_normalization()
+        ])
+
+    def __call__(self, inp):
+        if isinstance(inp, Image):
+            inp = self.resize(inp)
+        elif inp.shape[1] !=32:  
+            inp = self.resize(inp)
+        q = self.train_transform(inp)
+        k = self.train_transform(inp)
+        return q, k
+    
+
+class Moco2EvalCelebATransforms:
+    """
+    Moco 2 augmentation:
+    https://arxiv.org/pdf/2003.04297.pdf
+    """
+    def __init__(self, height=32):
+        self.resize = transforms.Resize(size = (height,height))
+        self.test_transform = transforms.Compose([
+            transforms.Resize(height + 12),
+            transforms.CenterCrop(height),
+            transforms.ToTensor(),
+            celeba_normalization(),
+        ])
+
+    def __call__(self, inp):
+        if isinstance(inp, Image):
+            inp = self.resize(inp)
+        elif inp.shape[1] !=32:  
+            inp = self.resize(inp)
+        q = self.test_transform(inp)
+        k = self.test_transform(inp)
+        return q, k
+    
+
+class Moco2TrainWIDERFaceTransforms:
+    
+    """
+    Moco 2 augmentation:
+    https://arxiv.org/pdf/2003.04297.pdf
+    """
+
+    def __init__(self, height=32):
+        # image augmentation functions
+
+        self.resize = transforms.Resize(size = (height,height))
+        self.train_transform = transforms.Compose([
+            transforms.Resize(height),
+            transforms.RandomResizedCrop(height, scale=(0.2, 1.)),
+            transforms.RandomApply([
+                transforms.ColorJitter(0.4, 0.4, 0.4, 0.1)  # not strengthened
+            ], p=0.8),
+            transforms.RandomGrayscale(p=0.2),
+            transforms.RandomApply([GaussianBlur([.1, 2.])], p=0.5),
+            transforms.RandomHorizontalFlip(),
+            transforms.ToTensor(),
+            widerface_normalization(),
+        ])
+
+    def __call__(self, inp):
+        if isinstance(inp, Image):
+            inp = self.resize(inp)
+        elif inp.shape[1] !=32:  
+            inp = self.resize(inp)
+        q = self.train_transform(inp)
+        k = self.train_transform(inp)
+        return q, k
+    
+
+class Moco2EvalWIDERFaceTransforms:
+    """
+    Moco 2 augmentation:
+    https://arxiv.org/pdf/2003.04297.pdf
+    """
+    def __init__(self, height=32):
+        self.resize = transforms.Resize(size = (height,height))
+        self.test_transform = transforms.Compose([
+            transforms.Resize(height + 12),
+            transforms.CenterCrop(height),
+            transforms.ToTensor(),
+            widerface_normalization(),
+        ])
+
+    def __call__(self, inp):
+        if isinstance(inp, Image):
+            inp = self.resize(inp)
+        elif inp.shape[1] !=32:  
+            inp = self.resize(inp)
+        q = self.test_transform(inp)
+        k = self.test_transform(inp)
+        return q, k
 
 class Moco2TrainFashionMNISTTransforms:
     """

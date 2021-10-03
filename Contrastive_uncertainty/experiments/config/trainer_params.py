@@ -5,6 +5,7 @@ trainer_hparams = dict(
 seed = 26,
 epochs = 0,
 bsz = 32,#64,
+OOD_dataset = ['STL10'],
 # Trainer configurations
 fast_run = False,
 quick_callback = False,
@@ -15,7 +16,7 @@ val_check = 1,  # evaluation, Moco_training
 #callbacks = ['Oracle Nearest 10 Neighbours Class 1D Typicality'],
 #callbacks = ['Metrics'],
 #callbacks = ['Different K Nearest Neighbours Class'],
-callbacks = ['Mahalanobis Distance','Different K Nearest Neighbours Class 1D Typicality'],
+callbacks = ['Mahalanobis Distance','Different K Nearest Neighbours Class 1D Typicality','Nearest'],
 #callbacks = ['Nearest','Class Mahalanobis','Mahalanobis Distance'],
 #callbacks = ['Nearest Neighbours Class 1D Typicality'],
 
