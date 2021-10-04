@@ -2,6 +2,8 @@ from PIL.Image import Image
 import numpy as np
 import random
 from warnings import warn
+
+from numpy.lib.type_check import imag
 from Contrastive_uncertainty.general.datamodules.dataset_normalizations import cifar10_normalization,\
     cifar100_normalization, fashionmnist_normalization, mnist_normalization, kmnist_normalization,\
     svhn_normalization, stl10_normalization, caltech101_normalization,celeba_normalization,widerface_normalization, emnist_normalization
@@ -52,6 +54,17 @@ CIFAR10_coarse_labels = np.array([ 0,  2, 3,  5,  6,  5,  4,  6, 1,  2])
 # 60: '60 - plain', 61: '61 - plate', 62: '62 - poppy', 63: '63 - porcupine', 64: '64 - possum', 65: '65 - rabbit', 66: '66 - raccoon', 67: '67 - ray', 68: '68 - road', 69: '69 - rocket', 70: '70 - rose', 71: '71 - sea', 72: '72 - seal', 73: '73 - shark', 74: '74 - shrew', 75: '75 - skunk', 76: '76 - skyscraper', 77: '77 - snail', 78: '78 - snake', 79: '79 - spider', 
 # 80: '80 - squirrel', 81: '81 - streetcar', 82: '82 - sunflower', 83: '83 - sweet_pepper', 84: '84 - table', 85: '85 - tank', 86: '86 - telephone', 87: '87 - television', 88: '88 - tiger', 89: '89 - tractor', 90: '90 - train', 91: '91 - trout', 92: '92 - tulip', 93: '93 - turtle', 94: '94 - wardrobe', 95: '95 - whale', 96: '96 - willow_tree', 97: '97 - wolf', 98: '98 - woman', 99: '99 - worm'}
 
+class GaussianBlur(object):
+    """Gaussian blur augmentation in SimCLR https://arxiv.org/abs/2002.05709"""
+
+    def __init__(self, sigma=(0.1, 2.0)):
+        self.sigma = sigma
+
+    def __call__(self, x):
+        sigma = random.uniform(self.sigma[0], self.sigma[1])
+        x = x.filter(ImageFilter.GaussianBlur(radius=sigma))
+        return x 
+
 class Moco2TrainCIFAR10Transforms:
     """
     Moco 2 augmentation:
@@ -60,8 +73,11 @@ class Moco2TrainCIFAR10Transforms:
     def __init__(self, height=32):
         # image augmentation functions
         # Used to resize images which are different
-        self.resize = transforms.Resize(size = (height,height))
 
+        #self.colorize = transforms.Lambda(lambda x: x.repeat(3, 1, 1) ) #  change shape from 2D to 3D
+        self.colorize = transforms.Grayscale(num_output_channels=3) #  change shape from 2D to 3D
+
+        self.resize = transforms.Resize(size = (height,height))
         self.train_transform = transforms.Compose([
             transforms.RandomResizedCrop(height, scale=(0.2, 1.)),
             transforms.RandomApply([
@@ -75,13 +91,23 @@ class Moco2TrainCIFAR10Transforms:
         ])
 
     def __call__(self, inp):
-        if isinstance(inp, Image):
-            inp = self.resize(inp)
-        elif inp.shape[1] !=32:  
-            inp = self.resize(inp)
         
+        if isinstance(inp,Image): 
+            if len(inp.getbands())<3:
+                #width, height = inp.size
+                #inp = inp.view(width, height, 1).expand(-1, -1, 3)
+                inp = self.colorize(inp)   
+            if inp.size[0] !=32:
+                inp = self.resize(inp)
+        elif isinstance(inp, torch.Tensor):
+            if len(inp.shape)<3:
+                inp = self.colorize(inp)
+            if inp.shape[1] !=32:
+                inp = self.resize(inp)
+
         q = self.train_transform(inp)
         k = self.train_transform(inp)
+
         return q, k
 
 
@@ -91,6 +117,9 @@ class Moco2EvalCIFAR10Transforms:
     https://arxiv.org/pdf/2003.04297.pdf
     """
     def __init__(self, height=32):
+
+        self.colorize = transforms.Grayscale(num_output_channels=3) #  change shape from 2D to 3D
+
         self.resize = transforms.Resize(size = (height,height))
 
         self.test_transform = transforms.Compose([
@@ -101,10 +130,17 @@ class Moco2EvalCIFAR10Transforms:
         ])
 
     def __call__(self, inp):
-        if isinstance(inp, Image):
-            inp = self.resize(inp)
-        elif inp.shape[1] !=32:  
-            inp = self.resize(inp)
+        if isinstance(inp,Image):
+            if len(inp.getbands())<3:
+                inp = self.colorize(inp)
+            if inp.size[0] !=32:
+                inp = self.resize(inp)
+        elif isinstance(inp, torch.Tensor):
+            if len(inp.shape)<3:
+                inp = self.colorize(inp)
+            if inp.shape[1] !=32:
+                inp = self.resize(inp)
+            
         q = self.test_transform(inp)
         k = self.test_transform(inp)
         return q, k
@@ -118,6 +154,9 @@ class Moco2MultiCIFAR10Transforms:
     def __init__(self,num_augmentations, height=32):
         self.num_augmentations = num_augmentations
         # image augmentation functions
+
+        self.colorize = transforms.Grayscale(num_output_channels=3)
+
         self.resize = transforms.Resize(height)
 
         self.multi_transform = transforms.Compose([
@@ -133,10 +172,17 @@ class Moco2MultiCIFAR10Transforms:
         ])
 
     def __call__(self, inp):
-        if isinstance(inp, Image):
-            inp = self.resize(inp)
-        elif inp.shape[1] !=32:  
-            inp = self.resize(inp)
+        if isinstance(inp,Image):
+            if len(inp.getbands())<3:
+                inp = self.colorize(inp)
+            if inp.size[0] !=32:
+                inp = self.resize(inp)
+        elif isinstance(inp, torch.Tensor):
+            if len(inp.shape)<3:
+                inp = self.colorize(inp)
+            if inp.shape[1] !=32:
+                inp = self.resize(inp)
+
         multiple_aug_inp = [self.multi_transform(inp) for i in range(self.num_augmentations)]
         return multiple_aug_inp
 
@@ -148,7 +194,11 @@ class Moco2TrainCIFAR100Transforms:
     """
     def __init__(self, height=32):
         # image augmentation functions
+        self.colorize = transforms.Grayscale(num_output_channels=3)
+
         self.resize = transforms.Resize(size = (height,height))
+        
+        
         self.train_transform = transforms.Compose([
             transforms.RandomResizedCrop(height, scale=(0.2, 1.)),
             transforms.RandomApply([
@@ -162,10 +212,18 @@ class Moco2TrainCIFAR100Transforms:
         ])
 
     def __call__(self, inp):
-        if isinstance(inp, Image):
-            inp = self.resize(inp)
-        elif inp.shape[1] !=32:  
-            inp = self.resize(inp)
+
+        if isinstance(inp,Image):
+            if len(inp.getbands())<3:
+                inp = self.colorize(inp)
+            if inp.size[0] !=32:
+                inp = self.resize(inp)
+        elif isinstance(inp, torch.Tensor):
+            if len(inp.shape)<3:
+                inp = self.colorize(inp)
+            if inp.shape[1] !=32:
+                inp = self.resize(inp)
+
         q = self.train_transform(inp)
         k = self.train_transform(inp)
         return q, k
@@ -177,6 +235,8 @@ class Moco2EvalCIFAR100Transforms:
     https://arxiv.org/pdf/2003.04297.pdf
     """
     def __init__(self, height=32):
+        self.colorize = transforms.Grayscale(num_output_channels=3)
+
         self.resize = transforms.Resize(size = (height,height))
 
         self.test_transform = transforms.Compose([
@@ -187,8 +247,17 @@ class Moco2EvalCIFAR100Transforms:
         ])
 
     def __call__(self, inp):
-        if inp.shape[1] !=32:
-            inp = self.resize(inp)
+
+        if isinstance(inp,Image):
+            if len(inp.getbands())<3:
+                inp = self.colorize(inp)
+            if inp.size[0] !=32:
+                inp = self.resize(inp)
+        elif isinstance(inp, torch.Tensor):
+            if len(inp.shape)<3:
+                inp = self.colorize(inp)
+            if inp.shape[1] !=32:
+                inp = self.resize(inp)
 
         q = self.test_transform(inp)
         k = self.test_transform(inp)
@@ -203,6 +272,8 @@ class Moco2MultiCIFAR100Transforms:
     def __init__(self,num_augmentations, height=32):
         # image augmentation functions
         self.num_augmentations = num_augmentations
+        self.colorize = transforms.Grayscale(num_output_channels=3)
+
         self.resize = transforms.Resize(size = (height,height))
         self.multi_transform = transforms.Compose([
             transforms.RandomResizedCrop(height, scale=(0.2, 1.)),
@@ -217,10 +288,17 @@ class Moco2MultiCIFAR100Transforms:
         ])
 
     def __call__(self, inp):
-        if isinstance(inp, Image):
-            inp = self.resize(inp)
-        elif inp.shape[1] !=32:  
-            inp = self.resize(inp)
+        if isinstance(inp,Image):
+            if len(inp.getbands())<3:
+                inp = self.colorize(inp)
+            if inp.size[0] !=32:
+                inp = self.resize(inp)
+        elif isinstance(inp, torch.Tensor):
+            if len(inp.shape)<3:
+                inp = self.colorize(inp)
+            if inp.shape[1] !=32:
+                inp = self.resize(inp)
+
         multiple_aug_inp = [self.multi_transform(inp) for i in range(self.num_augmentations)]
         return multiple_aug_inp
 
@@ -231,6 +309,8 @@ class Moco2TrainSVHNTransforms:
     """
     def __init__(self, height=32):
         # image augmentation functions
+        self.colorize = transforms.Grayscale(num_output_channels=3)
+
         self.resize = transforms.Resize(size = (height,height))
         self.train_transform = transforms.Compose([
             transforms.RandomResizedCrop(height, scale=(0.2, 1.)),
@@ -245,10 +325,17 @@ class Moco2TrainSVHNTransforms:
         ])
 
     def __call__(self, inp):
-        if isinstance(inp, Image):
-            inp = self.resize(inp)
-        elif inp.shape[1] !=32:  
-            inp = self.resize(inp)
+        if isinstance(inp,Image):
+            if len(inp.getbands())<3:
+                inp = self.colorize(inp)
+            if inp.size[0] !=32:
+                inp = self.resize(inp)
+        elif isinstance(inp, torch.Tensor):
+            if len(inp.shape)<3:
+                inp = self.colorize(inp)
+            if inp.shape[1] !=32:
+                inp = self.resize(inp)
+
         q = self.train_transform(inp)
         k = self.train_transform(inp)
         return q, k
@@ -260,6 +347,8 @@ class Moco2EvalSVHNTransforms:
     https://arxiv.org/pdf/2003.04297.pdf
     """
     def __init__(self, height=32):
+        self.colorize = transforms.Grayscale(num_output_channels=3)
+
         self.resize = transforms.Resize(size = (height,height))
         self.test_transform = transforms.Compose([
             transforms.Resize(height + 12),
@@ -269,8 +358,17 @@ class Moco2EvalSVHNTransforms:
         ])
 
     def __call__(self, inp):
-        if inp.shape[1] !=32 or isinstance(inp, Image):
-            inp = self.resize(inp)
+        if isinstance(inp,Image):
+            if len(inp.getbands())<3:
+                inp = self.colorize(inp)
+            if inp.size[0] !=32:
+                inp = self.resize(inp)
+        elif isinstance(inp, torch.Tensor):
+            if len(inp.shape)<3:
+                inp = self.colorize(inp)
+            if inp.shape[1] !=32:
+                inp = self.resize(inp)
+                
         q = self.test_transform(inp)
         k = self.test_transform(inp)
         return q, k
@@ -283,6 +381,7 @@ class Moco2MultiSVHNTransforms:
     def __init__(self,num_augmentations, height=32):
         # image augmentation functions
         self.num_augmentations = num_augmentations
+        self.colorize = transforms.Grayscale(num_output_channels=3)
         self.resize = transforms.Resize(size = (height,height))
         self.multi_transform = transforms.Compose([
             transforms.RandomResizedCrop(height, scale=(0.2, 1.)),
@@ -297,10 +396,17 @@ class Moco2MultiSVHNTransforms:
         ])
 
     def __call__(self, inp):
-        if isinstance(inp, Image):
-            inp = self.resize(inp)
-        elif inp.shape[1] !=32:  
-            inp = self.resize(inp)
+        if isinstance(inp,Image):
+            if len(inp.getbands())<3:
+                inp = self.colorize(inp)
+            if inp.size[0] !=32:
+                inp = self.resize(inp)
+        elif isinstance(inp, torch.Tensor):
+            if len(inp.shape)<3:
+                inp = self.colorize(inp)
+            if inp.shape[1] !=32:
+                inp = self.resize(inp)
+
         multiple_aug_inp = [self.multi_transform(inp) for i in range(self.num_augmentations)]
         return multiple_aug_inp
 
@@ -312,7 +418,7 @@ class Moco2TrainSTL10Transforms:
     """
     def __init__(self, height=32):
         # image augmentation functions
-
+        self.colorize = transforms.Grayscale(num_output_channels=3)
         self.resize = transforms.Resize(size = (height,height))
         self.train_transform = transforms.Compose([
             transforms.Resize(height),
@@ -328,10 +434,17 @@ class Moco2TrainSTL10Transforms:
         ])
 
     def __call__(self, inp):
-        if isinstance(inp, Image):
-            inp = self.resize(inp)
-        elif inp.shape[1] !=32:  
-            inp = self.resize(inp)
+        if isinstance(inp,Image):
+            if len(inp.getbands())<3:
+                inp = self.colorize(inp)
+            if inp.size[0] !=32:
+                inp = self.resize(inp)
+        elif isinstance(inp, torch.Tensor):
+            if len(inp.shape)<3:
+                inp = self.colorize(inp)
+            if inp.shape[1] !=32:
+                inp = self.resize(inp)
+
         q = self.train_transform(inp)
         k = self.train_transform(inp)
         return q, k
@@ -342,6 +455,7 @@ class Moco2EvalSTL10Transforms:
     https://arxiv.org/pdf/2003.04297.pdf
     """
     def __init__(self, height=32):
+        self.colorize = transforms.Grayscale(num_output_channels=3)
         self.resize = transforms.Resize(size = (height,height))
         self.test_transform = transforms.Compose([
             transforms.Resize(height + 12),
@@ -351,10 +465,17 @@ class Moco2EvalSTL10Transforms:
         ])
 
     def __call__(self, inp):
-        if isinstance(inp, Image):
-            inp = self.resize(inp)
-        elif inp.shape[1] !=32:  
-            inp = self.resize(inp)
+        if isinstance(inp,Image):
+            if len(inp.getbands())<3:
+                inp = self.colorize(inp)
+            if inp.size[0] !=32:
+                inp = self.resize(inp)
+        elif isinstance(inp, torch.Tensor):
+            if len(inp.shape)<3:
+                inp = self.colorize(inp)
+            if inp.shape[1] !=32:
+                inp = self.resize(inp)
+
         q = self.test_transform(inp)
         k = self.test_transform(inp)
         return q, k
@@ -369,6 +490,7 @@ class Moco2TrainCaltech101Transforms:
 
     def __init__(self, height=32):
         # image augmentation functions
+        self.colorize = transforms.Grayscale(num_output_channels=3)
 
         self.resize = transforms.Resize(size = (height,height))
         self.train_transform = transforms.Compose([
@@ -385,10 +507,17 @@ class Moco2TrainCaltech101Transforms:
         ])
 
     def __call__(self, inp):
-        if isinstance(inp, Image):
-            inp = self.resize(inp)
-        elif inp.shape[1] !=32:  
-            inp = self.resize(inp)
+        if isinstance(inp,Image):
+            if len(inp.getbands())<3:
+                inp = self.colorize(inp)
+            if inp.size[0] !=32:
+                inp = self.resize(inp)
+        elif isinstance(inp, torch.Tensor):
+            if len(inp.shape)<3:
+                inp = self.colorize(inp)
+            if inp.shape[1] !=32:
+                inp = self.resize(inp)
+
         q = self.train_transform(inp)
         k = self.train_transform(inp)
         return q, k
@@ -400,6 +529,7 @@ class Moco2EvalCaltech101Transforms:
     https://arxiv.org/pdf/2003.04297.pdf
     """
     def __init__(self, height=32):
+        self.colorize = transforms.Grayscale(num_output_channels=3) #  change shape from 2D to 3D
         self.resize = transforms.Resize(size = (height,height))
         self.test_transform = transforms.Compose([
             transforms.Resize(height + 12),
@@ -409,10 +539,17 @@ class Moco2EvalCaltech101Transforms:
         ])
 
     def __call__(self, inp):
-        if isinstance(inp, Image):
-            inp = self.resize(inp)
-        elif inp.shape[1] !=32:  
-            inp = self.resize(inp)
+        if isinstance(inp,Image):
+            if len(inp.getbands())<3:
+                inp = self.colorize(inp)
+            if inp.size[0] !=32:
+                inp = self.resize(inp)
+        elif isinstance(inp, torch.Tensor):
+            if len(inp.shape)<3:
+                inp = self.colorize(inp)
+            if inp.shape[1] !=32:
+                inp = self.resize(inp)
+
         q = self.test_transform(inp)
         k = self.test_transform(inp)
         return q, k
@@ -426,7 +563,7 @@ class Moco2TrainCelebATransforms:
 
     def __init__(self, height=32):
         # image augmentation functions
-
+        self.colorize = transforms.Grayscale(num_output_channels=3) #  change shape from 2D to 3D
         self.resize = transforms.Resize(size = (height,height))
         self.train_transform = transforms.Compose([
             transforms.Resize(height),
@@ -442,10 +579,17 @@ class Moco2TrainCelebATransforms:
         ])
 
     def __call__(self, inp):
-        if isinstance(inp, Image):
-            inp = self.resize(inp)
-        elif inp.shape[1] !=32:  
-            inp = self.resize(inp)
+        if isinstance(inp,Image):
+            if len(inp.getbands())<3:
+                inp = self.colorize(inp)
+            if inp.size[0] !=32:
+                inp = self.resize(inp)
+        elif isinstance(inp, torch.Tensor):
+            if len(inp.shape)<3:
+                inp = self.colorize(inp)
+            if inp.shape[1] !=32:
+                inp = self.resize(inp)
+
         q = self.train_transform(inp)
         k = self.train_transform(inp)
         return q, k
@@ -457,6 +601,7 @@ class Moco2EvalCelebATransforms:
     https://arxiv.org/pdf/2003.04297.pdf
     """
     def __init__(self, height=32):
+        self.colorize = transforms.Grayscale(num_output_channels=3) #  change shape from 2D to 3D
         self.resize = transforms.Resize(size = (height,height))
         self.test_transform = transforms.Compose([
             transforms.Resize(height + 12),
@@ -466,10 +611,17 @@ class Moco2EvalCelebATransforms:
         ])
 
     def __call__(self, inp):
-        if isinstance(inp, Image):
-            inp = self.resize(inp)
-        elif inp.shape[1] !=32:  
-            inp = self.resize(inp)
+        if isinstance(inp,Image):
+            if len(inp.getbands())<3:
+                inp = self.colorize(inp)
+            if inp.size[0] !=32:
+                inp = self.resize(inp)
+        elif isinstance(inp, torch.Tensor):
+            if len(inp.shape)<3:
+                inp = self.colorize(inp)
+            if inp.shape[1] !=32:
+                inp = self.resize(inp)
+
         q = self.test_transform(inp)
         k = self.test_transform(inp)
         return q, k
@@ -484,7 +636,7 @@ class Moco2TrainWIDERFaceTransforms:
 
     def __init__(self, height=32):
         # image augmentation functions
-
+        self.colorize = transforms.Grayscale(num_output_channels=3) #  change shape from 2D to 3D
         self.resize = transforms.Resize(size = (height,height))
         self.train_transform = transforms.Compose([
             transforms.Resize(height),
@@ -500,10 +652,17 @@ class Moco2TrainWIDERFaceTransforms:
         ])
 
     def __call__(self, inp):
-        if isinstance(inp, Image):
-            inp = self.resize(inp)
-        elif inp.shape[1] !=32:  
-            inp = self.resize(inp)
+        if isinstance(inp,Image):
+            if len(inp.getbands())<3:
+                inp = self.colorize(inp)
+            if inp.size[0] !=32:
+                inp = self.resize(inp)
+        elif isinstance(inp, torch.Tensor):
+            if len(inp.shape)<3:
+                inp = self.colorize(inp)
+            if inp.shape[1] !=32:
+                inp = self.resize(inp)
+
         q = self.train_transform(inp)
         k = self.train_transform(inp)
         return q, k
@@ -515,6 +674,7 @@ class Moco2EvalWIDERFaceTransforms:
     https://arxiv.org/pdf/2003.04297.pdf
     """
     def __init__(self, height=32):
+        self.colorize = transforms.Grayscale(num_output_channels=3) #  change shape from 2D to 3D
         self.resize = transforms.Resize(size = (height,height))
         self.test_transform = transforms.Compose([
             transforms.Resize(height + 12),
@@ -524,10 +684,17 @@ class Moco2EvalWIDERFaceTransforms:
         ])
 
     def __call__(self, inp):
-        if isinstance(inp, Image):
-            inp = self.resize(inp)
-        elif inp.shape[1] !=32:  
-            inp = self.resize(inp)
+        if isinstance(inp,Image):
+            if len(inp.getbands())<3:
+                inp = self.colorize(inp)
+            if inp.size[0] !=32:
+                inp = self.resize(inp)
+        elif isinstance(inp, torch.Tensor):
+            if len(inp.shape)<3:
+                inp = self.colorize(inp)
+            if inp.shape[1] !=32:
+                inp = self.resize(inp)
+
         q = self.test_transform(inp)
         k = self.test_transform(inp)
         return q, k
@@ -773,20 +940,7 @@ class Moco2MultiEMNISTTransforms:
         return multiple_aug_inp
 
 
-        
-
-class GaussianBlur(object):
-    """Gaussian blur augmentation in SimCLR https://arxiv.org/abs/2002.05709"""
-
-    def __init__(self, sigma=(0.1, 2.0)):
-        self.sigma = sigma
-
-    def __call__(self, x):
-        sigma = random.uniform(self.sigma[0], self.sigma[1])
-        x = x.filter(ImageFilter.GaussianBlur(radius=sigma))
-        return x
-
-
+    
 #https://discuss.pytorch.org/t/how-to-retrieve-the-sample-indices-of-a-mini-batch/7948/18
 def dataset_with_indices(cls):
     """

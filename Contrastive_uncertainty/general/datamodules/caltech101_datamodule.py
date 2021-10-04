@@ -8,8 +8,8 @@ from torchvision.datasets import caltech
 from torchvision.datasets.caltech import Caltech101
 
 
-from datalad.api import download_url
-import patoolib
+#from datalad.api import download_url
+#import patoolib
 
 from pytorch_lightning import LightningDataModule
 from torch.utils import data
@@ -26,6 +26,7 @@ from torchvision.transforms import transforms
 from Contrastive_uncertainty.general.datamodules.dataset_normalizations import caltech101_normalization
 from Contrastive_uncertainty.general.datamodules.datamodule_transforms import dataset_with_indices
 
+# http://places2.csail.mit.edu/download.html where I downloaded the dataset for the case of places 365
 # based on https://pretagteam.com/question/pytorch-lightning-get-models-output-on-full-train-data-during-training
 class Caltech101DataModule(LightningDataModule):
 
@@ -122,16 +123,16 @@ class Caltech101DataModule(LightningDataModule):
         """
         Saves CIFAR10 files to data_dir
         """
-        #import ipdb; ipdb.set_trace()
         url = 'https://s3-eu-west-1.amazonaws.com/pfigshare-u-files/12855005/Caltech101ImageDataset.rar'
         # download#
         if os.path.isfile('Caltech101 Image Dataset.rar'):
             print('data present')
         else:
             print('data not present')
+            '''
             download_url(url, self.data_dir)
             patoolib.extract_archive('Caltech101 Image Dataset.rar', outdir = self.data_dir)
-    
+            '''
     def setup(self):
         
         Indices_ImageFolder =dataset_with_indices(torchvision.datasets.ImageFolder)

@@ -12,7 +12,8 @@ weight_decay = 1e-4,
 emb_dim = 128,
 instance_encoder = 'resnet18',
 
-dataset ='CIFAR10',
+dataset ='CIFAR100',
+OOD_dataset =['FashionMNIST'],
 #OOD_dataset =['STL10'],
 #dataset = 'MNIST',
 #OOD_dataset = ['SVHN'],
@@ -52,7 +53,7 @@ practice_trainer_hparams = dict(
 # Miscellaneous arguments in common
 seed = 26,
 epochs = 300,
-bsz = 2,
+bsz = 16,
 
 # Trainer configurations in common
 fast_run = True,
@@ -65,6 +66,7 @@ model_saving = 200, # Used to control how often the model is saved
 
 #callbacks = ['Model_saving'],
 callbacks = ['Mahalanobis Distance'],
+#callbacks = ['Mahalanobis Distance','Nearest'],
 )
 
 batch_practice_base_hparams = [practice_base_hparams]
