@@ -1,4 +1,5 @@
 from numpy.core.numeric import indices
+from numpy.lib.function_base import average
 import torch
 import torch.optim as optim
 import torch.nn as nn
@@ -697,6 +698,162 @@ class DifferentKNNMarginal1DTypicality(NearestNeighbours1DTypicality):
             thresholds.append(ddata_deviation)
         
         return thresholds
+
+    def get_eval_results(self, ftrain, ftest, food):
+        ftrain_norm, ftest_norm, food_norm = self.normalise(ftrain, ftest, food)
+        name = f'Different K Normalized One Dim Marginal Typicality KNN OOD - {self.OOD_Datamodule.name}'
+        self.datasaving(ftrain_norm,ftest_norm,food_norm,name)        
+    
+    def datasaving(self,ftrain,ftest, food,wandb_name):
+        K_values = [1,5,10,15,20,25]
+        mean, cov, eigvalues, eigvectors, dtrain_1d_mean, dtrain_1d_std = self.get_1d_train(ftrain)
+        table_data = {'K Value':[], 'AUROC':[]}
+        for k in K_values:
+            knn_indices = self.get_nearest_neighbours(ftest,food,k)
+            knn_ID_features, knn_OOD_features = self.get_knn_features(ftest, food, knn_indices)
+            din = self.get_thresholds(knn_ID_features, mean, eigvalues,eigvectors, dtrain_1d_mean,dtrain_1d_std,k)
+            dood = self.get_thresholds(knn_OOD_features, mean, eigvalues,eigvectors, dtrain_1d_mean,dtrain_1d_std,k)
+            AUROC = get_roc_sklearn(din, dood)
+
+            table_data['K Value'].append(k)
+            table_data['AUROC'].append(round(AUROC,3))
+
+        table_df = pd.DataFrame(table_data)
+        table = wandb.Table(dataframe=table_df)
+        wandb.log({wandb_name:table})
+
+
+
+# Ablation studies
+# Performs 1D typicality using the different K values and saves them in a table
+class DifferentKNNClassTypicality(DifferentKNNMarginal1DTypicality):
+    def __init__(self, Datamodule,OOD_Datamodule,
+        quick_callback:bool = True,K:int = 10):
+
+        super().__init__(Datamodule,OOD_Datamodule, quick_callback,K)
+        # Used to save the summary value
+
+    def on_test_epoch_end(self, trainer, pl_module):
+        return super().on_test_epoch_end(trainer, pl_module)
+
+    def forward_callback(self, trainer, pl_module):
+        train_loader = self.Datamodule.deterministic_train_dataloader()
+        test_loader = self.Datamodule.test_dataloader()
+        ood_loader = self.OOD_Datamodule.test_dataloader()
+
+        features_train, labels_train = self.get_features(pl_module, train_loader)
+        features_test, labels_test = self.get_features(pl_module, test_loader)
+        features_ood, labels_ood = self.get_features(pl_module, ood_loader)
+
+        self.get_eval_results(
+            np.copy(features_train),
+            np.copy(features_test),
+            np.copy(features_ood),
+            np.copy(labels_train))
+        
+    def get_features(self, pl_module, dataloader):
+        return super().get_features(pl_module, dataloader)
+    
+    def normalise(self, ftrain, ftest, food):
+        return super().normalise(ftrain, ftest, food)
+    
+    def get_nearest_neighbours(self, ftest, food,K):
+        return super().get_nearest_neighbours(ftest, food,K)
+
+
+    # get the features of the data which also has the KNN in either the test set or the OOD dataset
+    def get_knn_features(self, ftest, food, knn_indices):
+        return super().get_knn_features(ftest, food, knn_indices)
+
+    # Get the mean, covariance and the average distance for a class
+    def get_train(self, ftrain,ypred):
+        # Nawid - get all the features which belong to each of the different classes
+        xc = [ftrain[ypred == i] for i in np.unique(ypred)] # Nawid - training data which have been predicted to belong to a particular class
+        # Calculate the means of each of the different classes
+        means = [np.mean(x,axis=0,keepdims=True) for x in xc] # Calculates mean from (B,embdim) to (1,embdim)
+        # Calculate the covariance matrices for each of the different classes
+        covs = [np.cov(x.T, bias=True) for x in xc]
+
+        dtrain_means = []
+        for class_num in range(len(np.unique(ypred))):
+            # Go through each of the different classes and calculate the average likelihood which is the entropy of the class
+            xc_class = xc[class_num]
+            dtrain = np.sum(
+                (xc_class - means[class_num]) # Nawid - distance between the data point and the mean
+                * (
+                    np.linalg.pinv(covs[class_num]).dot(
+                        (xc_class - means[class_num]).T
+                    ) # Nawid - calculating the covariance matrix of the data belonging to a particular class and dot product by the distance of the data point from the mean (distance calculation)
+                ).T,
+                axis=-1)
+            class_average_distance = np.mean(dtrain)
+            dtrain_means.append(class_average_distance)
+            # Would there be benefit in scaling (Not sure but this is just an ablation so should not be too important)
+
+        return means, covs, dtrain_means
+
+
+    def get_thresholds(self, fdata, means, eigvalues, eigvectors, dtrain_1d_mean, dtrain_1d_std,K):
+        thresholds = []
+        num_batches = len(fdata)//K
+        # Currently goes through a single data point at a time which is not very efficient
+        for i in range(num_batches):
+            fdata_batch = fdata[(i*K):((i+1)*K)]
+            ddata = [np.matmul(eigvectors[class_num].T,(fdata_batch - means[class_num]).T)**2/eigvalues[class_num] for class_num in range(len(means))] # Calculate the 1D scores for all the different classes 
+        
+            # obtain the normalised the scores for the different classes
+            ddata = [ddata[class_num] - dtrain_1d_mean[class_num]/(dtrain_1d_std[class_num]  +1e-10) for class_num in range(len(means))] # shape (dim, batch)
+            
+            # shape (dim) average of all data in batch size
+            ddata = [np.mean(ddata[class_num],axis=1) for class_num in range(len(means))] # shape dim
+
+            # Obtain the sum of absolute normalised scores
+            scores = [np.sum(np.abs(ddata[class_num]),axis=0) for class_num in range(len(means))]
+            # Obtain the scores corresponding to the lowest class
+            ddata = np.min(scores,axis=0)
+
+
+            thresholds.append(ddata)
+
+        return thresholds
+    
+    def get_thresholds(self,means, covs, dtrain_mean, fdata, K):
+        
+        num_classes = len(means)
+        thresholds = []
+
+        num_batches = len(fdata)//K
+        # Currently goes through a single data point at a time which is not very efficient
+        for i in range(num_batches):
+            fdata_batch = fdata[(i*K):((i+1)*K)]
+            # Calculate the scores for a particular batch of data for all the different classes
+            ddata = [
+            np.sum(
+                (fdata - means[class_num]) # Nawid - distance between the data point and the mean
+                * (
+                    np.linalg.pinv(covs[class_num]).dot(
+                        (fdata - means[class_num]).T
+                    ) # Nawid - calculating the covariance matrix of the data belonging to a particular class and dot product by the distance of the data point from the mean (distance calculation)
+                ).T,
+                axis=-1,
+            )
+            for class_num in range(num_classes) # Nawid - done for all the different classes
+            ]
+
+            # NEED TO FINISH WORKING ON THIS PART
+            ddata = [np.mean(ddata[class_num])-dtrain_mean[class_num] for class_num in range(num_classes)]
+
+            # shape (dim) average of all data in batch size
+            ddata = np.mean(ddata,axis= 1) # shape : (dim)
+            
+            # Sum of the deviations of each individual dimension
+            ddata_deviation = np.sum(np.abs(ddata))
+
+            thresholds.append(ddata_deviation)
+        
+        return thresholds
+    
+    
 
     def get_eval_results(self, ftrain, ftest, food):
         ftrain_norm, ftest_norm, food_norm = self.normalise(ftrain, ftest, food)

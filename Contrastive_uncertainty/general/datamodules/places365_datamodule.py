@@ -125,7 +125,7 @@ class Places365DataModule(LightningDataModule):
 
         self.val_train_dataset.dataset.transform = train_transforms
         self.val_test_dataset.dataset.transform = test_transforms
-        copying_time = time.time() - original_time
+        
     def train_dataloader(self):
         """
         FashionMNIST train set removes a subset to use for validation
