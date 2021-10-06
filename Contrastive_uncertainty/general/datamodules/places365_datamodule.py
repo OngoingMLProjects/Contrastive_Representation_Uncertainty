@@ -110,7 +110,6 @@ class Places365DataModule(LightningDataModule):
         # Same validataion and test set size as CIFAR10
         train_dataset, val_dataset, test_dataset = random_split(places365_dataset, [2153460, 5000, 10000],generator=torch.Generator().manual_seed(self.seed)
         )
-
         train_transforms = self.default_transforms() if self.train_transforms is None else self.train_transforms
         test_transforms = self.default_transforms() if self.test_transforms is None else self.test_transforms
         
@@ -126,7 +125,7 @@ class Places365DataModule(LightningDataModule):
 
         self.val_train_dataset.dataset.transform = train_transforms
         self.val_test_dataset.dataset.transform = test_transforms
-
+        copying_time = time.time() - original_time
     def train_dataloader(self):
         """
         FashionMNIST train set removes a subset to use for validation
@@ -201,27 +200,3 @@ class Places365DataModule(LightningDataModule):
             #places365_normalization()
         ])
         return places365_transforms
-'''
-datamodule = Places365DataModule()
-datamodule.setup()
-
-test_loader = datamodule.test_dataloader()
-train_loader = datamodule.deterministic_train_dataloader()
-
-
-for i,k in zip(train_loader,test_loader):
-    import ipdb; ipdb.set_trace()
-
-mean = 0.
-std = 0.
-nb_samples = 0.
-for data in train_loader:
-    batch_samples = data[0].size(0)
-    data = data[0].view(batch_samples, data[0].size(1), -1)
-    mean += data.mean(2).sum(0)
-    std += data.std(2).sum(0)
-    nb_samples += batch_samples
-
-mean /= nb_samples
-std /= nb_samples
-'''

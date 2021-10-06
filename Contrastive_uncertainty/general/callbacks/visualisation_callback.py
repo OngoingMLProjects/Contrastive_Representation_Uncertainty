@@ -33,12 +33,13 @@ class Visualisation(pl.Callback): # General class for visualisation
         #self.ood_datamodule = ood_datamodule
         #self.ood_datamodule.test_transforms= self.datamodule.test_transforms   # Make it so that the OOD datamodule has the same transform as the true module
 
-        self.datamodule.setup()
+        
         #self.ood_datamodule.setup()
         # setup data
         self.quick_callback = quick_callback
     
     def on_test_epoch_end(self, trainer, pl_module):
+        self.datamodule.setup()
         num_classes = self.datamodule.num_classes
 
         # Obtain representations for the normal case as well as the concatenated representations
