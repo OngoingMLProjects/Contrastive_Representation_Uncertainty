@@ -12,9 +12,9 @@ weight_decay = 1e-4,
 emb_dim = 128,
 instance_encoder = 'resnet18',
 
-dataset ='CIFAR100',
+dataset ='MNIST',
 #OOD_dataset =['MNIST','FashionMNIST','KMNIST','EMNIST','Places365','VOC'],
-OOD_dataset =['Places365'],
+#OOD_dataset =['Places365'],
 #OOD_dataset =['STL10'],
 #dataset = 'MNIST',
 #OOD_dataset = ['SVHN'],
@@ -66,7 +66,8 @@ val_check = 20,
 model_saving = 200, # Used to control how often the model is saved
 
 #callbacks = ['Model_saving'],
-callbacks = ['Mahalanobis Distance','Different K Nearest Neighbours Class 1D Typicality'],
+#callbacks = ['Mahalanobis Distance','Different K Nearest Neighbours Class 1D Typicality'],
+callbacks = ['Different K Nearest Neighbours Marginal 1D Typicality'],
 #callbacks = ['Mahalanobis Distance','Nearest'],
 )
 
