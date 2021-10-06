@@ -55,3 +55,15 @@ def celeba_normalization():
 def widerface_normalization():
     normalize = transforms.Normalize(mean = [0.4696, 0.4345, 0.4078], std = [0.2488, 0.2387, 0.2390])
     return normalize
+
+
+# Currently have not calculated it
+def places365_normalization():
+    normalize = transforms.Normalize(mean = [0.4696, 0.4345, 0.4078], std = [0.2488, 0.2387, 0.2390])
+    return normalize
+
+
+# calculated manually using the procedure described in https://discuss.pytorch.org/t/about-normalization-using-pre-trained-vgg16-networks/23560/6
+def voc_normalization():
+    normalize = transforms.Normalize(mean = [0.3748, 0.3472, 0.3164], std = [0.2261, 0.2138, 0.2083])
+    return normalize

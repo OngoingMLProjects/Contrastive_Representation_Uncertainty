@@ -8,12 +8,28 @@ import os
 # Import general params
 import json
 # For each ID dataset, it maps the dict to another value
+'''
 dataset_dict = {'MNIST': {'FashionMNIST':0, 'KMNIST':1,'EMNIST':2},
             'FashionMNIST': {'MNIST':0, 'KMNIST':1,'EMNIST':2},
             'KMNIST': {'MNIST':0, 'FashionMNIST':1,'EMNIST':2},
             'CIFAR10': {'SVHN':0, 'CIFAR100':1},
             'CIFAR100': {'SVHN':0, 'CIFAR10':1}
 }
+'''
+'''
+dataset_dict = {'CIFAR10': {'STL10':0,'Caltech101':1, 'CelebA':2,'WIDERFace':3,'SVHN':4, 'CIFAR100':5},
+            'CIFAR100': {'STL10':0, 'Caltech101':1, 'CelebA':2,'WIDERFace':3, 'SVHN':4, 'CIFAR10':5}
+}
+'''
+
+dataset_dict = {'MNIST': {'FashionMNIST':0, 'KMNIST':1,'EMNIST':2},
+            'FashionMNIST': {'MNIST':0, 'KMNIST':1,'EMNIST':2},
+            'KMNIST': {'MNIST':0, 'FashionMNIST':1,'EMNIST':2},
+            'CIFAR10': {'STL10':0,'Caltech101':1, 'CelebA':2,'WIDERFace':3,'SVHN':4, 'CIFAR100':5, 'VOC':6, 'Places365':7, 'MNIST':8, 'FashionMNIST':9, 'KMNIST':10, 'EMNIST':11},
+            'CIFAR100': {'STL10':0, 'Caltech101':1, 'CelebA':2,'WIDERFace':3, 'SVHN':4, 'CIFAR10':5,'VOC':6, 'Places365':7,'MNIST':8, 'FashionMNIST':9, 'KMNIST':10, 'EMNIST':11}
+}
+
+            
 # Dict for the specific case to the other value
 key_dict = {'model_type':{'CE':0, 'Moco':1, 'SupCon':2},
             'dataset': {'MNIST':0, 'FashionMNIST':1, 'KMNIST':2, 'CIFAR10':3,'CIFAR100':4}}
@@ -78,6 +94,7 @@ if __name__ =='__main__':
     desired_key = 'Different K Normalized One Dim Class Typicality KNN'
     #run_filter={"config.group":"Baselines Repeats"}
     #run_filter={"config.group":"OOD hierarchy baselines","config.model_type": "SupCon", 'state':'finished'}
-    run_filter={"config.group":"New Model Testing","config.epochs":300}
+    run_filter={"config.group":"OOD hierarchy baselines","config.model_type": "SupCon"}
+    #run_filter={"config.group":"New Model Testing","config.epochs":300}
     #run_filter={"config.group":"Baselines Repeats","$or": [{"config.model_type":"Moco"}, {"config.model_type": "SupCon"}]}
     generic_saving(desired_key,run_filter)

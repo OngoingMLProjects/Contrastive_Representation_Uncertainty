@@ -22,12 +22,12 @@ import copy
 from torchvision import transforms as transform_lib
 from torchvision.transforms import transforms
 
-from Contrastive_uncertainty.general.datamodules.dataset_normalizations import celeba_normalization
+from Contrastive_uncertainty.general.datamodules.dataset_normalizations import voc_normalization
 from Contrastive_uncertainty.general.datamodules.datamodule_transforms import dataset_with_indices
 
 # based on https://pretagteam.com/question/pytorch-lightning-get-models-output-on-full-train-data-during-training
-class Places365DataModule(LightningDataModule):
-    name = 'places365'
+class VOCDataModule(LightningDataModule):
+    name = 'voc'
     extra_args = {}
 
     def __init__(
@@ -42,7 +42,7 @@ class Places365DataModule(LightningDataModule):
     ):
         super().__init__(*args, **kwargs)
         # http://places2.csail.mit.edu/download.html
-        self.dims = (3, 256, 256)
+        self.dims = (3, 128, 128)
         self.val_split = val_split
         self.num_workers = num_workers
         self.batch_size = batch_size
@@ -79,36 +79,35 @@ class Places365DataModule(LightningDataModule):
     def input_height(self):
         """
         Return:
-            256
+            128
         """
-        return 256
+        return 128
 
     
     def prepare_data(self):
         """
-        Saves Places365 files to data_dir
+        Saves VOC files to data_dir
         """
         #torchvision.datasets.CelebA(self.data_dir)
         pass # Using pass as I need to download the data directly as there does seem to be errors in the downloading of the data
     
 
     def setup(self):
-        data_path = 'places365/'
+        data_path = 'VOC/'
         Indices_ImageFolder =dataset_with_indices(torchvision.datasets.ImageFolder)
 
-        places365_dataset = Indices_ImageFolder(
+        voc_dataset = Indices_ImageFolder(
             root=data_path,
         transform=torchvision.transforms.ToTensor())
         
-        
-        self.idx2class = {i:f'class {i}' for i in range(max(places365_dataset.targets)+1)}
-        if isinstance(places365_dataset.targets, list):
-            places365_dataset.targets = torch.Tensor(places365_dataset.targets).type(torch.int64) # Need to change into int64 to use in test step 
-        elif isinstance(places365_dataset.targets,np.ndarray):
-            places365_dataset.targets = torch.from_numpy(places365_dataset.targets).type(torch.int64)
+        self.idx2class = {i:f'class {i}' for i in range(max(voc_dataset.targets)+1)}
+        if isinstance(voc_dataset.targets, list):
+            voc_dataset.targets = torch.Tensor(voc_dataset.targets).type(torch.int64) # Need to change into int64 to use in test step 
+        elif isinstance(voc_dataset.targets,np.ndarray):
+            voc_dataset.targets = torch.from_numpy(voc_dataset.targets).type(torch.int64)
 
         # Same validataion and test set size as CIFAR10
-        train_dataset, val_dataset, test_dataset = random_split(places365_dataset, [2153460, 5000, 10000],generator=torch.Generator().manual_seed(self.seed)
+        train_dataset, val_dataset, test_dataset = random_split(voc_dataset, [7951, 5000, 10000],generator=torch.Generator().manual_seed(self.seed)
         )
 
         train_transforms = self.default_transforms() if self.train_transforms is None else self.train_transforms
@@ -196,32 +195,9 @@ class Places365DataModule(LightningDataModule):
         return loader
 
     def default_transforms(self):
-        places365_transforms = transform_lib.Compose([
+        voc_transforms = transform_lib.Compose([
+            transforms.Resize(size = (128,128)),
             transform_lib.ToTensor(),
-            #places365_normalization()
+            voc_normalization()
         ])
-        return places365_transforms
-'''
-datamodule = Places365DataModule()
-datamodule.setup()
-
-test_loader = datamodule.test_dataloader()
-train_loader = datamodule.deterministic_train_dataloader()
-
-
-for i,k in zip(train_loader,test_loader):
-    import ipdb; ipdb.set_trace()
-
-mean = 0.
-std = 0.
-nb_samples = 0.
-for data in train_loader:
-    batch_samples = data[0].size(0)
-    data = data[0].view(batch_samples, data[0].size(1), -1)
-    mean += data.mean(2).sum(0)
-    std += data.std(2).sum(0)
-    nb_samples += batch_samples
-
-mean /= nb_samples
-std /= nb_samples
-'''
+        return voc_transforms

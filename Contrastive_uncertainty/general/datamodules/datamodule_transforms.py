@@ -6,7 +6,10 @@ from warnings import warn
 from numpy.lib.type_check import imag
 from Contrastive_uncertainty.general.datamodules.dataset_normalizations import cifar10_normalization,\
     cifar100_normalization, fashionmnist_normalization, mnist_normalization, kmnist_normalization,\
-    svhn_normalization, stl10_normalization, caltech101_normalization,celeba_normalization,widerface_normalization, emnist_normalization
+    svhn_normalization, stl10_normalization,\
+    caltech101_normalization,celeba_normalization,widerface_normalization,\
+    places365_normalization,voc_normalization,\
+    emnist_normalization
     
 import torch
 
@@ -131,6 +134,7 @@ class Moco2EvalCIFAR10Transforms:
 
     def __call__(self, inp):
         if isinstance(inp,Image):
+            #https://stackoverflow.com/questions/52962969/number-of-channels-in-pil-pillow-image
             if len(inp.getbands())<3:
                 inp = self.colorize(inp)
             if inp.size[0] !=32:
@@ -681,6 +685,150 @@ class Moco2EvalWIDERFaceTransforms:
             transforms.CenterCrop(height),
             transforms.ToTensor(),
             widerface_normalization(),
+        ])
+
+    def __call__(self, inp):
+        if isinstance(inp,Image):
+            if len(inp.getbands())<3:
+                inp = self.colorize(inp)
+            if inp.size[0] !=32:
+                inp = self.resize(inp)
+        elif isinstance(inp, torch.Tensor):
+            if len(inp.shape)<3:
+                inp = self.colorize(inp)
+            if inp.shape[1] !=32:
+                inp = self.resize(inp)
+
+        q = self.test_transform(inp)
+        k = self.test_transform(inp)
+        return q, k
+
+class Moco2TrainPlaces365Transforms:
+    
+    """
+    Moco 2 augmentation:
+    https://arxiv.org/pdf/2003.04297.pdf
+    """
+
+    def __init__(self, height=32):
+        # image augmentation functions
+        self.colorize = transforms.Grayscale(num_output_channels=3) #  change shape from 2D to 3D
+        self.resize = transforms.Resize(size = (height,height))
+        self.train_transform = transforms.Compose([
+            transforms.Resize(height),
+            transforms.RandomResizedCrop(height, scale=(0.2, 1.)),
+            transforms.RandomApply([
+                transforms.ColorJitter(0.4, 0.4, 0.4, 0.1)  # not strengthened
+            ], p=0.8),
+            transforms.RandomGrayscale(p=0.2),
+            transforms.RandomApply([GaussianBlur([.1, 2.])], p=0.5),
+            transforms.RandomHorizontalFlip(),
+            transforms.ToTensor(),
+            places365_normalization(),
+        ])
+
+    def __call__(self, inp):
+        if isinstance(inp,Image):
+            if len(inp.getbands())<3:
+                inp = self.colorize(inp)
+            if inp.size[0] !=32:
+                inp = self.resize(inp)
+        elif isinstance(inp, torch.Tensor):
+            if len(inp.shape)<3:
+                inp = self.colorize(inp)
+            if inp.shape[1] !=32:
+                inp = self.resize(inp)
+
+        q = self.train_transform(inp)
+        k = self.train_transform(inp)
+        return q, k
+    
+
+class Moco2EvalPlaces365Transforms:
+    """
+    Moco 2 augmentation:
+    https://arxiv.org/pdf/2003.04297.pdf
+    """
+    def __init__(self, height=32):
+        self.colorize = transforms.Grayscale(num_output_channels=3) #  change shape from 2D to 3D
+        self.resize = transforms.Resize(size = (height,height))
+        self.test_transform = transforms.Compose([
+            transforms.Resize(height + 12),
+            transforms.CenterCrop(height),
+            transforms.ToTensor(),
+            places365_normalization(),
+        ])
+
+    def __call__(self, inp):
+        if isinstance(inp,Image):
+            if len(inp.getbands())<3:
+                inp = self.colorize(inp)
+            if inp.size[0] !=32:
+                inp = self.resize(inp)
+        elif isinstance(inp, torch.Tensor):
+            if len(inp.shape)<3:
+                inp = self.colorize(inp)
+            if inp.shape[1] !=32:
+                inp = self.resize(inp)
+
+        q = self.test_transform(inp)
+        k = self.test_transform(inp)
+        return q, k
+
+class Moco2TrainVOCTransforms:
+    
+    """
+    Moco 2 augmentation:
+    https://arxiv.org/pdf/2003.04297.pdf
+    """
+
+    def __init__(self, height=32):
+        # image augmentation functions
+        self.colorize = transforms.Grayscale(num_output_channels=3) #  change shape from 2D to 3D
+        self.resize = transforms.Resize(size = (height,height))
+        self.train_transform = transforms.Compose([
+            transforms.Resize(height),
+            transforms.RandomResizedCrop(height, scale=(0.2, 1.)),
+            transforms.RandomApply([
+                transforms.ColorJitter(0.4, 0.4, 0.4, 0.1)  # not strengthened
+            ], p=0.8),
+            transforms.RandomGrayscale(p=0.2),
+            transforms.RandomApply([GaussianBlur([.1, 2.])], p=0.5),
+            transforms.RandomHorizontalFlip(),
+            transforms.ToTensor(),
+            voc_normalization(),
+        ])
+
+    def __call__(self, inp):
+        if isinstance(inp,Image):
+            if len(inp.getbands())<3:
+                inp = self.colorize(inp)
+            if inp.size[0] !=32:
+                inp = self.resize(inp)
+        elif isinstance(inp, torch.Tensor):
+            if len(inp.shape)<3:
+                inp = self.colorize(inp)
+            if inp.shape[1] !=32:
+                inp = self.resize(inp)
+
+        q = self.train_transform(inp)
+        k = self.train_transform(inp)
+        return q, k
+    
+
+class Moco2EvalVOCTransforms:
+    """
+    Moco 2 augmentation:
+    https://arxiv.org/pdf/2003.04297.pdf
+    """
+    def __init__(self, height=32):
+        self.colorize = transforms.Grayscale(num_output_channels=3) #  change shape from 2D to 3D
+        self.resize = transforms.Resize(size = (height,height))
+        self.test_transform = transforms.Compose([
+            transforms.Resize(height + 12),
+            transforms.CenterCrop(height),
+            transforms.ToTensor(),
+            voc_normalization(),
         ])
 
     def __call__(self, inp):

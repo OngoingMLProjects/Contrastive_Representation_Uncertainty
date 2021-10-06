@@ -9,6 +9,8 @@ from Contrastive_uncertainty.general.datamodules.stl10_datamodule import STL10Da
 from Contrastive_uncertainty.general.datamodules.caltech101_datamodule import Caltech101DataModule
 from Contrastive_uncertainty.general.datamodules.celeba_datamodule import CelebADataModule
 from Contrastive_uncertainty.general.datamodules.widerface_datamodule import WIDERFaceDataModule
+from Contrastive_uncertainty.general.datamodules.places365_datamodule import Places365DataModule
+from Contrastive_uncertainty.general.datamodules.voc_datamodule import VOCDataModule
 from Contrastive_uncertainty.general.datamodules.emnist_datamodule import EMNISTDataModule
 
 
@@ -21,6 +23,8 @@ Moco2TrainSVHNTransforms, Moco2EvalSVHNTransforms,Moco2MultiSVHNTransforms,\
 Moco2TrainCaltech101Transforms,Moco2EvalCaltech101Transforms,\
 Moco2TrainCelebATransforms, Moco2EvalCelebATransforms,\
 Moco2TrainWIDERFaceTransforms, Moco2EvalWIDERFaceTransforms,\
+Moco2TrainPlaces365Transforms, Moco2EvalPlaces365Transforms,\
+Moco2TrainVOCTransforms, Moco2EvalVOCTransforms,\
 Moco2TrainKMNISTTransforms,Moco2EvalKMNISTTransforms,Moco2MultiKMNISTTransforms, \
 Moco2TrainSTL10Transforms, Moco2EvalSTL10Transforms, Moco2TrainEMNISTTransforms, Moco2EvalEMNISTTransforms, Moco2MultiEMNISTTransforms
 
@@ -59,6 +63,12 @@ dataset_dict = {'MNIST':{'module':MNISTDataModule,'train_transform':Moco2TrainMN
                 'WIDERFace':{'module': WIDERFaceDataModule,'train_transform':Moco2TrainWIDERFaceTransforms(),
                 'val_transform':Moco2EvalWIDERFaceTransforms(),'test_transform':Moco2EvalWIDERFaceTransforms()},
 
+                'Places365':{'module': Places365DataModule,'train_transform':Moco2TrainPlaces365Transforms(),
+                'val_transform':Moco2EvalPlaces365Transforms(),'test_transform':Moco2EvalPlaces365Transforms()},
+
+                'VOC':{'module': VOCDataModule,'train_transform':Moco2TrainVOCTransforms(),
+                'val_transform':Moco2EvalVOCTransforms(),'test_transform':Moco2EvalVOCTransforms()},
+                
                 }
 
 
@@ -97,8 +107,8 @@ OOD_dict = {'MNIST':['FashionMNIST','KMNIST','EMNIST'],
             'KMNIST':['MNIST','FashionMNIST','EMNIST'],
             'EMNIST':['MNIST','FashionMNIST','KMNIST'],
             
-            'CIFAR10':['Caltech101','CelebA','WIDERFace'],
-            'CIFAR100':['Caltech101','CelebA','WIDERFace'],
+            'CIFAR10':['Caltech101','CelebA','WIDERFace','Places365','VOC'],
+            'CIFAR100':['Caltech101','CelebA','WIDERFace','Places365','VOC'],
             #'CIFAR10':['CIFAR100','SVHN'],
             #'CIFAR100':['CIFAR10','SVHN'],
             'SVHN':['CIFAR10','CIFAR100']}

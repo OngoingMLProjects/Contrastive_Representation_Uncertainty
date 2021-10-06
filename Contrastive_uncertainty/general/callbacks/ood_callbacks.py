@@ -63,10 +63,10 @@ class Mahalanobis_OOD(pl.Callback):
         
         # Obtain representations of the data
         
-        features_ood, labels_ood = self.get_features(pl_module, ood_loader)
+        
         features_train, labels_train = self.get_features(pl_module, train_loader)
         features_test, labels_test = self.get_features(pl_module, test_loader)
-        
+        features_ood, labels_ood = self.get_features(pl_module, ood_loader)
         
         # Number of classes obtained from the max label value + 1 ( to take into account counting from zero)
 

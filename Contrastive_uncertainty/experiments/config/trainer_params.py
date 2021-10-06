@@ -5,7 +5,7 @@ trainer_hparams = dict(
 seed = 26,
 epochs = 0,
 bsz = 32,#64,
-OOD_dataset = ['STL10'],
+OOD_dataset =['MNIST','FashionMNIST','KMNIST','EMNIST','Places365','VOC'],
 # Trainer configurations
 fast_run = False,
 quick_callback = False,

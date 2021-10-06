@@ -13,7 +13,7 @@ emb_dim = 128,
 instance_encoder = 'resnet18',
 
 dataset ='CIFAR100',
-OOD_dataset =['FashionMNIST'],
+OOD_dataset =['MNIST','FashionMNIST','KMNIST','EMNIST','Places365','VOC'],
 #OOD_dataset =['STL10'],
 #dataset = 'MNIST',
 #OOD_dataset = ['SVHN'],
