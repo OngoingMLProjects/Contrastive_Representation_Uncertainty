@@ -792,7 +792,7 @@ class DifferentKNNClassTypicality(DifferentKNNMarginal1DTypicality):
 
         return means, covs, dtrain_means
 
-
+    '''
     def get_thresholds(self, fdata, means, eigvalues, eigvectors, dtrain_1d_mean, dtrain_1d_std,K):
         thresholds = []
         num_batches = len(fdata)//K
@@ -816,8 +816,9 @@ class DifferentKNNClassTypicality(DifferentKNNMarginal1DTypicality):
             thresholds.append(ddata)
 
         return thresholds
-    
-    def get_thresholds(self,means, covs, dtrain_mean, fdata, K):
+    '''
+
+    def get_thresholds(self,fdata, means, covs, dtrain_mean, K):
         
         num_classes = len(means)
         thresholds = []
@@ -829,46 +830,43 @@ class DifferentKNNClassTypicality(DifferentKNNMarginal1DTypicality):
             # Calculate the scores for a particular batch of data for all the different classes
             ddata = [
             np.sum(
-                (fdata - means[class_num]) # Nawid - distance between the data point and the mean
+                (fdata_batch - means[class_num]) # Nawid - distance between the data point and the mean
                 * (
                     np.linalg.pinv(covs[class_num]).dot(
-                        (fdata - means[class_num]).T
+                        (fdata_batch - means[class_num]).T
                     ) # Nawid - calculating the covariance matrix of the data belonging to a particular class and dot product by the distance of the data point from the mean (distance calculation)
                 ).T,
                 axis=-1,
             )
             for class_num in range(num_classes) # Nawid - done for all the different classes
             ]
+            # ddata is a list of n classes where each element has a shape of (batch,)  
+            # calculate the average scores for the situation within a class and see how the average deviates from the mean it is a list of n classes where each value is a scalar
+            ddata = [np.abs(np.mean(ddata[class_num])-dtrain_mean[class_num]) for class_num in range(num_classes)] # deviation from the mean for the different classes
 
-            # NEED TO FINISH WORKING ON THIS PART
-            ddata = [np.mean(ddata[class_num])-dtrain_mean[class_num] for class_num in range(num_classes)]
-
-            # shape (dim) average of all data in batch size
-            ddata = np.mean(ddata,axis= 1) # shape : (dim)
-            
-            # Sum of the deviations of each individual dimension
-            ddata_deviation = np.sum(np.abs(ddata))
-
-            thresholds.append(ddata_deviation)
+            ddata = np.min(ddata ,axis=0) # Finds min of all the class values
+            thresholds.append(ddata)
         
         return thresholds
     
-    
-
-    def get_eval_results(self, ftrain, ftest, food):
+    def get_eval_results(self, ftrain, ftest, food,labelstrain):
         ftrain_norm, ftest_norm, food_norm = self.normalise(ftrain, ftest, food)
-        name = f'Different K Normalized One Dim Marginal Typicality KNN OOD - {self.OOD_Datamodule.name}'
-        self.datasaving(ftrain_norm,ftest_norm,food_norm,name)        
+        name = f'Different K Class Typicality KNN OOD - {self.OOD_Datamodule.name}'
+        self.datasaving(ftrain_norm,ftest_norm,food_norm,labelstrain,name)        
     
-    def datasaving(self,ftrain,ftest, food,wandb_name):
+    def datasaving(self,ftrain,ftest, food,labelstrain, wandb_name):
+        
         K_values = [1,5,10,15,20,25]
-        mean, cov, eigvalues, eigvectors, dtrain_1d_mean, dtrain_1d_std = self.get_1d_train(ftrain)
+        means, covs, dtrain_means = self.get_train(ftrain,labelstrain)
         table_data = {'K Value':[], 'AUROC':[]}
         for k in K_values:
             knn_indices = self.get_nearest_neighbours(ftest,food,k)
             knn_ID_features, knn_OOD_features = self.get_knn_features(ftest, food, knn_indices)
-            din = self.get_thresholds(knn_ID_features, mean, eigvalues,eigvectors, dtrain_1d_mean,dtrain_1d_std,k)
-            dood = self.get_thresholds(knn_OOD_features, mean, eigvalues,eigvectors, dtrain_1d_mean,dtrain_1d_std,k)
+
+            din = self.get_thresholds(knn_ID_features, means, covs, dtrain_means, k)
+            dood = self.get_thresholds(knn_OOD_features, means, covs, dtrain_means, k)
+
+            #dood = self.get_thresholds(knn_OOD_features, mean, eigvalues,eigvectors, dtrain_1d_mean,dtrain_1d_std,k)
             AUROC = get_roc_sklearn(din, dood)
 
             table_data['K Value'].append(k)

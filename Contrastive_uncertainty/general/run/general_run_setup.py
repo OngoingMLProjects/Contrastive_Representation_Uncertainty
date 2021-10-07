@@ -8,7 +8,7 @@ from Contrastive_uncertainty.general.callbacks.metrics.metric_callback import Me
 from Contrastive_uncertainty.general.callbacks.ood_callbacks import Mahalanobis_OOD, Class_Mahalanobis_OOD, Mahalanobis_OOD_Fractions
 from Contrastive_uncertainty.general.callbacks.nearest_neighbours_callbacks import NearestNeighbours, NearestClassNeighbours,\
 NearestNeighbours1DTypicality, NearestNeighboursClass1DTypicality, OracleNearestNeighboursClass1DTypicality, DifferentKNNClass1DTypicality,\
-DifferentKNNMarginal1DTypicality
+DifferentKNNMarginal1DTypicality, DifferentKNNClassTypicality
 
 
 def train_run_name(model_name, config, group=None):
@@ -60,7 +60,9 @@ def callback_dictionary(Datamodule,config,data_dict):
                 
 
                 # Ablation studies
-                f'Different K Nearest Neighbours Marginal 1D Typicality {ood_dataset}':DifferentKNNMarginal1DTypicality(Datamodule,OOD_Datamodule,quick_callback=quick_callback)}
+                f'Different K Nearest Neighbours Marginal 1D Typicality {ood_dataset}':DifferentKNNMarginal1DTypicality(Datamodule,OOD_Datamodule,quick_callback=quick_callback),
+                f'Different K Nearest Neighbours Class Typicality {ood_dataset}':DifferentKNNClassTypicality(Datamodule,OOD_Datamodule,quick_callback=quick_callback)}
+                
         callback_dict.update(OOD_callback)
     
     return callback_dict
