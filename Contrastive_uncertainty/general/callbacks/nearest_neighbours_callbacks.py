@@ -792,32 +792,6 @@ class DifferentKNNClassTypicality(DifferentKNNMarginal1DTypicality):
 
         return means, covs, dtrain_means
 
-    '''
-    def get_thresholds(self, fdata, means, eigvalues, eigvectors, dtrain_1d_mean, dtrain_1d_std,K):
-        thresholds = []
-        num_batches = len(fdata)//K
-        # Currently goes through a single data point at a time which is not very efficient
-        for i in range(num_batches):
-            fdata_batch = fdata[(i*K):((i+1)*K)]
-            ddata = [np.matmul(eigvectors[class_num].T,(fdata_batch - means[class_num]).T)**2/eigvalues[class_num] for class_num in range(len(means))] # Calculate the 1D scores for all the different classes 
-        
-            # obtain the normalised the scores for the different classes
-            ddata = [ddata[class_num] - dtrain_1d_mean[class_num]/(dtrain_1d_std[class_num]  +1e-10) for class_num in range(len(means))] # shape (dim, batch)
-            
-            # shape (dim) average of all data in batch size
-            ddata = [np.mean(ddata[class_num],axis=1) for class_num in range(len(means))] # shape dim
-
-            # Obtain the sum of absolute normalised scores
-            scores = [np.sum(np.abs(ddata[class_num]),axis=0) for class_num in range(len(means))]
-            # Obtain the scores corresponding to the lowest class
-            ddata = np.min(scores,axis=0)
-
-
-            thresholds.append(ddata)
-
-        return thresholds
-    '''
-
     def get_thresholds(self,fdata, means, covs, dtrain_mean, K):
         
         num_classes = len(means)
@@ -858,6 +832,112 @@ class DifferentKNNClassTypicality(DifferentKNNMarginal1DTypicality):
         
         K_values = [1,5,10,15,20,25]
         means, covs, dtrain_means = self.get_train(ftrain,labelstrain)
+        table_data = {'K Value':[], 'AUROC':[]}
+        for k in K_values:
+            knn_indices = self.get_nearest_neighbours(ftest,food,k)
+            knn_ID_features, knn_OOD_features = self.get_knn_features(ftest, food, knn_indices)
+
+            din = self.get_thresholds(knn_ID_features, means, covs, dtrain_means, k)
+            dood = self.get_thresholds(knn_OOD_features, means, covs, dtrain_means, k)
+
+            #dood = self.get_thresholds(knn_OOD_features, mean, eigvalues,eigvectors, dtrain_1d_mean,dtrain_1d_std,k)
+            AUROC = get_roc_sklearn(din, dood)
+
+            table_data['K Value'].append(k)
+            table_data['AUROC'].append(round(AUROC,3))
+
+        table_df = pd.DataFrame(table_data)
+        table = wandb.Table(dataframe=table_df)
+        wandb.log({wandb_name:table})
+
+
+class DifferentKNNMarginalTypicality(DifferentKNNMarginal1DTypicality):
+    def __init__(self, Datamodule,OOD_Datamodule,
+        quick_callback:bool = True,K:int = 10):
+
+        super().__init__(Datamodule,OOD_Datamodule, quick_callback,K)
+        # Used to save the summary value
+
+    def on_test_epoch_end(self, trainer, pl_module):
+        return super().on_test_epoch_end(trainer, pl_module)
+
+    def forward_callback(self, trainer, pl_module):
+        train_loader = self.Datamodule.deterministic_train_dataloader()
+        test_loader = self.Datamodule.test_dataloader()
+        ood_loader = self.OOD_Datamodule.test_dataloader()
+
+        features_train, labels_train = self.get_features(pl_module, train_loader)
+        features_test, labels_test = self.get_features(pl_module, test_loader)
+        features_ood, labels_ood = self.get_features(pl_module, ood_loader)
+
+        self.get_eval_results(
+            np.copy(features_train),
+            np.copy(features_test),
+            np.copy(features_ood))
+        
+    def get_features(self, pl_module, dataloader):
+        return super().get_features(pl_module, dataloader)
+    
+    def normalise(self, ftrain, ftest, food):
+        return super().normalise(ftrain, ftest, food)
+    
+    def get_nearest_neighbours(self, ftest, food,K):
+        return super().get_nearest_neighbours(ftest, food,K)
+
+    # get the features of the data which also has the KNN in either the test set or the OOD dataset
+    def get_knn_features(self, ftest, food, knn_indices):
+        return super().get_knn_features(ftest, food, knn_indices)
+
+    # Get the mean, covariance and the average distance for a class
+    def get_train(self, ftrain):
+        mean = np.mean(ftrain,axis=0,keepdims=True) 
+        cov = np.cov(ftrain.T, bias=True)
+        
+        dtrain = np.sum(
+                (ftrain - mean) # Nawid - distance between the data point and the mean
+                * (
+                    np.linalg.pinv(cov).dot(
+                        (ftrain - mean).T
+                    ) # Nawid - calculating the covariance matrix of the data belonging to a particular class and dot product by the distance of the data point from the mean (distance calculation)
+                ).T,
+                axis=-1)
+            
+        dtrain_mean = np.mean(dtrain)
+
+        return mean, cov, dtrain_mean
+
+    def get_thresholds(self,fdata, mean, cov, dtrain_mean, K):
+        thresholds = []
+        num_batches = len(fdata)//K
+        # Currently goes through a single data point at a time which is not very efficient
+        for i in range(num_batches):
+            fdata_batch = fdata[(i*K):((i+1)*K)]
+            # Calculate the scores for a particular batch of data for all the different classes
+            ddata = np.sum(
+                (fdata_batch - mean) # Nawid - distance between the data point and the mean
+                * (
+                    np.linalg.pinv(cov).dot(
+                        (fdata_batch - mean).T
+                    ) # Nawid - calculating the covariance matrix of the data belonging to a particular class and dot product by the distance of the data point from the mean (distance calculation)
+                ).T,
+                axis=-1)
+            # ddata is a list of n classes where each element has a shape of (batch,)  
+            # calculate the average scores for the situation within a class and see how the average deviates from the mean it is a list of n classes where each value is a scalar
+            ddata = np.abs(np.mean(ddata)-dtrain_mean)
+            thresholds.append(ddata)
+
+        return thresholds
+    
+    def get_eval_results(self, ftrain, ftest, food):
+        ftrain_norm, ftest_norm, food_norm = self.normalise(ftrain, ftest, food)
+        name = f'Different K Marginal Typicality KNN OOD - {self.OOD_Datamodule.name}'
+        self.datasaving(ftrain_norm,ftest_norm,food_norm,name)        
+    
+    def datasaving(self,ftrain,ftest, food, wandb_name):
+        
+        K_values = [1,5,10,15,20,25]
+        #K_values = [5]
+        means, covs, dtrain_means = self.get_train(ftrain)
         table_data = {'K Value':[], 'AUROC':[]}
         for k in K_values:
             knn_indices = self.get_nearest_neighbours(ftest,food,k)

@@ -18,7 +18,7 @@ api = wandb.Api()
 #runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"New Model Testing","config.epochs":300})
 #runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"New Model Testing","config.model_type":"Centroid_VicReg","config.dataset": "CIFAR10"})
 #runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"New Model Testing","config.model_type":"Centroid_VicReg","config.dataset": "CIFAR100"})
-#runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"New Model Testing","config.model_type":"Centroid_VicReg"})
+runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"New Model Testing","config.model_type":"Centroid_VicReg"})
 
 # Used to filter simulations which are finished rather than still continuing
 #runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"New Model Testing","config.model_type":"Centroid_VicReg",'state':'finished'})
@@ -30,7 +30,7 @@ api = wandb.Api()
 # Choose specifcally the specific group, the CIFAR100 dataset as well as choosing Moco or Supcon model
 #runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"OOD hierarchy baselines","config.dataset": "CIFAR100","$or": [{"config.model_type":"Moco" }, {"config.model_type": "SupCon"}]})
 
-runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"OOD hierarchy baselines","config.model_type": "SupCon","config.epochs":300,"$or": [{"config.dataset":"CIFAR10" }, {"config.dataset": "CIFAR100"}]})
+#runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"OOD hierarchy baselines","config.model_type": "SupCon","config.epochs":300,"$or": [{"config.dataset":"CIFAR10" }, {"config.dataset": "CIFAR100"}]})
 #runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"OOD hierarchy baselines","config.model_type": "Moco"})
 
 
