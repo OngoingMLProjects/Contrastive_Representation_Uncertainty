@@ -8,6 +8,7 @@ from Contrastive_uncertainty.general.datamodules.svhn_datamodule import SVHNData
 from Contrastive_uncertainty.general.datamodules.stl10_datamodule import STL10DataModule
 from Contrastive_uncertainty.general.datamodules.caltech101_datamodule import Caltech101DataModule
 from Contrastive_uncertainty.general.datamodules.caltech256_datamodule import Caltech256DataModule
+from Contrastive_uncertainty.general.datamodules.imagenet_datamodule import ImageNetDataModule
 from Contrastive_uncertainty.general.datamodules.celeba_datamodule import CelebADataModule
 from Contrastive_uncertainty.general.datamodules.widerface_datamodule import WIDERFaceDataModule
 from Contrastive_uncertainty.general.datamodules.places365_datamodule import Places365DataModule
@@ -23,6 +24,7 @@ Moco2TrainMNISTTransforms, Moco2EvalMNISTTransforms,Moco2MultiMNISTTransforms,\
 Moco2TrainSVHNTransforms, Moco2EvalSVHNTransforms,Moco2MultiSVHNTransforms,\
 Moco2TrainCaltech101Transforms, Moco2EvalCaltech101Transforms,\
 Moco2TrainCaltech256Transforms, Moco2EvalCaltech256Transforms,\
+Moco2TrainImageNetTransforms, Moco2EvalImageNetTransforms,\
 Moco2TrainCelebATransforms, Moco2EvalCelebATransforms,\
 Moco2TrainWIDERFaceTransforms, Moco2EvalWIDERFaceTransforms,\
 Moco2TrainPlaces365Transforms, Moco2EvalPlaces365Transforms,\
@@ -61,6 +63,9 @@ dataset_dict = {'MNIST':{'module':MNISTDataModule,'train_transform':Moco2TrainMN
 
                 'Caltech256':{'module': Caltech256DataModule,'train_transform':Moco2TrainCaltech256Transforms(),
                 'val_transform':Moco2EvalCaltech256Transforms(),'test_transform':Moco2EvalCaltech256Transforms()},
+
+                'ImageNet':{'module': ImageNetDataModule,'train_transform':Moco2TrainImageNetTransforms(),
+                'val_transform':Moco2EvalImageNetTransforms(),'test_transform':Moco2EvalImageNetTransforms()},
 
                 'CelebA':{'module': CelebADataModule,'train_transform':Moco2TrainCelebATransforms(),
                 'val_transform':Moco2EvalCelebATransforms(),'test_transform':Moco2EvalCelebATransforms()},
@@ -117,6 +122,7 @@ OOD_dict = {'MNIST':['FashionMNIST','KMNIST','EMNIST'],
 
             'Caltech101':['STL10', 'CelebA','WIDERFace','SVHN', 'CIFAR10','CIFAR100', 'VOC', 'Places365', 'MNIST', 'FashionMNIST', 'KMNIST', 'EMNIST'],
             'Caltech256':['STL10', 'CelebA','WIDERFace','SVHN','Caltech101', 'CIFAR10','CIFAR100', 'VOC', 'Places365', 'MNIST', 'FashionMNIST', 'KMNIST', 'EMNIST'],
+            'ImageNet':['STL10', 'CelebA','WIDERFace','SVHN','Caltech101', 'Caltech256','CIFAR10','CIFAR100', 'VOC', 'Places365', 'MNIST', 'FashionMNIST', 'KMNIST', 'EMNIST'],
             #'CIFAR10':['CIFAR100','SVHN'],
             #'CIFAR100':['CIFAR10','SVHN'],
             'SVHN':['CIFAR10','CIFAR100']}

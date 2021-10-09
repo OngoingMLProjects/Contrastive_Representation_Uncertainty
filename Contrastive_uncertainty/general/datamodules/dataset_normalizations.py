@@ -73,3 +73,8 @@ def places365_normalization():
 def voc_normalization():
     normalize = transforms.Normalize(mean = [0.3748, 0.3472, 0.3164], std = [0.2261, 0.2138, 0.2083])
     return normalize
+
+# https://stackoverflow.com/questions/58151507/why-pytorch-officially-use-mean-0-485-0-456-0-406-and-std-0-229-0-224-0-2#:~:text=Using%20the%20mean%20and%20std,mean%20and%20std%20is%20recommended.
+def imagenet_normalization():
+    normalize = transforms.Normalize(mean = [0.485, 0.456, 0.406], std = [0.229, 0.224, 0.225])
+    return normalize

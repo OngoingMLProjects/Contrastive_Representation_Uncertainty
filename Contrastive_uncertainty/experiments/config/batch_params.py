@@ -15,7 +15,7 @@ weight_decay = 1e-4,
 # Training parameters in common
 emb_dim = 128,
 instance_encoder = 'resnet50', # Use resnet 18 for confusion log probability 
-dataset = 'Caltech256',
+dataset = 'ImageNet',
 #OOD_dataset = ['CIFAR10'],
 #dataset = 'CIFAR100',
 #OOD_dataset = ['SVHN'],

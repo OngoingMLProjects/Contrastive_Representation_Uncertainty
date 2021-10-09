@@ -24,7 +24,7 @@ from torchvision import transforms as transform_lib
 from torchvision.datasets import Caltech101
 from torchvision.transforms import transforms
 
-from Contrastive_uncertainty.general.datamodules.dataset_normalizations import caltech101_normalization
+from Contrastive_uncertainty.general.datamodules.dataset_normalizations import imagenet_normalization
 from Contrastive_uncertainty.general.datamodules.datamodule_transforms import dataset_with_indices, UpdatedCustomTensorDataset
 
 # http://places2.csail.mit.edu/download.html where I downloaded the dataset for the case of places 365
@@ -39,7 +39,7 @@ class ImageNetDataModule(LightningDataModule):
             data_dir: str = None,
             val_split: int = 500,
             num_workers: int = 16,
-            batch_size: int = 32,
+            batch_size: int = 256,
             seed: int = 42,
             *args,
             **kwargs,
@@ -101,6 +101,7 @@ class ImageNetDataModule(LightningDataModule):
         train_datafolder = 'ImageNet/Imagenet32_train'
         collated_X_data,collated_Y_data = [], [] 
         val_datafolder = 'ImageNet/Imagenet32_val/val_data' 
+        
         for i in range(10):
             X_train,Y_train = self.load_databatch(train_datafolder,i+1)    
             collated_X_data.append(X_train), collated_Y_data.append(Y_train)
@@ -108,84 +109,28 @@ class ImageNetDataModule(LightningDataModule):
         X_train = torch.cat(collated_X_data)
         Y_train = torch.cat(collated_Y_data)
 
+
         X_val, Y_val = self.load_databatch(val_datafolder,idx=0)
-        full_X = torch.cat((X_train,X_val))
-        full_Y = torch.cat((Y_train,Y_val))
-        
         train_transforms = self.default_transforms() if self.train_transforms is None else self.train_transforms
         test_transforms = self.default_transforms() if self.test_transforms is None else self.test_transforms
-        dataset = UpdatedCustomTensorDataset((full_X, full_Y),transform = train_transforms)
         
-        self.train_dataset, self.val_dataset, self.test_dataset = random_split(dataset, [1316167, 5000, 10000],generator=torch.Generator().manual_seed(self.seed)
+        train_dataset = UpdatedCustomTensorDataset((X_train, Y_train),transform = train_transforms)
+        val_dataset = UpdatedCustomTensorDataset((X_val, Y_val),transform = test_transforms)
+        
+        # Use a subset of 1/10 image net for training purposes
+        _ , self.train_dataset, self.val_train_dataset = random_split(train_dataset, [1_146_167,130_000,5000],generator=torch.Generator().manual_seed(self.seed)
         )
-
-        self.augmentation = transforms.Compose([
-        transforms.RandomResizedCrop(size = 256, scale = (0.8, 1.0)),
-        transforms.RandomRotation(degrees = 15),
-        transforms.RandomHorizontalFlip(),
-        transforms.CenterCrop(size = 224),
-        transforms.ToTensor(),
-        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-        ])
-
-        # Preprocessing steps applied to validation and test set.
-        self.transform = transforms.Compose([
-           transforms.Resize(size = 256),
-           transforms.CenterCrop(size = 224),
-           transforms.ToTensor(),
-           transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-        ])
-
         
-        self.train_dataset.dataset.transform = self.augmentation
-        self.test_dataset.dataset.transform = self.transform
-
-        # Need to use deep copy in order to enable the train and test set to have distinct augmentations, otherwise the data augmentation will be postponed each time
-        #self.train_dataset = copy.deepcopy(train_dataset)
-        #self.test_dataset = copy.deepcopy(test_dataset)
-
-        #self.train_dataset.dataset.transform = train_transforms
-        #self.test_dataset.dataset.transform = test_transforms
-
-        #self.val_train_dataset = copy.deepcopy(val_dataset) 
-        #self.val_test_dataset = copy.deepcopy(val_dataset)
-
-        #self.val_train_dataset.dataset.transform = train_transforms
-        #self.val_test_dataset.dataset.transform = test_transforms
-
-        #import ipdb; ipdb.set_trace()
-        '''
-        X_train = np.concatenate(collated_X_data) 
-        Y_train = np.concatenate(collated_Y_data)
-
-        X_train = torch.from_numpy(X_train)
-        '''
+        _, self.val_test_dataset, self.test_dataset = random_split(val_dataset, [35_000,5000, 10000],generator=torch.Generator().manual_seed(self.seed)
+        )
+        
         # Steps to include:
-        # Difficulty cloning the dataset to use different transforms. A few approaches which can be used is determinstically obtaining a subset of the data each time
-        # Also could look at separating the data several times
+        # Difficulty cloning the dataset to use different transforms. A few approaches which can be used is determinstically obtaining a subset of the data each time https://pytorch.org/docs/stable/data.html#torch.utils.data.Subset
+        # Also could look at separating the data several times 
         # Within the custom dataset transform, make it so that it transofmrs to numpy array and PIL image within the transform https://github.com/pytorch/vision/blob/972ca657416c5896ba6e0f5fe7c0d0f3e99e1087/torchvision/datasets/mnist.py#L501
         # Calculate normalisation
         #
         
-
-        '''
-        Indices_ImageFolder =dataset_with_indices(torchvision.datasets.ImageFolder)
-        train_transforms = self.default_transforms() if self.train_transforms is None else self.train_transforms
-        caltech_dataset = Indices_ImageFolder('Caltech101',transform = train_transforms)
-        self.idx2class = {i:f'class {i}' for i in range(max(caltech_dataset.targets)+1)}
-        #self.class2idx = caltech_dataset.class_to_idx 
-        
-        if isinstance(caltech_dataset.targets, list):
-            caltech_dataset.targets = torch.Tensor(caltech_dataset.targets).type(torch.int64) # Need to change into int64 to use in test step 
-        elif isinstance(caltech_dataset.targets,np.ndarray):
-            caltech_dataset.targets = torch.from_numpy(caltech_dataset.targets).type(torch.int64)  
-        
-        train_dataset, val_dataset, test_dtrailataset = random_split(caltech_dataset, [6500, 1000, 1645],generator=torch.Generator().manual_seed(self.seed)
-        )
-        
-        
-        '''
-    
     def unpickle(self,file):
         with open(file, 'rb') as fo:
             dict = pickle.load(fo)
@@ -288,7 +233,7 @@ class ImageNetDataModule(LightningDataModule):
         imagenet_transforms = transform_lib.Compose([
             transforms.Resize(size = (32,32)),
             transform_lib.ToTensor(),
-            #caltech101_normalization()
+            imagenet_normalization()
         ])
         return imagenet_transforms
 
@@ -296,12 +241,23 @@ class ImageNetDataModule(LightningDataModule):
 datamodule = ImageNetDataModule()
 datamodule.setup()
 
+
 test_loader = datamodule.test_dataloader()
 train_loader = datamodule.deterministic_train_dataloader()
-for i,k in zip(train_loader,test_loader):
-    import ipdb; ipdb.set_trace()
-'''
 
+mean = 0.
+std = 0.
+nb_samples = 0.
+for data in train_loader:
+    batch_samples = data[0].size(0)
+    data = data[0].view(batch_samples, data[0].size(1), -1)
+    mean += data.mean(2).sum(0)
+    std += data.std(2).sum(0)
+    nb_samples += batch_samples
+
+mean /= nb_samples
+std /= nb_samples
+'''
 '''
 datamodule = Caltech101DataModule()
 #datamodule.prepare_data()
@@ -310,5 +266,4 @@ datamodule.setup()
 test_loader = datamodule.test_dataloader()
 train_loader = datamodule.deterministic_train_dataloader()
 for i,k in zip(train_loader,test_loader):
-    import ipdb; ipdb.set_trace()
 '''
