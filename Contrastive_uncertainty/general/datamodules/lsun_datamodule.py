@@ -302,5 +302,5 @@ class LSUNDataModule(LightningDataModule):
         return svhn_transforms
 
 
-Datamodule = LSUNDataModule()
-Datamodule.setup()
+#Datamodule = LSUNDataModule()
+#Datamodule.setup()

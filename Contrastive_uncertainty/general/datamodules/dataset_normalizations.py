@@ -45,6 +45,12 @@ def caltech101_normalization():
     normalize = transforms.Normalize(mean = [0.485, 0.456, 0.406], std = [0.229, 0.224, 0.225])
     return normalize
 
+
+# calculated manually using the procedure described in https://discuss.pytorch.org/t/about-normalization-using-pre-trained-vgg16-networks/23560/6
+def caltech256_normalization():
+    normalize = transforms.Normalize(mean = [0.5522, 0.5334, 0.5043], std = [0.2100, 0.2092, 0.2123])
+    return normalize
+
 # calculated manually using the procedure described in https://discuss.pytorch.org/t/about-normalization-using-pre-trained-vgg16-networks/23560/6
 def celeba_normalization():
     normalize = transforms.Normalize(mean = [0.5060, 0.4254, 0.3828], std = [0.2650, 0.2441, 0.2402])

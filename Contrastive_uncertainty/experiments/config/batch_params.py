@@ -15,7 +15,7 @@ weight_decay = 1e-4,
 # Training parameters in common
 emb_dim = 128,
 instance_encoder = 'resnet50', # Use resnet 18 for confusion log probability 
-dataset = 'CIFAR10',
+dataset = 'Caltech256',
 #OOD_dataset = ['CIFAR10'],
 #dataset = 'CIFAR100',
 #OOD_dataset = ['SVHN'],
@@ -67,7 +67,7 @@ val_check = 20,
 model_saving = 200, # Used to control how often the model is saved
 
 
-callbacks = ['Model_saving','Nearest'], #'Model_saving'
+callbacks = ['Model_saving','Mahalanobis Distance','Different K Nearest Neighbours Class 1D Typicality'], #'Model_saving'
 )
 
 
@@ -213,11 +213,12 @@ model_saving = 200, # Used to control how often the model is saved
 
 callbacks = ['Model_saving','Nearest'], #'Model_saving'
 )
-'''
-batch_base_hparams = [base1_hparams, base2_hparams]
-batch_trainer_hparams = [trainer1_hparams, trainer2_hparams]
+
+batch_base_hparams = [base1_hparams]
+batch_trainer_hparams = [trainer1_hparams]
+
 '''
 batch_base_hparams = [base1_hparams, base2_hparams, base3_hparams]
 batch_trainer_hparams = [trainer1_hparams, trainer2_hparams, trainer3_hparams]
-
+'''
 assert len(batch_base_hparams) == len(batch_trainer_hparams)

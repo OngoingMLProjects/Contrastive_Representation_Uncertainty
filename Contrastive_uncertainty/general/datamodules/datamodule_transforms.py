@@ -1,13 +1,15 @@
-from PIL.Image import Image
+#from PIL.Image import Image
 import numpy as np
 import random
 from warnings import warn
+from PIL import Image
 
 from numpy.lib.type_check import imag
 from Contrastive_uncertainty.general.datamodules.dataset_normalizations import cifar10_normalization,\
     cifar100_normalization, fashionmnist_normalization, mnist_normalization, kmnist_normalization,\
     svhn_normalization, stl10_normalization,\
-    caltech101_normalization,celeba_normalization,widerface_normalization,\
+    caltech101_normalization,caltech256_normalization,\
+    celeba_normalization,widerface_normalization,\
     places365_normalization,voc_normalization,\
     emnist_normalization
     
@@ -95,7 +97,7 @@ class Moco2TrainCIFAR10Transforms:
 
     def __call__(self, inp):
         
-        if isinstance(inp,Image): 
+        if isinstance(inp,Image.Image): 
             if len(inp.getbands())<3:
                 #width, height = inp.size
                 #inp = inp.view(width, height, 1).expand(-1, -1, 3)
@@ -133,7 +135,7 @@ class Moco2EvalCIFAR10Transforms:
         ])
 
     def __call__(self, inp):
-        if isinstance(inp,Image):
+        if isinstance(inp,Image.Image):
             #https://stackoverflow.com/questions/52962969/number-of-channels-in-pil-pillow-image
             if len(inp.getbands())<3:
                 inp = self.colorize(inp)
@@ -176,7 +178,7 @@ class Moco2MultiCIFAR10Transforms:
         ])
 
     def __call__(self, inp):
-        if isinstance(inp,Image):
+        if isinstance(inp,Image.Image):
             if len(inp.getbands())<3:
                 inp = self.colorize(inp)
             if inp.size[0] !=32:
@@ -217,7 +219,7 @@ class Moco2TrainCIFAR100Transforms:
 
     def __call__(self, inp):
 
-        if isinstance(inp,Image):
+        if isinstance(inp,Image.Image):
             if len(inp.getbands())<3:
                 inp = self.colorize(inp)
             if inp.size[0] !=32:
@@ -252,7 +254,7 @@ class Moco2EvalCIFAR100Transforms:
 
     def __call__(self, inp):
 
-        if isinstance(inp,Image):
+        if isinstance(inp,Image.Image):
             if len(inp.getbands())<3:
                 inp = self.colorize(inp)
             if inp.size[0] !=32:
@@ -292,7 +294,7 @@ class Moco2MultiCIFAR100Transforms:
         ])
 
     def __call__(self, inp):
-        if isinstance(inp,Image):
+        if isinstance(inp,Image.Image):
             if len(inp.getbands())<3:
                 inp = self.colorize(inp)
             if inp.size[0] !=32:
@@ -329,7 +331,7 @@ class Moco2TrainSVHNTransforms:
         ])
 
     def __call__(self, inp):
-        if isinstance(inp,Image):
+        if isinstance(inp,Image.Image):
             if len(inp.getbands())<3:
                 inp = self.colorize(inp)
             if inp.size[0] !=32:
@@ -362,7 +364,7 @@ class Moco2EvalSVHNTransforms:
         ])
 
     def __call__(self, inp):
-        if isinstance(inp,Image):
+        if isinstance(inp,Image.Image):
             if len(inp.getbands())<3:
                 inp = self.colorize(inp)
             if inp.size[0] !=32:
@@ -400,7 +402,7 @@ class Moco2MultiSVHNTransforms:
         ])
 
     def __call__(self, inp):
-        if isinstance(inp,Image):
+        if isinstance(inp,Image.Image):
             if len(inp.getbands())<3:
                 inp = self.colorize(inp)
             if inp.size[0] !=32:
@@ -438,7 +440,7 @@ class Moco2TrainSTL10Transforms:
         ])
 
     def __call__(self, inp):
-        if isinstance(inp,Image):
+        if isinstance(inp,Image.Image):
             if len(inp.getbands())<3:
                 inp = self.colorize(inp)
             if inp.size[0] !=32:
@@ -469,7 +471,7 @@ class Moco2EvalSTL10Transforms:
         ])
 
     def __call__(self, inp):
-        if isinstance(inp,Image):
+        if isinstance(inp,Image.Image):
             if len(inp.getbands())<3:
                 inp = self.colorize(inp)
             if inp.size[0] !=32:
@@ -511,7 +513,7 @@ class Moco2TrainCaltech101Transforms:
         ])
 
     def __call__(self, inp):
-        if isinstance(inp,Image):
+        if isinstance(inp,Image.Image):
             if len(inp.getbands())<3:
                 inp = self.colorize(inp)
             if inp.size[0] !=32:
@@ -543,7 +545,7 @@ class Moco2EvalCaltech101Transforms:
         ])
 
     def __call__(self, inp):
-        if isinstance(inp,Image):
+        if isinstance(inp,Image.Image):
             if len(inp.getbands())<3:
                 inp = self.colorize(inp)
             if inp.size[0] !=32:
@@ -557,6 +559,83 @@ class Moco2EvalCaltech101Transforms:
         q = self.test_transform(inp)
         k = self.test_transform(inp)
         return q, k
+
+
+class Moco2TrainCaltech256Transforms:
+    
+    """
+    Moco 2 augmentation:
+    https://arxiv.org/pdf/2003.04297.pdf
+    """
+
+    def __init__(self, height=32):
+        # image augmentation functions
+        self.colorize = transforms.Grayscale(num_output_channels=3)
+
+        self.resize = transforms.Resize(size = (height,height))
+        self.train_transform = transforms.Compose([
+            transforms.Resize(height),
+            transforms.RandomResizedCrop(height, scale=(0.2, 1.)),
+            transforms.RandomApply([
+                transforms.ColorJitter(0.4, 0.4, 0.4, 0.1)  # not strengthened
+            ], p=0.8),
+            transforms.RandomGrayscale(p=0.2),
+            transforms.RandomApply([GaussianBlur([.1, 2.])], p=0.5),
+            transforms.RandomHorizontalFlip(),
+            transforms.ToTensor(),
+            caltech256_normalization()
+        ])
+
+    def __call__(self, inp):
+        if isinstance(inp,Image.Image):
+            if len(inp.getbands())<3:
+                inp = self.colorize(inp)
+            if inp.size[0] !=32:
+                inp = self.resize(inp)
+        elif isinstance(inp, torch.Tensor):
+            if len(inp.shape)<3:
+                inp = self.colorize(inp)
+            if inp.shape[1] !=32:
+                inp = self.resize(inp)
+
+        q = self.train_transform(inp)
+        k = self.train_transform(inp)
+        return q, k
+    
+
+class Moco2EvalCaltech256Transforms:
+    """
+    Moco 2 augmentation:
+    https://arxiv.org/pdf/2003.04297.pdf
+    """
+    def __init__(self, height=32):
+        self.colorize = transforms.Grayscale(num_output_channels=3) #  change shape from 2D to 3D
+        self.resize = transforms.Resize(size = (height,height))
+        self.test_transform = transforms.Compose([
+            transforms.Resize(height + 12),
+            transforms.CenterCrop(height),
+            transforms.ToTensor(),
+            caltech256_normalization(),
+        ])
+
+    def __call__(self, inp):
+        if isinstance(inp,Image.Image):
+            if len(inp.getbands())<3:
+                inp = self.colorize(inp)
+            if inp.size[0] !=32:
+                inp = self.resize(inp)
+        elif isinstance(inp, torch.Tensor):
+            if len(inp.shape)<3:
+                inp = self.colorize(inp)
+            if inp.shape[1] !=32:
+                inp = self.resize(inp)
+
+        q = self.test_transform(inp)
+        k = self.test_transform(inp)
+        return q, k
+
+
+
 
 class Moco2TrainCelebATransforms:
     
@@ -583,7 +662,7 @@ class Moco2TrainCelebATransforms:
         ])
 
     def __call__(self, inp):
-        if isinstance(inp,Image):
+        if isinstance(inp,Image.Image):
             if len(inp.getbands())<3:
                 inp = self.colorize(inp)
             if inp.size[0] !=32:
@@ -615,7 +694,7 @@ class Moco2EvalCelebATransforms:
         ])
 
     def __call__(self, inp):
-        if isinstance(inp,Image):
+        if isinstance(inp,Image.Image):
             if len(inp.getbands())<3:
                 inp = self.colorize(inp)
             if inp.size[0] !=32:
@@ -656,7 +735,7 @@ class Moco2TrainWIDERFaceTransforms:
         ])
 
     def __call__(self, inp):
-        if isinstance(inp,Image):
+        if isinstance(inp,Image.Image):
             if len(inp.getbands())<3:
                 inp = self.colorize(inp)
             if inp.size[0] !=32:
@@ -688,7 +767,7 @@ class Moco2EvalWIDERFaceTransforms:
         ])
 
     def __call__(self, inp):
-        if isinstance(inp,Image):
+        if isinstance(inp,Image.Image):
             if len(inp.getbands())<3:
                 inp = self.colorize(inp)
             if inp.size[0] !=32:
@@ -728,7 +807,7 @@ class Moco2TrainPlaces365Transforms:
         ])
 
     def __call__(self, inp):
-        if isinstance(inp,Image):
+        if isinstance(inp,Image.Image):
             if len(inp.getbands())<3:
                 inp = self.colorize(inp)
             if inp.size[0] !=32:
@@ -760,7 +839,7 @@ class Moco2EvalPlaces365Transforms:
         ])
 
     def __call__(self, inp):
-        if isinstance(inp,Image):
+        if isinstance(inp,Image.Image):
             if len(inp.getbands())<3:
                 inp = self.colorize(inp)
             if inp.size[0] !=32:
@@ -800,7 +879,7 @@ class Moco2TrainVOCTransforms:
         ])
 
     def __call__(self, inp):
-        if isinstance(inp,Image):
+        if isinstance(inp,Image.Image):
             if len(inp.getbands())<3:
                 inp = self.colorize(inp)
             if inp.size[0] !=32:
@@ -832,7 +911,7 @@ class Moco2EvalVOCTransforms:
         ])
 
     def __call__(self, inp):
-        if isinstance(inp,Image):
+        if isinstance(inp,Image.Image):
             if len(inp.getbands())<3:
                 inp = self.colorize(inp)
             if inp.size[0] !=32:
@@ -1222,3 +1301,35 @@ class CustomTensorDataset(Dataset):
     def __len__(self):
         return self.tensors[0].size(0)
 
+# Same as tensor dataset but converts into a numpy array beforehand to make it usable
+class UpdatedCustomTensorDataset(Dataset):
+    """TensorDataset with support of transforms.
+    """
+    def __init__(self, tensors, transform=None):
+        assert all(tensors[0].size(0) == tensor.size(0) for tensor in tensors)
+        self.tensors = tensors
+        self.transform = transform
+
+    def __getitem__(self, index):
+        x = self.tensors[0][index]
+        
+        x = Image.fromarray(x.numpy())
+
+        if self.transform:
+            x = self.transform(x)
+        
+        # y is from the 1st value to the last value to be able to deal with the coarse values which are present for the task
+        
+
+        if len(self.tensors) ==3:
+            y = self.tensors[1][index]
+            coarse_y = self.tensors[2][index]
+            return x, y, coarse_y, index # Added the return of index for the purpose of PCL
+            
+        else:
+            y = self.tensors[1][index]
+
+            return x, y, index # Added the return of index for the purpose of PCL
+
+    def __len__(self):
+        return self.tensors[0].size(0)
