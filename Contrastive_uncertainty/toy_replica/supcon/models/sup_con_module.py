@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import pytorch_lightning as pl
 from Contrastive_uncertainty.toy_replica.supcon.models.encoder_model import Backbone
-from Contrastive_uncertainty.general.run.general_run_setup import model_names_dict
+from Contrastive_uncertainty.general.run.model_names import model_names_dict
 
 class SupConToy(pl.LightningModule):
     def __init__(self,

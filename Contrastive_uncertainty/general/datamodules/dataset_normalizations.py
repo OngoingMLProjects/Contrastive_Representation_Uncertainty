@@ -78,3 +78,9 @@ def voc_normalization():
 def imagenet_normalization():
     normalize = transforms.Normalize(mean = [0.485, 0.456, 0.406], std = [0.229, 0.224, 0.225])
     return normalize
+
+
+# calculated manually using the procedure described in https://discuss.pytorch.org/t/about-normalization-using-pre-trained-vgg16-networks/23560/6
+def tinyimagenet_normalization():
+    normalize = transforms.Normalize(mean = [0.4803, 0.4483, 0.3978], std = [0.2019, 0.1979, 0.1979])
+    return normalize

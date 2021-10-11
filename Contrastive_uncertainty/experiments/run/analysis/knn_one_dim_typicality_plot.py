@@ -30,7 +30,7 @@ def knn_auroc_plot():
     runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"New Model Testing","config.epochs":300})
 
     summary_list, config_list, name_list = [], [], []
-    key_dict = {'dataset':{'MNIST':0, 'FashionMNIST':1,'KMNIST':2, 'CIFAR10':3, 'CIFAR100':4},
+    key_dict = {'dataset':{'MNIST':0, 'FashionMNIST':1,'KMNIST':2, 'CIFAR10':3, 'CIFAR100':4,'Caltech101':5,'Caltech256':6},
                 'model_type':{'SupCon':0}}
 
     for i, run in enumerate(runs): 
@@ -192,7 +192,7 @@ def knn_auroc_plot_v3():
 
     summary_list, config_list, name_list = [], [], []
     
-    key_dict = {'dataset':{'MNIST':0, 'FashionMNIST':1,'KMNIST':2, 'CIFAR10':3, 'CIFAR100':4},
+    key_dict = {'dataset':{'MNIST':0, 'FashionMNIST':1,'KMNIST':2, 'CIFAR10':3, 'CIFAR100':4,'Caltech101':5,'Caltech256':6},
                 'model_type':{'SupCon':0}}
     
     '''

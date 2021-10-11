@@ -1,13 +1,13 @@
 from Contrastive_uncertainty.toy_replica.toy_experiments.train.experimental_dict import model_dict
-from Contrastive_uncertainty.general.run.general_run_setup import model_names_dict
+from Contrastive_uncertainty.general.run.model_names import model_names_dict
 
 
 def train(batch_base_dict, batch_trainer_dict):   
     # Actively choose which modeles to choose in the acceptable models 
     acceptable_single_models = ['Baselines',
-    #model_names_dict['CE'],
+    model_names_dict['CE'],
     #model_names_dict['Moco'],
-    model_names_dict['SupCon'],
+    #model_names_dict['SupCon'],
     #model_names_dict['Centroid_VicReg'],
     #model_names_dict['NNCLR'],
     

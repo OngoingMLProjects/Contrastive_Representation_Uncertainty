@@ -3,6 +3,7 @@
 *.mat
 *.pdf
 *.png
+*.txt
 # Package Files #
 *.jar
 *.war
@@ -35,3 +36,4 @@ places365
 VOC
 ImageNet
 Caltech256
+tiny-imagenet-200

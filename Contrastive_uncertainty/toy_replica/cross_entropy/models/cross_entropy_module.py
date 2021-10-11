@@ -11,7 +11,7 @@ from pytorch_lightning.loggers import WandbLogger
 from Contrastive_uncertainty.toy_replica.cross_entropy.models.encoder_model import Backbone
 from Contrastive_uncertainty.general.utils.hybrid_utils import label_smoothing, LabelSmoothingCrossEntropy 
 from Contrastive_uncertainty.general.utils.pl_metrics import precision_at_k, mean
-from Contrastive_uncertainty.general.run.general_run_setup import model_names_dict
+from Contrastive_uncertainty.general.run.model_names import model_names_dict
 
 
 
@@ -39,11 +39,7 @@ class CrossEntropyToy(pl.LightningModule):
         # create the encoders
         # num_classes is the output fc dimension
         self.encoder = self.init_encoders()
-        '''
-        if self.hparams.pretrained_network is not None:
-            self.encoder_loading(self.hparams.pretrained_network)
-            print('loaded model')
-        '''
+        
     @property
     def name(self):
         ''' return name of model'''
@@ -68,17 +64,7 @@ class CrossEntropyToy(pl.LightningModule):
         z = nn.functional.normalize(z, dim=1)
         return z
     
-    def instance_vector(self, x):
-        z = self.callback_vector(x)
-        return z
-   
-    def fine_vector(self, x):
-        z = self.callback_vector(x)
-        return z
 
-    def coarse_vector(self, x):
-        z = self.callback_vector(x)
-        return z
     
     def class_forward(self, x):
         z = self.encoder(x)

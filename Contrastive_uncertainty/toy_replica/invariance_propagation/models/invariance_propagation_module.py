@@ -13,7 +13,7 @@ from pytorch_lightning.loggers import WandbLogger
 
 from Contrastive_uncertainty.toy_replica.moco.models.encoder_model import Backbone
 from Contrastive_uncertainty.general.utils.pl_metrics import precision_at_k, mean, min_distance_accuracy
-from Contrastive_uncertainty.general.run.general_run_setup import model_names_dict
+from Contrastive_uncertainty.general.run.model_names import model_names_dict
 
 
 # Based on https://github.com/WangFeng18/InvariancePropagation

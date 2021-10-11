@@ -1,4 +1,4 @@
-from Contrastive_uncertainty.general.run.general_run_setup import model_names_dict
+from Contrastive_uncertainty.general.run.model_names import model_names_dict
 
 sup_con_hparams = dict(
 emb_dim = 128,

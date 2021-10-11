@@ -24,7 +24,7 @@ from Contrastive_uncertainty.nnclr.models.nnclr_model_instance import ModelInsta
 
 
 # Import evaluate
-from Contrastive_uncertainty.general.run.general_run_setup import model_names_dict
+from Contrastive_uncertainty.general.run.model_names import model_names_dict
 from Contrastive_uncertainty.general.train.train_general import train as general_training
 from Contrastive_uncertainty.general.train.evaluate_general import evaluation as general_evaluation
 
