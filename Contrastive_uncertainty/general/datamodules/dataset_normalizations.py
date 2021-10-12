@@ -84,3 +84,13 @@ def imagenet_normalization():
 def tinyimagenet_normalization():
     normalize = transforms.Normalize(mean = [0.4803, 0.4483, 0.3978], std = [0.2019, 0.1979, 0.1979])
     return normalize
+
+# calculated manually using the procedure described in https://discuss.pytorch.org/t/about-normalization-using-pre-trained-vgg16-networks/23560/6
+def cubs200_normalization():
+    normalize = transforms.Normalize(mean = [0.4863, 0.4998, 0.4323], std = [0.1482, 0.1479, 0.1592])
+    return normalize
+
+# calculated manually using the procedure described in https://discuss.pytorch.org/t/about-normalization-using-pre-trained-vgg16-networks/23560/6
+def dogs_normalization():
+    normalize = transforms.Normalize(mean = [0.4759, 0.4516, 0.3912], std = [0.2051, 0.2003, 0.1985])
+    return normalize

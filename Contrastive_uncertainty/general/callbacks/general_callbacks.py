@@ -42,7 +42,6 @@ class ModelSaving(pl.Callback):
 
         
     def save_model(self, trainer, pl_module,epoch):
-        import ipdb; ipdb.set_trace()
         folder = self.folder_name
         folder = os.path.join(folder, wandb.run.path)
         # makedirs used to make multiple subfolders in comparison to mkdir which makes a single folder

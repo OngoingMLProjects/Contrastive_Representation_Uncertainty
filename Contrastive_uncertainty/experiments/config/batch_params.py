@@ -15,7 +15,7 @@ weight_decay = 1e-4,
 # Training parameters in common
 emb_dim = 128,
 instance_encoder = 'resnet50', # Use resnet 18 for confusion log probability 
-dataset = 'ImageNet',
+dataset = 'TinyImageNet',
 #OOD_dataset = ['CIFAR10'],
 #dataset = 'CIFAR100',
 #OOD_dataset = ['SVHN'],
@@ -24,8 +24,8 @@ pretrained_network = None,
 # Wandb parameters in common
 project = 'evaluation',
 
-group = 'New Model Testing',
-notes = 'Testing whether new models are able to train effectively',  # Add notes to the specific models each time
+group = 'OOD hierarchy baselines', #'New Model Testing',
+notes = 'Baselines for the OOD detection for the ID and OOD data', #'Testing whether new models are able to train effectively',  # Add notes to the specific models each time
 
 # Cross entropy Specific parameters
 label_smoothing = False,

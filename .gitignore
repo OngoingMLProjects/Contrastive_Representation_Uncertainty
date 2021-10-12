@@ -10,6 +10,7 @@
 *.nar
 *.ear
 *.zip
+*.tar
 *.tar.gz
 *.rar
 *pyc
@@ -37,3 +38,6 @@ VOC
 ImageNet
 Caltech256
 tiny-imagenet-200
+CUB_200_2011
+indoorCVPR_09
+stanford_dogs

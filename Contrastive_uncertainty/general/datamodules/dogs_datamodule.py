@@ -20,14 +20,14 @@ import copy
 from torchvision import transforms as transform_lib
 from torchvision.transforms import transforms
 
-from Contrastive_uncertainty.general.datamodules.dataset_normalizations import tinyimagenet_normalization
+#from Contrastive_uncertainty.general.datamodules.dataset_normalizations import dogs256_normalization
 from Contrastive_uncertainty.general.datamodules.datamodule_transforms import dataset_with_indices
 
-# https://compsci697l.github.io/projects/ where I downloaded the dataset for the case of tinyimagenet
+# http://places2.csail.mit.edu/download.html where I downloaded the dataset for the case of places 365
 # based on https://pretagteam.com/question/pytorch-lightning-get-models-output-on-full-train-data-during-training
-class TinyImageNetDataModule(LightningDataModule):
+class DogsDataModule(LightningDataModule):
 
-    name = 'tinyimagenet'
+    name = 'dogs'
     extra_args = {}
 
     def __init__(
@@ -54,17 +54,17 @@ class TinyImageNetDataModule(LightningDataModule):
     def total_samples(self):
         """
         Return:
-            100_000
+            5000
         """
-        return 100_0000
+        return 5000
         
     @property
     def num_classes(self):
         """
         Return:
-            200
+            256
         """
-        return 200
+        return 256
     
     @property
     def num_channels(self):
@@ -80,7 +80,7 @@ class TinyImageNetDataModule(LightningDataModule):
         Return:
             32
         """
-        return 32 # 64 in actuality
+        return 32
         
     
     def prepare_data(self):
@@ -90,20 +90,19 @@ class TinyImageNetDataModule(LightningDataModule):
         pass
         
     def setup(self):
+        'stanford_dogs/Images'
         
         Indices_ImageFolder =dataset_with_indices(torchvision.datasets.ImageFolder)
         train_transforms = self.default_transforms() if self.train_transforms is None else self.train_transforms
-        tinyimagenet_dataset = Indices_ImageFolder('tiny-imagenet-200',transform = train_transforms)
-
-        self.idx2class = {i:f'class {i}' for i in range(max(tinyimagenet_dataset.targets)+1)}
-        #self.class2idx = tinyimagenet_dataset.class_to_idx 
-        
-        if isinstance(tinyimagenet_dataset.targets, list):
-            tinyimagenet_dataset.targets = torch.Tensor(tinyimagenet_dataset.targets).type(torch.int64) # Need to change into int64 to use in test step 
-        elif isinstance(tinyimagenet_dataset.targets,np.ndarray):
-            tinyimagenet_dataset.targets = torch.from_numpy(tinyimagenet_dataset.targets).type(torch.int64)  
-
-        train_dataset, val_dataset, test_dataset = random_split(tinyimagenet_dataset, [105_000, 5000, 10000],generator=torch.Generator().manual_seed(self.seed)
+        dogs_dataset = Indices_ImageFolder('stanford_dogs/Images',transform = train_transforms)
+        self.idx2class = {i:f'class {i}' for i in range(max(dogs_dataset.targets)+1)}
+         
+        if isinstance(dogs_dataset.targets, list):
+            dogs_dataset.targets = torch.Tensor(dogs_dataset.targets).type(torch.int64) # Need to change into int64 to use in test step 
+        elif isinstance(dogs_dataset.targets,np.ndarray):
+            dogs_dataset.targets = torch.from_numpy(dogs_dataset.targets).type(torch.int64)  
+        # Different split due to the limited amount of datapoints present
+        train_dataset, val_dataset, test_dataset = random_split(dogs_dataset, [15000, 580, 5000],generator=torch.Generator().manual_seed(self.seed)
         )
         
         train_transforms = self.default_transforms() if self.train_transforms is None else self.train_transforms
@@ -121,7 +120,7 @@ class TinyImageNetDataModule(LightningDataModule):
 
         self.val_train_dataset.dataset.transform = train_transforms
         self.val_test_dataset.dataset.transform = test_transforms
-    
+        
     def train_dataloader(self):
         """
         FashionMNIST train set removes a subset to use for validation
@@ -142,6 +141,7 @@ class TinyImageNetDataModule(LightningDataModule):
         FashionMNIST train set removes a subset to use for validation
         """
 
+        
         loader = DataLoader(
             self.train_dataset,
             batch_size=self.batch_size,
@@ -190,9 +190,32 @@ class TinyImageNetDataModule(LightningDataModule):
         return loader
 
     def default_transforms(self):
-        tinyimagenet_transforms = transform_lib.Compose([
+        dogs_transforms = transform_lib.Compose([
             transforms.Resize(size = (32,32)),
             transform_lib.ToTensor(),
-            tinyimagenet_normalization()
+            #dogs256_normalization()
         ])
-        return tinyimagenet_transforms
+        return dogs_transforms
+
+
+datamodule = DogsDataModule()
+#datamodule.prepare_data()
+datamodule.setup()
+
+
+test_loader = datamodule.test_dataloader()
+train_loader = datamodule.deterministic_train_dataloader()
+
+mean = 0.
+std = 0.
+nb_samples = 0.
+for data in train_loader:
+    batch_samples = data[0].size(0)
+    data = data[0].view(batch_samples, data[0].size(1), -1)
+    mean += data.mean(2).sum(0)
+    std += data.std(2).sum(0)
+    nb_samples += batch_samples
+
+mean /= nb_samples
+std /= nb_samples
+import ipdb; ipdb.set_trace()

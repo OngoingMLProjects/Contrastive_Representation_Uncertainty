@@ -20,14 +20,14 @@ import copy
 from torchvision import transforms as transform_lib
 from torchvision.transforms import transforms
 
-from Contrastive_uncertainty.general.datamodules.dataset_normalizations import tinyimagenet_normalization
+#from Contrastive_uncertainty.general.datamodules.dataset_normalizations import trafficsign_normalization
 from Contrastive_uncertainty.general.datamodules.datamodule_transforms import dataset_with_indices
 
-# https://compsci697l.github.io/projects/ where I downloaded the dataset for the case of tinyimagenet
+# https://compsci697l.github.io/projects/ where I downloaded the dataset for the case of trafficsign
 # based on https://pretagteam.com/question/pytorch-lightning-get-models-output-on-full-train-data-during-training
-class TinyImageNetDataModule(LightningDataModule):
+class TrafficSignDataModule(LightningDataModule):
 
-    name = 'tinyimagenet'
+    name = 'TrafficSign'
     extra_args = {}
 
     def __init__(
@@ -91,19 +91,18 @@ class TinyImageNetDataModule(LightningDataModule):
         
     def setup(self):
         
-        Indices_ImageFolder =dataset_with_indices(torchvision.datasets.ImageFolder)
+        Indices_ImageFolder = dataset_with_indices(torchvision.datasets.ImageFolder)
         train_transforms = self.default_transforms() if self.train_transforms is None else self.train_transforms
-        tinyimagenet_dataset = Indices_ImageFolder('tiny-imagenet-200',transform = train_transforms)
+        trafficsign_dataset = Indices_ImageFolder('indoorCVPR_09',transform = train_transforms)
 
-        self.idx2class = {i:f'class {i}' for i in range(max(tinyimagenet_dataset.targets)+1)}
-        #self.class2idx = tinyimagenet_dataset.class_to_idx 
-        
-        if isinstance(tinyimagenet_dataset.targets, list):
-            tinyimagenet_dataset.targets = torch.Tensor(tinyimagenet_dataset.targets).type(torch.int64) # Need to change into int64 to use in test step 
-        elif isinstance(tinyimagenet_dataset.targets,np.ndarray):
-            tinyimagenet_dataset.targets = torch.from_numpy(tinyimagenet_dataset.targets).type(torch.int64)  
+        self.idx2class = {i:f'class {i}' for i in range(max(trafficsign_dataset.targets)+1)}
+        #self.class2idx = trafficsign_dataset.class_to_idx 
+        if isinstance(trafficsign_dataset.targets, list):
+            trafficsign_dataset.targets = torch.Tensor(trafficsign_dataset.targets).type(torch.int64) # Need to change into int64 to use in test step 
+        elif isinstance(trafficsign_dataset.targets,np.ndarray):
+            trafficsign_dataset.targets = torch.from_numpy(trafficsign_dataset.targets).type(torch.int64)  
 
-        train_dataset, val_dataset, test_dataset = random_split(tinyimagenet_dataset, [105_000, 5000, 10000],generator=torch.Generator().manual_seed(self.seed)
+        train_dataset, val_dataset, test_dataset = random_split(trafficsign_dataset, [105_000, 5000, 10000],generator=torch.Generator().manual_seed(self.seed)
         )
         
         train_transforms = self.default_transforms() if self.train_transforms is None else self.train_transforms
@@ -190,9 +189,14 @@ class TinyImageNetDataModule(LightningDataModule):
         return loader
 
     def default_transforms(self):
-        tinyimagenet_transforms = transform_lib.Compose([
+        trafficsign_transforms = transform_lib.Compose([
             transforms.Resize(size = (32,32)),
             transform_lib.ToTensor(),
-            tinyimagenet_normalization()
+            #trafficsign_normalization()
         ])
-        return tinyimagenet_transforms
+        return trafficsign_transforms
+
+'''
+datamodule = TrafficSignDataModule()
+datamodule.setup()
+'''
