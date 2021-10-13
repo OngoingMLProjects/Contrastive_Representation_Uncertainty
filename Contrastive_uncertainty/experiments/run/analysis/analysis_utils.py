@@ -85,18 +85,25 @@ def generic_saving(desired_key,run_filter):
         name_list.append(run.name)
         keys = [key for key, value in summary_list[i].items() if desired_key in key.lower()]
         keys = [key for key in keys if 'table' not in key.lower()]
-        for key in keys:    
+        for key in keys:
+            
             data_dir = summary_list[i][key]['path'] 
             run_dir = root_dir + run_path
-            file_data = json.load(run.file(data_dir).download(root=run_dir))
+
+            total_dir = os.path.join(run_dir, data_dir)
+            # Checks if the file is already present
+            if os.path.isfile(total_dir):
+                pass
+            else:
+                file_data = json.load(run.file(data_dir).download(root=run_dir))
 
 if __name__ =='__main__':
     #desired_key = 'Centroid Distances Average vector_table'
     #desired_key = 'KL Divergence(Total||Class)'
     desired_key = 'Different K Normalized One Dim Class Typicality KNN'
     #run_filter={"config.group":"Baselines Repeats"}
-    #run_filter={"config.group":"OOD hierarchy baselines","config.model_type": "SupCon", 'state':'finished'}
-    run_filter={"config.group":"OOD hierarchy baselines","config.model_type": "SupCon"}
+    run_filter={"config.group":"OOD hierarchy baselines","config.model_type": "SupCon", 'state':'finished'}
+    #run_filter={"config.group":"OOD hierarchy baselines","config.model_type": "SupCon"}
     #run_filter={"config.group":"New Model Testing","config.epochs":300}
     #run_filter={"config.group":"Baselines Repeats","$or": [{"config.model_type":"Moco"}, {"config.model_type": "SupCon"}]}
     generic_saving(desired_key,run_filter)

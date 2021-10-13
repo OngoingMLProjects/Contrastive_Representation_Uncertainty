@@ -24,7 +24,7 @@ from torchvision.transforms import transforms
 
 from Contrastive_uncertainty.general.datamodules.dataset_normalizations import cubs200_normalization
 from Contrastive_uncertainty.general.datamodules.datamodule_transforms import dataset_with_indices
-
+# Data from https://blog.cambridgespark.com/50-free-machine-learning-datasets-image-datasets-241852b03b49
 # Based on this repository  - https://github.com/ecm200/caltech_birds
 # https://github.com/TDeVries/cub2011_dataset    Potential alternative
 class CUB200DataModule(LightningDataModule):

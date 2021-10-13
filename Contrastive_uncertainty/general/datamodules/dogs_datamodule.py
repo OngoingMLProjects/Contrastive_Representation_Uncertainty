@@ -22,7 +22,7 @@ from torchvision.transforms import transforms
 
 #from Contrastive_uncertainty.general.datamodules.dataset_normalizations import dogs256_normalization
 from Contrastive_uncertainty.general.datamodules.datamodule_transforms import dataset_with_indices
-
+# Where I obtained the dataset from https://blog.cambridgespark.com/50-free-machine-learning-datasets-image-datasets-241852b03b49
 # http://places2.csail.mit.edu/download.html where I downloaded the dataset for the case of places 365
 # based on https://pretagteam.com/question/pytorch-lightning-get-models-output-on-full-train-data-during-training
 class DogsDataModule(LightningDataModule):
@@ -197,7 +197,7 @@ class DogsDataModule(LightningDataModule):
         ])
         return dogs_transforms
 
-
+'''
 datamodule = DogsDataModule()
 #datamodule.prepare_data()
 datamodule.setup()
@@ -219,3 +219,4 @@ for data in train_loader:
 mean /= nb_samples
 std /= nb_samples
 import ipdb; ipdb.set_trace()
+'''

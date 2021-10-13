@@ -12,6 +12,7 @@ from Contrastive_uncertainty.general.datamodules.imagenet_datamodule import Imag
 from Contrastive_uncertainty.general.datamodules.tinyimagenet_datamodule import TinyImageNetDataModule
 from Contrastive_uncertainty.general.datamodules.celeba_datamodule import CelebADataModule
 from Contrastive_uncertainty.general.datamodules.cubs200_datamodule import CUB200DataModule
+from Contrastive_uncertainty.general.datamodules.dogs_datamodule import DogsDataModule
 from Contrastive_uncertainty.general.datamodules.widerface_datamodule import WIDERFaceDataModule
 from Contrastive_uncertainty.general.datamodules.places365_datamodule import Places365DataModule
 from Contrastive_uncertainty.general.datamodules.voc_datamodule import VOCDataModule
@@ -78,6 +79,9 @@ dataset_dict = {'MNIST':{'module':MNISTDataModule,'train_transform':Moco2TrainMN
                 'Cubs200':{'module': CUB200DataModule,'train_transform':Moco2TrainCubs200Transforms(),
                 'val_transform':Moco2EvalCubs200Transforms(),'test_transform':Moco2EvalCubs200Transforms()},
 
+                'Dogs':{'module': DogsDataModule,'train_transform':Moco2TrainDogsTransforms(),
+                'val_transform':Moco2EvalDogsTransforms(),'test_transform':Moco2EvalDogsTransforms()},
+
                 'CelebA':{'module': CelebADataModule,'train_transform':Moco2TrainCelebATransforms(),
                 'val_transform':Moco2EvalCelebATransforms(),'test_transform':Moco2EvalCelebATransforms()},
 
@@ -106,8 +110,8 @@ OOD_dict = {'MNIST':['FashionMNIST','KMNIST','EMNIST'],
             'Caltech101':['STL10', 'CelebA','WIDERFace','SVHN', 'CIFAR10','CIFAR100', 'VOC', 'Places365', 'MNIST', 'FashionMNIST', 'KMNIST', 'EMNIST'],
             'Caltech256':['STL10', 'CelebA','WIDERFace','SVHN','Caltech101', 'CIFAR10','CIFAR100', 'VOC', 'Places365', 'MNIST', 'FashionMNIST', 'KMNIST', 'EMNIST'],
             'TinyImageNet':['STL10', 'CelebA','WIDERFace','SVHN','Caltech101', 'Caltech256','CIFAR10','CIFAR100', 'VOC', 'Places365', 'MNIST', 'FashionMNIST', 'KMNIST', 'EMNIST'],
-            'Cubs200':['STL10', 'CelebA','WIDERFace','SVHN','Caltech101', 'Caltech256','CIFAR10','CIFAR100', 'VOC', 'Places365','TinyImageNet','Dogs' 'MNIST', 'FashionMNIST', 'KMNIST', 'EMNIST'],
-            'Dogs':['STL10', 'CelebA','WIDERFace','SVHN','Caltech101', 'Caltech256','CIFAR10','CIFAR100', 'VOC', 'Places365','TinyImageNet','Cubs200' 'MNIST', 'FashionMNIST', 'KMNIST', 'EMNIST'],
+            'Cubs200':['STL10', 'CelebA','WIDERFace','SVHN','Caltech101', 'Caltech256','CIFAR10','CIFAR100', 'VOC', 'Places365','TinyImageNet','Dogs', 'MNIST', 'FashionMNIST', 'KMNIST', 'EMNIST'],
+            'Dogs':['STL10', 'CelebA','WIDERFace','SVHN','Caltech101', 'Caltech256','CIFAR10','CIFAR100', 'VOC', 'Places365','TinyImageNet','Cubs200', 'MNIST', 'FashionMNIST', 'KMNIST', 'EMNIST'],
             #'CIFAR10':['CIFAR100','SVHN'],
             #'CIFAR100':['CIFAR10','SVHN'],
             'SVHN':['CIFAR10','CIFAR100']}

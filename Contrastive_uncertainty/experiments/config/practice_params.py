@@ -12,7 +12,7 @@ weight_decay = 1e-4,
 emb_dim = 128,
 instance_encoder = 'resnet18',
 
-dataset ='TinyImageNet',
+dataset ='Dogs',
 OOD_dataset =['MNIST'],
 #OOD_dataset =['MNIST','FashionMNIST','KMNIST','EMNIST','Places365','VOC'],
 #OOD_dataset =['Places365'],

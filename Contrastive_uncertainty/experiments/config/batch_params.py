@@ -15,7 +15,8 @@ weight_decay = 1e-4,
 # Training parameters in common
 emb_dim = 128,
 instance_encoder = 'resnet50', # Use resnet 18 for confusion log probability 
-dataset = 'TinyImageNet',
+#dataset = 'TinyImageNet',
+dataset = 'Cubs200',
 #OOD_dataset = ['CIFAR10'],
 #dataset = 'CIFAR100',
 #OOD_dataset = ['SVHN'],
@@ -87,7 +88,8 @@ weight_decay = 1e-4,
 # Training parameters in common
 emb_dim = 128,
 instance_encoder = 'resnet50', # Use resnet 18 for confusion log probability 
-dataset = 'CIFAR100',
+#dataset = 'TinyImageNet',
+dataset = 'Dogs',
 #OOD_dataset = ['CIFAR10'],
 #dataset = 'CIFAR100',
 #OOD_dataset = ['SVHN'],
@@ -96,9 +98,8 @@ pretrained_network = None,
 # Wandb parameters in common
 project = 'evaluation',
 
-group = 'New Model Testing',
-notes = 'Testing whether new models are able to train effectively',  # Add notes to the specific models each time
-
+group = 'OOD hierarchy baselines', #'New Model Testing',
+notes = 'Baselines for the OOD detection for the ID and OOD data', #'Testing whether new models are able to train effectively',  # Add notes to the specific models each time
 
 # Cross entropy Specific parameters
 label_smoothing = False,
@@ -123,6 +124,7 @@ else:
     base2_hparams['OOD_dataset'] = OOD_dict[base2_hparams['dataset']]
 
 
+
 trainer2_hparams = dict(
 
 # Miscellaneous arguments in common
@@ -140,7 +142,7 @@ val_check = 20,
 model_saving = 200, # Used to control how often the model is saved
 
 
-callbacks = ['Model_saving','Nearest'], #'Model_saving'
+callbacks = ['Model_saving','Mahalanobis Distance','Different K Nearest Neighbours Class 1D Typicality'], #'Model_saving'
 )
 
 
@@ -214,8 +216,13 @@ model_saving = 200, # Used to control how often the model is saved
 callbacks = ['Model_saving','Nearest'], #'Model_saving'
 )
 
+'''
 batch_base_hparams = [base1_hparams]
 batch_trainer_hparams = [trainer1_hparams]
+'''
+
+batch_base_hparams = [base1_hparams, base2_hparams]
+batch_trainer_hparams = [trainer1_hparams, trainer2_hparams]
 
 '''
 batch_base_hparams = [base1_hparams, base2_hparams, base3_hparams]
