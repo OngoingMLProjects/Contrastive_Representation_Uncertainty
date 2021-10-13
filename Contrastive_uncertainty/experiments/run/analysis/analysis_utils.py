@@ -7,21 +7,11 @@ import os
 
 # Import general params
 import json
-# For each ID dataset, it maps the dict to another value
-'''
-dataset_dict = {'MNIST': {'FashionMNIST':0, 'KMNIST':1,'EMNIST':2},
-            'FashionMNIST': {'MNIST':0, 'KMNIST':1,'EMNIST':2},
-            'KMNIST': {'MNIST':0, 'FashionMNIST':1,'EMNIST':2},
-            'CIFAR10': {'SVHN':0, 'CIFAR100':1},
-            'CIFAR100': {'SVHN':0, 'CIFAR10':1}
-}
-'''
-'''
-dataset_dict = {'CIFAR10': {'STL10':0,'Caltech101':1, 'CelebA':2,'WIDERFace':3,'SVHN':4, 'CIFAR100':5},
-            'CIFAR100': {'STL10':0, 'Caltech101':1, 'CelebA':2,'WIDERFace':3, 'SVHN':4, 'CIFAR10':5}
-}
-'''
 
+from Contrastive_uncertainty.general.datamodules.datamodule_dict import OOD_dict
+# For each ID dataset, it maps the dict to another value
+
+'''
 dataset_dict = {'MNIST': {'FashionMNIST':0, 'KMNIST':1,'EMNIST':2},
             'FashionMNIST': {'MNIST':0, 'KMNIST':1,'EMNIST':2},
             'KMNIST': {'MNIST':0, 'FashionMNIST':1,'EMNIST':2},
@@ -30,6 +20,32 @@ dataset_dict = {'MNIST': {'FashionMNIST':0, 'KMNIST':1,'EMNIST':2},
             'Caltech101': {'STL10':0, 'CelebA':1,'WIDERFace':2, 'SVHN':3, 'CIFAR10':4,'CIFAR100':5, 'VOC':6, 'Places365':7,'MNIST':8, 'FashionMNIST':9, 'KMNIST':10, 'EMNIST':11},
             'Caltech256': {'STL10':0, 'CelebA':1,'WIDERFace':2,'SVHN':3, 'Caltech101':4, 'CIFAR10':5,'CIFAR100':6,'VOC':7, 'Places365':8,'MNIST':9, 'FashionMNIST':10, 'KMNIST':11, 'EMNIST':12},
 }
+'''
+
+dataset_dict = {'MNIST':['FashionMNIST','KMNIST','EMNIST'],
+            'FashionMNIST':['MNIST','KMNIST','EMNIST'],
+            'KMNIST':['MNIST','FashionMNIST','EMNIST'],
+            'EMNIST':['MNIST','FashionMNIST','KMNIST'],
+            
+            'CIFAR10':['STL10','Caltech101', 'CelebA','WIDERFace','SVHN', 'CIFAR100', 'VOC', 'Places365', 'MNIST', 'FashionMNIST', 'KMNIST', 'EMNIST'],
+            'CIFAR100':['STL10','Caltech101', 'CelebA','WIDERFace','SVHN', 'CIFAR10', 'VOC', 'Places365', 'MNIST', 'FashionMNIST', 'KMNIST', 'EMNIST'],
+
+            'Caltech101':['STL10', 'CelebA','WIDERFace','SVHN', 'CIFAR10','CIFAR100', 'VOC', 'Places365', 'MNIST', 'FashionMNIST', 'KMNIST', 'EMNIST'],
+            'Caltech256':['STL10', 'CelebA','WIDERFace','SVHN','Caltech101', 'CIFAR10','CIFAR100', 'VOC', 'Places365', 'MNIST', 'FashionMNIST', 'KMNIST', 'EMNIST'],
+            'TinyImageNet':['STL10', 'CelebA','WIDERFace','SVHN','Caltech101', 'Caltech256','CIFAR10','CIFAR100', 'VOC', 'Places365', 'MNIST', 'FashionMNIST', 'KMNIST', 'EMNIST'],
+            'Cubs200':['STL10', 'CelebA','WIDERFace','SVHN','Caltech101', 'Caltech256','CIFAR10','CIFAR100', 'VOC', 'Places365','TinyImageNet','Dogs', 'MNIST', 'FashionMNIST', 'KMNIST', 'EMNIST'],
+            'Dogs':['STL10', 'CelebA','WIDERFace','SVHN','Caltech101', 'Caltech256','CIFAR10','CIFAR100', 'VOC', 'Places365','TinyImageNet','Cubs200', 'MNIST', 'FashionMNIST', 'KMNIST', 'EMNIST'],
+}
+
+# Converts dataset dict to have same shape as before
+# https://careerkarma.com/blog/python-convert-list-to-dictionary/#:~:text=To%20convert%20a%20list%20to%20a%20dictionary%20using%20the%20same,the%20values%20of%20a%20list.
+# Makes a list of numbers
+for key in dataset_dict.keys():
+    ood_datasets = dataset_dict[key]
+    # https://stackoverflow.com/questions/18265935/python-create-list-with-numbers-between-2-values?rq=1
+    indices = np.arange(len(ood_datasets)).tolist() # Create a list of numbers with from 0 to n based on the number of data points present
+    dataset_dict[key] = dict(zip(ood_datasets,indices)) # make a dictionary from combining two lists together
+    
 
             
 # Dict for the specific case to the other value
@@ -39,6 +55,7 @@ key_dict = {'model_type':{'CE':0, 'Moco':1, 'SupCon':2},
 # Check if ood_dataset substring is present in string
 def ood_dataset_string(key, dataset_dict, ID_dataset):
     split_keys = key.lower().split() # Make the key lower and then split the string at locations where is a space
+    print(key)    
     OOD_dict = dataset_dict[ID_dataset]
     for key in OOD_dict.keys():
         if key.lower() in split_keys:
