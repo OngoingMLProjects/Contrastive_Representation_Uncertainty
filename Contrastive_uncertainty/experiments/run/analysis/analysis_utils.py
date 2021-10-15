@@ -33,8 +33,8 @@ dataset_dict = {'MNIST':['FashionMNIST','KMNIST','EMNIST'],
             'Caltech101':['STL10', 'CelebA','WIDERFace','SVHN', 'CIFAR10','CIFAR100', 'VOC', 'Places365', 'MNIST', 'FashionMNIST', 'KMNIST', 'EMNIST'],
             'Caltech256':['STL10', 'CelebA','WIDERFace','SVHN','Caltech101', 'CIFAR10','CIFAR100', 'VOC', 'Places365', 'MNIST', 'FashionMNIST', 'KMNIST', 'EMNIST'],
             'TinyImageNet':['STL10', 'CelebA','WIDERFace','SVHN','Caltech101', 'Caltech256','CIFAR10','CIFAR100', 'VOC', 'Places365', 'MNIST', 'FashionMNIST', 'KMNIST', 'EMNIST'],
-            'Cubs200':['STL10', 'CelebA','WIDERFace','SVHN','Caltech101', 'Caltech256','CIFAR10','CIFAR100', 'VOC', 'Places365','TinyImageNet','Dogs', 'MNIST', 'FashionMNIST', 'KMNIST', 'EMNIST'],
-            'Dogs':['STL10', 'CelebA','WIDERFace','SVHN','Caltech101', 'Caltech256','CIFAR10','CIFAR100', 'VOC', 'Places365','TinyImageNet','Cubs200', 'MNIST', 'FashionMNIST', 'KMNIST', 'EMNIST'],
+            'Cub200':['STL10', 'CelebA','WIDERFace','SVHN','Caltech101', 'Caltech256','CIFAR10','CIFAR100', 'VOC', 'Places365','TinyImageNet','Dogs', 'MNIST', 'FashionMNIST', 'KMNIST', 'EMNIST'],
+            'Dogs':['STL10', 'CelebA','WIDERFace','SVHN','Caltech101', 'Caltech256','CIFAR10','CIFAR100', 'VOC', 'Places365','TinyImageNet','Cub200', 'MNIST', 'FashionMNIST', 'KMNIST', 'EMNIST'],
 }
 
 # Converts dataset dict to have same shape as before
@@ -55,7 +55,7 @@ key_dict = {'model_type':{'CE':0, 'Moco':1, 'SupCon':2},
 # Check if ood_dataset substring is present in string
 def ood_dataset_string(key, dataset_dict, ID_dataset):
     split_keys = key.lower().split() # Make the key lower and then split the string at locations where is a space
-    print(key)    
+    #print(key)    
     OOD_dict = dataset_dict[ID_dataset]
     for key in OOD_dict.keys():
         if key.lower() in split_keys:

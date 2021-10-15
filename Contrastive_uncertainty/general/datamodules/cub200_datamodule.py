@@ -22,7 +22,7 @@ import copy
 from torchvision import transforms as transform_lib
 from torchvision.transforms import transforms
 
-from Contrastive_uncertainty.general.datamodules.dataset_normalizations import cubs200_normalization
+from Contrastive_uncertainty.general.datamodules.dataset_normalizations import cub200_normalization
 from Contrastive_uncertainty.general.datamodules.datamodule_transforms import dataset_with_indices
 # Data from https://blog.cambridgespark.com/50-free-machine-learning-datasets-image-datasets-241852b03b49
 # Based on this repository  - https://github.com/ecm200/caltech_birds
@@ -129,20 +129,20 @@ class CUB200DataModule(LightningDataModule):
         Indices_ImageFolder = dataset_with_indices(torchvision.datasets.ImageFolder)
         train_transforms = self.default_transforms() if self.train_transforms is None else self.train_transforms
         test_transforms = self.default_transforms() if self.test_transforms is None else self.test_transforms
-        cubs200_train_dataset = Indices_ImageFolder(train_data_dir,transform = train_transforms)
-        cubs200_test_dataset = Indices_ImageFolder(test_data_dir,transform = test_transforms)
-        self.idx2class = {i:f'class {i}' for i in range(max(cubs200_train_dataset.targets)+1)}
+        cub200_train_dataset = Indices_ImageFolder(train_data_dir,transform = train_transforms)
+        cub200_test_dataset = Indices_ImageFolder(test_data_dir,transform = test_transforms)
+        self.idx2class = {i:f'class {i}' for i in range(max(cub200_train_dataset.targets)+1)}
 
-        if isinstance(cubs200_train_dataset.targets, list):
-            cubs200_train_dataset.targets = torch.Tensor(cubs200_train_dataset.targets).type(torch.int64) # Need to change into int64 to use in test step 
-            cubs200_test_dataset.targets = torch.Tensor(cubs200_test_dataset.targets).type(torch.int64) # Need to change into int64 to use in test step 
-        elif isinstance(cubs200_train_dataset.targets,np.ndarray):
-            cubs200_train_dataset.targets = torch.from_numpy(cubs200_train_dataset.targets).type(torch.int64)  
-            cubs200_test_dataset.targets = torch.from_numpy(cubs200_test_dataset.targets).type(torch.int64)  
-        self.train_dataset, val_dataset = random_split(cubs200_train_dataset, [5500, 494],generator=torch.Generator().manual_seed(self.seed)
+        if isinstance(cub200_train_dataset.targets, list):
+            cub200_train_dataset.targets = torch.Tensor(cub200_train_dataset.targets).type(torch.int64) # Need to change into int64 to use in test step 
+            cub200_test_dataset.targets = torch.Tensor(cub200_test_dataset.targets).type(torch.int64) # Need to change into int64 to use in test step 
+        elif isinstance(cub200_train_dataset.targets,np.ndarray):
+            cub200_train_dataset.targets = torch.from_numpy(cub200_train_dataset.targets).type(torch.int64)  
+            cub200_test_dataset.targets = torch.from_numpy(cub200_test_dataset.targets).type(torch.int64)  
+        self.train_dataset, val_dataset = random_split(cub200_train_dataset, [5500, 494],generator=torch.Generator().manual_seed(self.seed)
         )
         # splitting just to keep format consistent
-        self.test_dataset, _ = random_split(cubs200_test_dataset, [5790, 4],generator=torch.Generator().manual_seed(self.seed)
+        self.test_dataset, _ = random_split(cub200_test_dataset, [5790, 4],generator=torch.Generator().manual_seed(self.seed)
         )
 
         self.val_train_dataset = copy.deepcopy(val_dataset) 
@@ -219,12 +219,12 @@ class CUB200DataModule(LightningDataModule):
         return loader
 
     def default_transforms(self):
-        cubs200_transforms = transform_lib.Compose([
+        cub200_transforms = transform_lib.Compose([
             transforms.Resize(size = (32,32)),
             transform_lib.ToTensor(),
-            cubs200_normalization()
+            cub200_normalization()
         ])
-        return cubs200_transforms
+        return cub200_transforms
 
 '''
 datamodule = CUB200DataModule()

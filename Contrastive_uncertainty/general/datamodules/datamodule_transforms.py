@@ -10,7 +10,7 @@ from Contrastive_uncertainty.general.datamodules.dataset_normalizations import c
     svhn_normalization, stl10_normalization,\
     caltech101_normalization,caltech256_normalization,\
     imagenet_normalization,tinyimagenet_normalization,\
-    cubs200_normalization,dogs_normalization, \
+    cub200_normalization,dogs_normalization, \
     celeba_normalization,widerface_normalization,\
     places365_normalization,voc_normalization,\
     emnist_normalization
@@ -787,7 +787,7 @@ class Moco2EvalTinyImageNetTransforms:
         return q, k
 
 
-class Moco2TrainCubs200Transforms:
+class Moco2TrainCub200Transforms:
     
     """
     Moco 2 augmentation:
@@ -809,7 +809,7 @@ class Moco2TrainCubs200Transforms:
             transforms.RandomApply([GaussianBlur([.1, 2.])], p=0.5),
             transforms.RandomHorizontalFlip(),
             transforms.ToTensor(),
-            cubs200_normalization()
+            cub200_normalization()
         ])
 
     def __call__(self, inp):
@@ -829,7 +829,7 @@ class Moco2TrainCubs200Transforms:
         return q, k
     
 
-class Moco2EvalCubs200Transforms:
+class Moco2EvalCub200Transforms:
     """
     Moco 2 augmentation:
     https://arxiv.org/pdf/2003.04297.pdf
@@ -841,7 +841,7 @@ class Moco2EvalCubs200Transforms:
             transforms.Resize(height + 12),
             transforms.CenterCrop(height),
             transforms.ToTensor(),
-            cubs200_normalization(),
+            cub200_normalization(),
         ])
 
     def __call__(self, inp):

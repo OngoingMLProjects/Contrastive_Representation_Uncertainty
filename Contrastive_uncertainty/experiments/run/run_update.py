@@ -24,13 +24,13 @@ for i in range(len(runs)):
 #"OOD detection at different scales experiment"
 #"OOD hierarchy baselines"
 '''
+
 '''
 run_paths = ['nerdk312/evaluation/325cu61i',
             'nerdk312/evaluation/29ck9osj',
             'nerdk312/evaluation/fzl1buh6'
             ]
 '''
-run_paths = ['nerdk312/evaluation/3ro3xdsi',
-            'nerdk312/evaluation/2f13wvv3']
+run_paths = ['nerdk312/evaluation/3pgbko1g']
 
 update(run_paths, update_hparams)

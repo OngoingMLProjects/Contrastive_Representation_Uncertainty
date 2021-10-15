@@ -86,7 +86,7 @@ def tinyimagenet_normalization():
     return normalize
 
 # calculated manually using the procedure described in https://discuss.pytorch.org/t/about-normalization-using-pre-trained-vgg16-networks/23560/6
-def cubs200_normalization():
+def cub200_normalization():
     normalize = transforms.Normalize(mean = [0.4863, 0.4998, 0.4323], std = [0.1482, 0.1479, 0.1592])
     return normalize
 

@@ -19,7 +19,7 @@ def update_config(run_path, update_dict):
     config = previous_config
 
     for update_k, update_v in update_dict.items():
-        if update_k == 'group' or update_k =='notes':
+        if update_k == 'group' or update_k =='notes' or update_k == 'dataset':
             config[update_k] = update_v
 
     # During run, this is when the group, notes and config are able to change for the task

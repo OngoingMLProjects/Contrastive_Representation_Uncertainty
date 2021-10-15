@@ -21,7 +21,7 @@ import math
 import random
 
 import plotly.graph_objs as go
-from plotly.subplots import make_subplots
+from plotly.subplots import SubplotRef, make_subplots
 from sklearn.metrics import roc_auc_score
 
 
@@ -488,6 +488,74 @@ class NearestNeighboursClass1DTypicality(NearestNeighbours1DTypicality):
         din, dood = self.get_scores(ftrain_norm,ftest_norm, food_norm,labelstrain)
         AUROC = get_roc_sklearn(din, dood)
         wandb.run.summary[self.summary_key] = AUROC
+
+
+
+
+
+
+
+# Performs 1D typicality using a quadratic summation using the nearest neighbours as the batch for the data, and obtaining specific classes for the data
+class NearestNeighboursQuadraticClass1DTypicality(NearestNeighboursClass1DTypicality):
+    def __init__(self, Datamodule,OOD_Datamodule,
+        quick_callback:bool = True,K:int = 10):
+
+        super().__init__(Datamodule,OOD_Datamodule, quick_callback,K)
+        # Used to save the summary value
+        self.K = K
+        self.summary_key = f'Normalized One Dim Class Quadratic Typicality KNN - {self.K} OOD - {self.OOD_Datamodule.name}'
+
+    def forward_callback(self, trainer, pl_module):
+        return super().forward_callback(trainer, pl_module)
+        
+    def get_features(self, pl_module, dataloader):
+        return super().get_features(pl_module, dataloader)
+    
+    def normalise(self, ftrain, ftest, food):
+        return super().normalise(ftrain, ftest, food)
+    
+    def get_nearest_neighbours(self, ftest, food):
+        return super().get_nearest_neighbours(ftest, food)
+    
+    # get the features of the data which also has the KNN in either the test set or the OOD dataset
+    def get_knn_features(self, ftest, food, knn_indices):
+        return super().get_knn_features(ftest, food, knn_indices)
+    
+    def get_1d_train(self, ftrain, ypred):
+        return super().get_1d_train(ftrain, ypred)
+    
+    def get_thresholds(self, fdata, means, eigvalues, eigvectors, dtrain_1d_mean, dtrain_1d_std):
+        thresholds = []
+        num_batches = len(fdata)//self.K
+        # Currently goes through a single data point at a time which is not very efficient
+        for i in range(num_batches):
+            fdata_batch = fdata[(i*self.K):((i+1)*self.K)]
+            ddata = [np.matmul(eigvectors[class_num].T,(fdata_batch - means[class_num]).T)**2/eigvalues[class_num] for class_num in range(len(means))] # Calculate the 1D scores for all the different classes 
+        
+            # obtain the normalised the scores for the different classes
+            ddata = [ddata[class_num] - dtrain_1d_mean[class_num]/(dtrain_1d_std[class_num]  +1e-10) for class_num in range(len(means))] # shape (dim, batch)
+            
+            # shape (dim) average of all data in batch size
+            ddata = [np.mean(ddata[class_num],axis=1) for class_num in range(len(means))] # shape dim
+
+            ###### Only change from the previous class is this line ###########
+            # Obtain the sum of absolute normalised scores squared (to emphasis the larger penalty when the deviation of a dimension is larger)
+            scores = [np.sum(np.abs(ddata[class_num]**2),axis=0) for class_num in range(len(means))]
+            ##################################################################
+
+            # Obtain the scores corresponding to the lowest class
+            ddata = np.min(scores,axis=0)
+
+            thresholds.append(ddata)
+
+        return thresholds
+
+    def get_scores(self, ftrain, ftest, food, labelstrain):
+        return super().get_scores(ftrain, ftest, food, labelstrain)
+
+    def get_eval_results(self, ftrain, ftest, food, labelstrain):
+        return super().get_eval_results(ftrain, ftest, food, labelstrain)
+
 
 # Oracle situation where the nearest neighbours are always obtained from the same dataset
 class OracleNearestNeighboursClass1DTypicality(NearestNeighboursClass1DTypicality):

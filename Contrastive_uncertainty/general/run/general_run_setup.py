@@ -8,7 +8,7 @@ from Contrastive_uncertainty.general.callbacks.metrics.metric_callback import Me
 from Contrastive_uncertainty.general.callbacks.ood_callbacks import Mahalanobis_OOD, Class_Mahalanobis_OOD, Mahalanobis_OOD_Fractions
 from Contrastive_uncertainty.general.callbacks.odin_callbacks import ODIN
 from Contrastive_uncertainty.general.callbacks.nearest_neighbours_callbacks import NearestNeighbours, NearestClassNeighbours,\
-NearestNeighbours1DTypicality, NearestNeighboursClass1DTypicality, OracleNearestNeighboursClass1DTypicality, DifferentKNNClass1DTypicality,\
+NearestNeighbours1DTypicality, NearestNeighboursClass1DTypicality,NearestNeighboursQuadraticClass1DTypicality, OracleNearestNeighboursClass1DTypicality, DifferentKNNClass1DTypicality,\
 DifferentKNNMarginal1DTypicality, DifferentKNNMarginalTypicality, DifferentKNNClassTypicality
 
 
@@ -57,6 +57,9 @@ def callback_dictionary(Datamodule,config,data_dict):
                 f'Nearest Neighbours {ood_dataset}': NearestNeighbours(Datamodule,OOD_Datamodule,quick_callback=quick_callback),
                 f'Nearest 10 Neighbours 1D Typicality {ood_dataset}':NearestNeighbours1DTypicality(Datamodule,OOD_Datamodule,quick_callback=quick_callback,K=10),
                 f'Nearest 10 Neighbours Class 1D Typicality {ood_dataset}':NearestNeighboursClass1DTypicality(Datamodule,OOD_Datamodule,quick_callback=quick_callback,K=10),
+
+                f'Nearest 10 Neighbours Class Quadratic 1D Typicality {ood_dataset}':NearestNeighboursQuadraticClass1DTypicality(Datamodule,OOD_Datamodule,quick_callback=quick_callback,K=10),
+                
                 f'Nearest 5 Neighbours 1D Typicality {ood_dataset}':NearestNeighbours1DTypicality(Datamodule,OOD_Datamodule,quick_callback=quick_callback,K=5),
                 f'Nearest 5 Neighbours Class 1D Typicality {ood_dataset}':NearestNeighboursClass1DTypicality(Datamodule,OOD_Datamodule,quick_callback=quick_callback,K=5),
                 f'Oracle Nearest 10 Neighbours Class 1D Typicality {ood_dataset}': OracleNearestNeighboursClass1DTypicality(Datamodule,OOD_Datamodule,quick_callback=quick_callback,K=10),
