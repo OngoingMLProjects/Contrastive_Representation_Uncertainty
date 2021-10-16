@@ -162,6 +162,8 @@ class NearestClassNeighbours(pl.Callback):
         self.forward_callback(trainer=trainer, pl_module=pl_module) 
 
     def forward_callback(self,trainer,pl_module):
+        self.OOD_Datamodule.setup() # SETUP AGAIN TO RESET AFTER PROVIDING THE TRANSFORM FOR THE DATA
+
         train_loader = self.Datamodule.deterministic_train_dataloader()
         test_loader = self.Datamodule.test_dataloader()
 
@@ -256,6 +258,8 @@ class NearestNeighbours1DTypicality(NearestNeighbours):
         self.summary_key = f'Normalized One Dim Marginal Typicality KNN - {self.K} OOD - {self.OOD_Datamodule.name}'
 
     def forward_callback(self, trainer, pl_module):
+        self.OOD_Datamodule.setup() # SETUP AGAIN TO RESET AFTER PROVIDING THE TRANSFORM FOR THE DATA
+        
         train_loader = self.Datamodule.deterministic_train_dataloader()
         test_loader = self.Datamodule.test_dataloader()
         ood_loader = self.OOD_Datamodule.test_dataloader()
@@ -392,6 +396,8 @@ class NearestNeighboursClass1DTypicality(NearestNeighbours1DTypicality):
         self.summary_key = f'Normalized One Dim Class Typicality KNN - {self.K} OOD - {self.OOD_Datamodule.name}'
 
     def forward_callback(self, trainer, pl_module):
+        self.OOD_Datamodule.setup() # SETUP AGAIN TO RESET AFTER PROVIDING THE TRANSFORM FOR THE DATA
+
         train_loader = self.Datamodule.deterministic_train_dataloader()
         test_loader = self.Datamodule.test_dataloader()
         ood_loader = self.OOD_Datamodule.test_dataloader()
@@ -488,11 +494,6 @@ class NearestNeighboursClass1DTypicality(NearestNeighbours1DTypicality):
         din, dood = self.get_scores(ftrain_norm,ftest_norm, food_norm,labelstrain)
         AUROC = get_roc_sklearn(din, dood)
         wandb.run.summary[self.summary_key] = AUROC
-
-
-
-
-
 
 
 # Performs 1D typicality using a quadratic summation using the nearest neighbours as the batch for the data, and obtaining specific classes for the data
@@ -805,6 +806,8 @@ class DifferentKNNClassTypicality(DifferentKNNMarginal1DTypicality):
         return super().on_test_epoch_end(trainer, pl_module)
 
     def forward_callback(self, trainer, pl_module):
+        self.OOD_Datamodule.setup() # SETUP AGAIN TO RESET AFTER PROVIDING THE TRANSFORM FOR THE DATA
+
         train_loader = self.Datamodule.deterministic_train_dataloader()
         test_loader = self.Datamodule.test_dataloader()
         ood_loader = self.OOD_Datamodule.test_dataloader()
@@ -930,6 +933,8 @@ class DifferentKNNMarginalTypicality(DifferentKNNMarginal1DTypicality):
         return super().on_test_epoch_end(trainer, pl_module)
 
     def forward_callback(self, trainer, pl_module):
+        self.OOD_Datamodule.setup() # SETUP AGAIN TO RESET AFTER PROVIDING THE TRANSFORM FOR THE DATA
+        
         train_loader = self.Datamodule.deterministic_train_dataloader()
         test_loader = self.Datamodule.test_dataloader()
         ood_loader = self.OOD_Datamodule.test_dataloader()

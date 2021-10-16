@@ -5,7 +5,7 @@ trainer_hparams = dict(
 seed = 26,
 epochs = 0,
 bsz = 32,#64,
-OOD_dataset =['MNIST','FashionMNIST','KMNIST','EMNIST','Places365','VOC'],
+#OOD_dataset =['MNIST','FashionMNIST','KMNIST','EMNIST','Places365','VOC'],
 # Trainer configurations
 fast_run = False,
 quick_callback = False,
@@ -16,7 +16,8 @@ val_check = 1,  # evaluation, Moco_training
 #callbacks = ['Oracle Nearest 10 Neighbours Class 1D Typicality'],
 #callbacks = ['Metrics'],
 #callbacks = ['Different K Nearest Neighbours Class'],
-callbacks = ['Mahalanobis Distance','Different K Nearest Neighbours Class 1D Typicality','Nearest'],
+#callbacks = ['Mahalanobis Distance','Different K Nearest Neighbours Class 1D Typicality','Nearest'],
+callbacks = ['Nearest 10 Neighbours Class Quadratic 1D Typicality'],
 #callbacks = ['Nearest','Class Mahalanobis','Mahalanobis Distance'],
 #callbacks = ['Nearest Neighbours Class 1D Typicality'],
 

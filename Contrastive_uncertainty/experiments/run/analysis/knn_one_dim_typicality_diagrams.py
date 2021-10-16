@@ -409,6 +409,7 @@ def knn_auroc_table():
         #https://stackoverflow.com/questions/24704299/how-to-treat-t-as-a-regular-string-in-python
         latex_table = latex_table.replace(r'\\',r'\\ \hline')
         
+        
 
         # Replacing the string with the max value so it can be seen
         #https://stackoverflow.com/questions/4703390/how-to-extract-a-floating-number-from-a-string
