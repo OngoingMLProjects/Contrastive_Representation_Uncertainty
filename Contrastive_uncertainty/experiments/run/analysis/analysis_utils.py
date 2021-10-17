@@ -46,7 +46,6 @@ for key in dataset_dict.keys():
     indices = np.arange(len(ood_datasets)).tolist() # Create a list of numbers with from 0 to n based on the number of data points present
     dataset_dict[key] = dict(zip(ood_datasets,indices)) # make a dictionary from combining two lists together
     
-
             
 # Dict for the specific case to the other value
 key_dict = {'model_type':{'CE':0, 'Moco':1, 'SupCon':2},

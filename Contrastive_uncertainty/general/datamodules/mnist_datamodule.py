@@ -191,9 +191,7 @@ class MNISTDataModule(LightningDataModule):
     def deterministic_train_dataloader(self): #  Makes it so that the data does not shuffle (Used for the case of the hierarchical approach)
         """
         FashionMNIST train set removes a subset to use for validation
-        """
-
-        
+        """        
         loader = DataLoader(
             self.train_dataset,
             batch_size=self.batch_size,

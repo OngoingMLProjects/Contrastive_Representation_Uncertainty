@@ -4,7 +4,7 @@ trainer_hparams = dict(
 # Miscellaneous arguments
 seed = 26,
 epochs = 0,
-bsz = 32,#64,
+bsz =64, #32,#64,
 #OOD_dataset =['MNIST','FashionMNIST','KMNIST','EMNIST','Places365','VOC'],
 # Trainer configurations
 fast_run = False,
