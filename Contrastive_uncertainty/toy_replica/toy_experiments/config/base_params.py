@@ -32,6 +32,7 @@ softmax_temperature = 0.07,
 
 # Either goes through all the models or goes through baselines
 
+auxillary_dataset = 'TwoMoons',
 single_model = 'Baselines'
 )  # evaluation
 # Updates OOD dataset if not manually specified

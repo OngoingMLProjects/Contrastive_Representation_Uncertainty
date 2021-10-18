@@ -24,11 +24,13 @@ class BlobsDataModule(LightningDataModule): # Data module for Two Moons dataset
     def __init__(self,data_dir: str = None, batch_size=32, seed =42, centers = 10, train_transforms=None, test_transforms=None, multi_transforms=None):
         super().__init__()
         self.batch_size = batch_size
+        self.num_workers = 8 
         self.train_transforms = train_transforms
         self.test_transforms = test_transforms
         self.multi_transforms = multi_transforms
         self.centers = centers  # Number of different classes
         self.seed = seed
+        self.data_dir = data_dir if data_dir is not None else os.getcwd()
     
     @property
     def num_classes(self):

@@ -3,5 +3,7 @@ model_names_dict = dict(
     Moco = 'Moco',
     SupCon = 'SupCon',
     CE ='CE',
-    Centroid_VicReg = 'Centroid_VicReg'   
+    Centroid_VicReg = 'Centroid_VicReg',
+
+    OE ='OE'   # Outlier exposure
     )

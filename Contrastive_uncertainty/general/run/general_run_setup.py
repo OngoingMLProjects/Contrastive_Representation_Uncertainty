@@ -86,6 +86,3 @@ def specific_callbacks(callback_dict, names):
                 desired_callbacks.append(callback_dict[key]) # Add the specific callback
     
     return desired_callbacks
-
-
-

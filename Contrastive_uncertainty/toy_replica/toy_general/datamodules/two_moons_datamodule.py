@@ -24,12 +24,14 @@ class TwoMoonsDataModule(LightningDataModule): # Data module for Two Moons datas
     def __init__(self,data_dir: str = None,batch_size=32,seed = 42, train_transforms=None, test_transforms=None,multi_transforms=None, noise=0.1):
         super().__init__()
         self.batch_size = batch_size
+        self.num_workers = 8
         self.noise = noise
         self.train_transforms = train_transforms
         self.test_transforms = test_transforms
         self.multi_transforms = multi_transforms
         self.seed = seed
         self.name = 'TwoMoons'
+        self.data_dir = data_dir if data_dir is not None else os.getcwd()
 
     @property
     def num_classes(self):
@@ -57,7 +59,9 @@ class TwoMoonsDataModule(LightningDataModule): # Data module for Two Moons datas
             self.test_data = (self.test_data - self.mean)/self.std
 
         self.train_dataset = CustomTensorDataset((torch.from_numpy(self.train_data).float(), torch.from_numpy(self.train_labels)),transform = self.train_transforms)
-        self.val_dataset = CustomTensorDataset((torch.from_numpy(self.val_data).float(),torch.from_numpy(self.val_labels)), transform = self.test_transforms)
+        self.val_train_dataset = CustomTensorDataset((torch.from_numpy(self.val_data).float(), torch.from_numpy(self.val_labels)),transform = self.train_transforms)
+        self.val_test_dataset = CustomTensorDataset((torch.from_numpy(self.val_data).float(), torch.from_numpy(self.val_labels)),transform = self.test_transforms)
+        #self.val_dataset = CustomTensorDataset((torch.from_numpy(self.val_data).float(),torch.from_numpy(self.val_labels)), transform = self.test_transforms)
         self.test_dataset = CustomTensorDataset((torch.from_numpy(self.test_data).float(), torch.from_numpy(self.test_labels)), transform = self.test_transforms)
         # Test dataset where no augmenation is applied
         
@@ -71,11 +75,16 @@ class TwoMoonsDataModule(LightningDataModule): # Data module for Two Moons datas
 
     def val_dataloader(self):
         '''returns validation dataloader'''
-        
+        '''
         val_loader = DataLoader(self.val_dataset, batch_size=self.batch_size, shuffle=False, drop_last=True,num_workers = 8) # Batch size is entire validataion set
 
         return val_loader
+        '''
+        val_train_loader = DataLoader(self.val_train_dataset, batch_size=self.batch_size, shuffle=False, drop_last=True,num_workers = 8) # Batch size is entire validataion set
+        val_test_loader = DataLoader(self.val_test_dataset, batch_size=self.batch_size, shuffle=False, drop_last=True,num_workers = 8)
 
+        return [val_train_loader, val_test_loader]
+    
     def test_dataloader(self):
         '''returns test dataloader'''
         
