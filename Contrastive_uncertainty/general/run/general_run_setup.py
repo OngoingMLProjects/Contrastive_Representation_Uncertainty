@@ -62,7 +62,7 @@ def callback_dictionary(Datamodule,config,data_dict):
                 
                 f'Nearest 5 Neighbours 1D Typicality {ood_dataset}':NearestNeighbours1DTypicality(Datamodule,OOD_Datamodule,quick_callback=quick_callback,K=5),
                 f'Nearest 5 Neighbours Class 1D Typicality {ood_dataset}':NearestNeighboursClass1DTypicality(Datamodule,OOD_Datamodule,quick_callback=quick_callback,K=5),
-                f'Oracle Nearest 10 Neighbours Class 1D Typicality {ood_dataset}': OracleNearestNeighboursClass1DTypicality(Datamodule,OOD_Datamodule,quick_callback=quick_callback,K=10),
+                #f'Oracle Nearest 10 Neighbours Class 1D Typicality {ood_dataset}': OracleNearestNeighboursClass1DTypicality(Datamodule,OOD_Datamodule,quick_callback=quick_callback,K=10),
                 f'Different K Nearest Neighbours Class 1D Typicality {ood_dataset}':DifferentKNNClass1DTypicality(Datamodule,OOD_Datamodule,quick_callback=quick_callback)}
                 
                 # Ablation studies

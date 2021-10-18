@@ -106,7 +106,6 @@ class OutlierExposureModule(pl.LightningModule):
         return metrics
 
     def training_step(self, batch, batch_idx):
-        import ipdb; ipdb.set_trace()
         metrics = self.loss_function(batch)
         for k,v in metrics.items():
             if v is not None: self.log('Training ' + k, v.item(),on_epoch=True)

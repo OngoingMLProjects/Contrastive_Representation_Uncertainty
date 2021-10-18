@@ -46,7 +46,6 @@ class Mahalanobis_OOD(pl.Callback):
     
     '''
     def on_validation_epoch_end(self, trainer, pl_module):
-        #import ipdb; ipdb.set_trace()
         # Skip if fast testing as this can lead to issues with the code
         self.forward_callback(trainer=trainer, pl_module=pl_module) 
     '''
@@ -86,6 +85,10 @@ class Mahalanobis_OOD(pl.Callback):
             if isinstance(img, tuple) or isinstance(img, list):
                     img, *aug_img = img # Used to take into accoutn whether the data is a tuple of the different augmentations
 
+            '''        
+            plt.imshow(  img[1].permute(1, 2, 0)  )
+            plt.show()
+            '''
             # Selects the correct label based on the desired label level
             if len(label) > 1:
                 label_index = 0

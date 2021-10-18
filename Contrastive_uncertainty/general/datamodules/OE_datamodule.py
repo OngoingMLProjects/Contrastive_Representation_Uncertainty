@@ -104,7 +104,6 @@ class OEDatamodule(LightningDataModule):
         return train_loader
     
     def deterministic_train_dataloader(self):
-        import ipdb; ipdb.set_trace()
         '''returns training dataloader'''
         ''
         deterministic_train_loader = DataLoader(self.train_dataset, batch_size=self.batch_size, shuffle=False, drop_last = True, num_workers = 8)
@@ -167,7 +166,7 @@ class ConcatDataset(torch.utils.data.Dataset):
         return min(len(d) for d in self.datasets)
 
 
-
+'''
 ID_datamodule = MNISTDataModule()
 OOD_datamodule = FashionMNISTDataModule()
 ID_datamodule.setup()
@@ -179,4 +178,4 @@ OE_module.setup()
 #test_loader = OE_module.test_dataloader()
 
 loader = OE_module.deterministic_train_dataloader()
-import ipdb; ipdb.set_trace()
+'''
