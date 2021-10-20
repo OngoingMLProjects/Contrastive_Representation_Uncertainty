@@ -50,12 +50,6 @@ class Mahalanobis_OOD(pl.Callback):
         self.forward_callback(trainer=trainer, pl_module=pl_module) 
     '''
 
-    
-    def on_validation_epoch_end(self, trainer, pl_module):
-        # Skip if fast testing as this can lead to issues with the code
-        self.forward_callback(trainer=trainer, pl_module=pl_module) 
-    
-
     def on_test_epoch_end(self, trainer, pl_module):
         self.forward_callback(trainer=trainer, pl_module=pl_module) 
 
@@ -72,7 +66,7 @@ class Mahalanobis_OOD(pl.Callback):
         features_train, labels_train = self.get_features(pl_module, train_loader)
         features_test, labels_test = self.get_features(pl_module, test_loader)
         features_ood, labels_ood = self.get_features(pl_module, ood_loader)
-        _, _ = self.visualize_data(trainer,pl_module, ood_loader)
+        #self.visualize_data(trainer,pl_module, ood_loader)
         
         # Number of classes obtained from the max label value + 1 ( to take into account counting from zero)
 
@@ -133,22 +127,9 @@ class Mahalanobis_OOD(pl.Callback):
                 })
             '''
 
-            # Selects the correct label based on the desired label level
-            if len(label) > 1:
-                label_index = 0
-                label = label[label_index]
-            else: # Used for the case of the OOD data
-                label = label[0]
-
-            img = img.to(pl_module.device)
             
-            # Compute feature vector and place in list
-            feature_vector = pl_module.callback_vector(img) # Performs the callback for the desired level
-            
-            features += list(feature_vector.data.cpu().numpy())
-            labels += list(label.data.cpu().numpy())            
 
-        return np.array(features), np.array(labels)
+        return im
 
 
     def get_scores(self,ftrain, ftest, food, ypred):

@@ -11,6 +11,8 @@ from Contrastive_uncertainty.general.callbacks.nearest_neighbours_callbacks impo
 NearestNeighbours1DTypicality, NearestNeighboursClass1DTypicality,NearestNeighboursQuadraticClass1DTypicality, OracleNearestNeighboursClass1DTypicality, DifferentKNNClass1DTypicality,\
 DifferentKNNMarginal1DTypicality, DifferentKNNMarginalTypicality, DifferentKNNClassTypicality
 
+from Contrastive_uncertainty.general.callbacks.softmax_probability_callbacks import Max_Softmax_Probability
+
 
 def train_run_name(model_name, config, group=None):
     run_name = 'Train_' + model_name + '_DS:'+str(config['dataset']) +'_Epochs:'+ str(config['epochs']) + '_seed:' +str(config['seed'])  
@@ -50,6 +52,7 @@ def callback_dictionary(Datamodule,config,data_dict):
         OOD_callback = {                                                
                 f'Mahalanobis Distance {ood_dataset}': Mahalanobis_OOD(Datamodule,OOD_Datamodule,quick_callback=quick_callback),
                 f'Class Mahalanobis {ood_dataset}': Class_Mahalanobis_OOD(Datamodule,OOD_Datamodule,quick_callback=quick_callback),
+                f'Maximum Softmax Probability {ood_dataset}': Max_Softmax_Probability(Datamodule,OOD_Datamodule,quick_callback=quick_callback), # softmax probability baseline (need to train cross entropy models for the case of this baseline)
 
                 f'ODIN {ood_dataset}': ODIN(Datamodule,OOD_Datamodule,quick_callback=quick_callback),
 
