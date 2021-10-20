@@ -5,7 +5,8 @@ trainer_hparams = dict(
 seed = 26,
 epochs = 0,
 bsz =64, #32,#64,
-OOD_dataset = ['STL10', 'CelebA','WIDERFace','SVHN', 'Caltech101','Caltech256','CIFAR10','CIFAR100', 'VOC', 'Places365','TinyImageNet','Cub200','Dogs', 'MNIST', 'FashionMNIST', 'KMNIST', 'EMNIST'],
+#OOD_dataset = ['STL10', 'CelebA','WIDERFace','SVHN', 'Caltech101','Caltech256','CIFAR10','CIFAR100', 'VOC', 'Places365','TinyImageNet','Cub200','Dogs', 'MNIST', 'FashionMNIST', 'KMNIST', 'EMNIST'],
+OOD_dataset = ['MNIST', 'FashionMNIST', 'KMNIST', 'EMNIST'],
 #OOD_dataset =['MNIST','FashionMNIST','KMNIST','EMNIST','Places365','VOC'],
 # Trainer configurations
 fast_run = False,

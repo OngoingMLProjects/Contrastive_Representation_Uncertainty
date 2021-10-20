@@ -49,7 +49,13 @@ class Mahalanobis_OOD(pl.Callback):
         # Skip if fast testing as this can lead to issues with the code
         self.forward_callback(trainer=trainer, pl_module=pl_module) 
     '''
-        
+
+    
+    def on_validation_epoch_end(self, trainer, pl_module):
+        # Skip if fast testing as this can lead to issues with the code
+        self.forward_callback(trainer=trainer, pl_module=pl_module) 
+    
+
     def on_test_epoch_end(self, trainer, pl_module):
         self.forward_callback(trainer=trainer, pl_module=pl_module) 
 
@@ -63,10 +69,10 @@ class Mahalanobis_OOD(pl.Callback):
         
         # Obtain representations of the data
         
-        
         features_train, labels_train = self.get_features(pl_module, train_loader)
         features_test, labels_test = self.get_features(pl_module, test_loader)
         features_ood, labels_ood = self.get_features(pl_module, ood_loader)
+        _, _ = self.visualize_data(trainer,pl_module, ood_loader)
         
         # Number of classes obtained from the max label value + 1 ( to take into account counting from zero)
 
@@ -84,11 +90,7 @@ class Mahalanobis_OOD(pl.Callback):
             assert len(loader)>0, 'loader is empty'
             if isinstance(img, tuple) or isinstance(img, list):
                     img, *aug_img = img # Used to take into accoutn whether the data is a tuple of the different augmentations
-
-            '''        
-            plt.imshow(  img[1].permute(1, 2, 0)  )
-            plt.show()
-            '''
+            
             # Selects the correct label based on the desired label level
             if len(label) > 1:
                 label_index = 0
@@ -107,6 +109,48 @@ class Mahalanobis_OOD(pl.Callback):
         return np.array(features), np.array(labels)
     
     
+    # Function just to visualise data, not actually required
+    def visualize_data(self,trainer, pl_module, dataloader):
+        features, labels = [], []
+        loader = quickloading(self.quick_callback, dataloader)
+        for index, (img, *label, indices) in enumerate(loader):
+            assert len(loader)>0, 'loader is empty'
+            if isinstance(img, tuple) or isinstance(img, list):
+                    img, *aug_img = img # Used to take into accoutn whether the data is a tuple of the different augmentations
+            
+            from torchvision import transforms
+            im = transforms.ToPILImage()(img[0]).convert("RGB")
+
+            
+            wandb.log({"img": [wandb.Image(im, caption="Cafe")]})
+            
+            wandb.log({"img tensor": [wandb.Image(img[0], caption="tensor")]})
+            '''
+            trainer.logger.experiment.log({
+                'Image examining': [wandb.Image(x)
+                                for x in img[:8]],
+                "global_step": trainer.global_step #pl_module.current_epoch
+                })
+            '''
+
+            # Selects the correct label based on the desired label level
+            if len(label) > 1:
+                label_index = 0
+                label = label[label_index]
+            else: # Used for the case of the OOD data
+                label = label[0]
+
+            img = img.to(pl_module.device)
+            
+            # Compute feature vector and place in list
+            feature_vector = pl_module.callback_vector(img) # Performs the callback for the desired level
+            
+            features += list(feature_vector.data.cpu().numpy())
+            labels += list(label.data.cpu().numpy())            
+
+        return np.array(features), np.array(labels)
+
+
     def get_scores(self,ftrain, ftest, food, ypred):
         # Nawid - get all the features which belong to each of the different classes
         xc = [ftrain[ypred == i] for i in np.unique(ypred)] # Nawid - training data which have been predicted to belong to a particular class

@@ -192,3 +192,4 @@ class Visualisation(pl.Callback): # General class for visualisation
         wandb_tsne = name +' TSNE of Features'
         wandb.log({wandb_tsne:wandb.Image(tsne_filename)})
         plt.close()
+

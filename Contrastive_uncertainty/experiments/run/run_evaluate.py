@@ -19,8 +19,9 @@ api = wandb.Api()
 #runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"New Model Testing","config.model_type":"Centroid_VicReg","config.dataset": "CIFAR10"})
 #runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"New Model Testing","config.model_type":"Centroid_VicReg","config.dataset": "CIFAR100"})
 #runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"New Model Testing","config.model_type":"Centroid_VicReg"})
-runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"OOD hierarchy baselines","config.model_type": "SupCon","config.epochs":300})
+#runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"OOD hierarchy baselines","config.model_type": "SupCon","config.epochs":300})
 
+runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"OOD hierarchy baselines","config.model_type": "SupCon","config.epochs":300,"$or": [{"config.dataset":"MNIST" }, {"config.dataset": "FashionMNIST"},{"config.dataset": "KMNIST"}]})
 
 # Used to filter simulations which are finished rather than still continuing
 #runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"New Model Testing","config.model_type":"Centroid_VicReg",'state':'finished'})
