@@ -106,7 +106,7 @@ class ODIN(pl.Callback):
     '''
 
 
-       
+    '''       
     def on_test_batch_end(self, trainer, pl_module, outputs, batch, batch_idx: int, dataloader_idx: int):
         (img_1, img_2), *labels, indices = batch = batch
         if isinstance(labels, tuple) or isinstance(labels, list):
@@ -114,7 +114,17 @@ class ODIN(pl.Callback):
         torch.set_grad_enabled(True) # need to set grad enabled true during the test step
         pl_module.eval()
         self.loss_calculation(trainer, pl_module,img_1, labels)
+    '''
+
+    def on_test_epoch_end(self, trainer, pl_module):
+        # Perform callback only for the situation
+        torch.set_grad_enabled(True) # need to set grad enabled true during the test step
+        pl_module.eval()
+        self.forward_callback(trainer,pl_module)
+        
+
     
+
     # Second working version of calculating the gradients, able to perturb the input and calculate all the different values present
     def loss_calculation(self,trainer, pl_module,x,y):
         x_params = nn.Parameter(x)
@@ -135,9 +145,6 @@ class ODIN(pl.Callback):
 
         #import ipdb; ipdb.set_trace()
        
-    
-
-
 
     # Performs all the computation in the callback
     def forward_callback(self,trainer,pl_module):
@@ -149,18 +156,31 @@ class ODIN(pl.Callback):
         
         # Obtain representations of the data
             
-        features_train, labels_train = self.get_features(pl_module, train_loader)
-        features_test, labels_test = self.get_features(pl_module, test_loader)
-        features_ood, labels_ood = self.get_features(pl_module, ood_loader)
+        self.get_grads(trainer,pl_module, train_loader)
+        self.get_grads(trainer, pl_module, test_loader)
+        self.get_grads(trainer, pl_module, ood_loader)
         # Number of classes obtained from the max label value + 1 ( to take into account counting from zero)
-        '''
-        self.get_eval_results(
-            np.copy(features_train),
-            np.copy(features_test),
-            np.copy(features_ood),
-            np.copy(labels_train))
-        '''
+        
+    def get_grads(self,trainer,pl_module,dataloader):
+        loader = quickloading(self.quick_callback, dataloader)
+        for index, (img, *label, indices) in enumerate(loader):
+            assert len(loader)>0, 'loader is empty'
+            if isinstance(img, tuple) or isinstance(img, list):
+                    img, *aug_img = img # Used to take into accoutn whether the data is a tuple of the different augmentations
 
+            # Selects the correct label based on the desired label level
+            if len(label) > 1:
+                label_index = 0
+                label = label[label_index]
+            else: # Used for the case of the OOD data
+                label = label[0]
+            
+            self.loss_calculation(trainer, pl_module, img, label)
+
+
+        return img
+
+    '''
     def get_features(self, pl_module, dataloader):
         features, labels = [], []
         loader = quickloading(self.quick_callback, dataloader)
@@ -175,6 +195,8 @@ class ODIN(pl.Callback):
                 label = label[label_index]
             else: # Used for the case of the OOD data
                 label = label[0]
+            
+            self.loss_calculation()
 
             img = img.to(pl_module.device)
             
@@ -192,7 +214,7 @@ class ODIN(pl.Callback):
             labels += list(label.data.cpu().numpy())            
 
         return np.array(features), np.array(labels)
-    
+    '''
     '''
     def get_scores(self,ftrain, ftest, food, ypred):
         # Nawid - get all the features which belong to each of the different classes
