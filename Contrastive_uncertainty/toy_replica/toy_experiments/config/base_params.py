@@ -58,12 +58,14 @@ test_ratio = 1.0,
 val_check = 1,
 model_saving = 1, # Used to control how often the model is saved
 
-callbacks = ['Maximum Softmax Probability'],
+
+
+#callbacks = ['Maximum Softmax Probability'],
 #callbacks = ['Nearest 10 Neighbours Class Quadratic 1D Typicality'],
 #callbacks =['Oracle Nearest 10 Neighbours Class 1D Typicality'],
 #callbacks = ['Different K Nearest Neighbours Class Typicality'],
 #callbacks = ['Different K Nearest Neighbours Marginal Typicality'],
-#callbacks = ['ODIN'],
+callbacks = ['ODIN'],
 
 #callbacks = ['Nearest'],
 #callbacks = ['Nearest Neighbours Class 1D Typicality'],
