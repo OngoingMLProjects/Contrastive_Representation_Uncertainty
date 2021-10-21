@@ -15,8 +15,8 @@ weight_decay = 1e-4,
 # Training parameters in common
 emb_dim = 128,
 instance_encoder = 'resnet50', # Use resnet 18 for confusion log probability 
-#dataset = 'TinyImageNet',
-dataset = 'Cub200',
+dataset = 'TinyImageNet',
+#dataset = 'Cub200',
 #OOD_dataset = ['CIFAR10'],
 #dataset = 'CIFAR100',
 #OOD_dataset = ['SVHN'],
@@ -291,14 +291,14 @@ model_saving = 200, # Used to control how often the model is saved
 callbacks = ['Model_saving','Mahalanobis Distance','Maximum Softmax Probability'], #'Model_saving'
 )
 
-'''
+
 batch_base_hparams = [base1_hparams]
 batch_trainer_hparams = [trainer1_hparams]
-'''
 
+'''
 batch_base_hparams = [base1_hparams, base2_hparams,base3_hparams, base4_hparams]
 batch_trainer_hparams = [trainer1_hparams, trainer2_hparams,trainer3_hparams, trainer4_hparams]
-
+'''
 '''
 batch_base_hparams = [base1_hparams, base2_hparams, base3_hparams]
 batch_trainer_hparams = [trainer1_hparams, trainer2_hparams, trainer3_hparams]

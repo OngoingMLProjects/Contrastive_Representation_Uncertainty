@@ -29,8 +29,9 @@ from Contrastive_uncertainty.general.callbacks.general_callbacks import quickloa
 from Contrastive_uncertainty.general.utils.pl_metrics import precision_at_k, mean
 from Contrastive_uncertainty.general.run.model_names import model_names_dict
 
-
-# NEED TO BE ABLE TO PERFORM BACKPROPAGATION EFFECTIVELY
+# Implementation based on these resources
+# https://github.com/facebookresearch/odin/blob/main/code/calData.py
+#https://github.com/guyera/Generalized-ODIN-Implementation/blob/master/code/cal.py
 class ODIN(pl.Callback):
     def __init__(self, Datamodule,OOD_Datamodule,
         quick_callback:bool = True,Temperature:float = 1000, noise_magnitude:float = 0.0014):
@@ -91,7 +92,6 @@ class ODIN(pl.Callback):
         loss = nn.CrossEntropyLoss()(probs, y)
         loss.backward()
         print(x_params.grad)
-        import ipdb; ipdb.set_trace()
     '''
 
     '''
@@ -121,31 +121,7 @@ class ODIN(pl.Callback):
         torch.set_grad_enabled(True) # need to set grad enabled true during the test step
         pl_module.eval()
         self.forward_callback(trainer,pl_module)
-        
-
     
-
-    # Second working version of calculating the gradients, able to perturb the input and calculate all the different values present
-    def loss_calculation(self,trainer, pl_module,x,y):
-        x_params = nn.Parameter(x)
-        
-        x_params, y = x_params.to(pl_module.device), y.to(pl_module.device)
-        x_params.retain_grad() # required to obtain the gradient otherwise the UserWarning : UserWarning: The .grad attribute of a Tensor that is not a leaf Tensor is being accessed. Its .grad attribute won't be populated during autograd.backward(). If you indeed want the gradient for a non-leaf Tensor, use .retain_grad() on the non-leaf Tensor. If you access the non-leaf Tensor by mistake, make sure you access the leaf Tensor instead. See github.com/pytorch/pytorch/pull/30531 for more informations.
-
-        logits = pl_module.class_forward(x_params)
-        
-        probs = F.softmax(logits,dim=1)
-        labels = torch.argmax(probs,dim=1) # use the maximum probability indices as the labels 
-        loss = nn.CrossEntropyLoss()(probs, labels)
-        loss.backward()
-        print(x_params.grad)
-        x = x.to(pl_module.device)
-        perturbed_x = torch.add(x,x_params.grad ,alpha=0.01) # adding x with x grad in conjuction with an alpha term to get the different values
-        perturbed_outputs = pl_module.class_forward(perturbed_x)
-
-        #import ipdb; ipdb.set_trace()
-       
-
     # Performs all the computation in the callback
     def forward_callback(self,trainer,pl_module):
         self.OOD_Datamodule.setup() # SETUP AGAIN TO RESET AFTER PROVIDING THE TRANSFORM FOR THE DATA
@@ -179,42 +155,47 @@ class ODIN(pl.Callback):
 
 
         return img
+    
+    # Second working version of calculating the gradients, able to perturb the input and calculate all the different values present
+    def loss_calculation(self,trainer, pl_module,x,y):
+        x_params = nn.Parameter(x)
+        
+        x_params, y = x_params.to(pl_module.device), y.to(pl_module.device)
+        x_params.retain_grad() # required to obtain the gradient otherwise the UserWarning : UserWarning: The .grad attribute of a Tensor that is not a leaf Tensor is being accessed. Its .grad attribute won't be populated during autograd.backward(). If you indeed want the gradient for a non-leaf Tensor, use .retain_grad() on the non-leaf Tensor. If you access the non-leaf Tensor by mistake, make sure you access the leaf Tensor instead. See github.com/pytorch/pytorch/pull/30531 for more informations.
 
-    '''
-    def get_features(self, pl_module, dataloader):
-        features, labels = [], []
-        loader = quickloading(self.quick_callback, dataloader)
-        for index, (img, *label, indices) in enumerate(loader):
-            assert len(loader)>0, 'loader is empty'
-            if isinstance(img, tuple) or isinstance(img, list):
-                    img, *aug_img = img # Used to take into accoutn whether the data is a tuple of the different augmentations
+        logits = pl_module.class_forward(x_params)
+        
+        probs = F.softmax(logits,dim=1)
 
-            # Selects the correct label based on the desired label level
-            if len(label) > 1:
-                label_index = 0
-                label = label[label_index]
-            else: # Used for the case of the OOD data
-                label = label[0]
-            
-            self.loss_calculation()
 
-            img = img.to(pl_module.device)
-            
-            # Compute feature vector and place in list
-            feature_vector = pl_module.callback_vector(img) # Performs the callback for the desired level
-            logits = pl_module.encoder.class_fc2(feature_vector)
-            prediction_values, prediction_labels= torch.max(logits,dim=1)
-            
-            loss = torch.nn.CrossEntropyLoss()(logits,prediction_labels)
-            #import ipdb; ipdb.set_trace()
-            pl_module.manual_backward(loss)
-            
-            
-            features += list(feature_vector.data.cpu().numpy())
-            labels += list(label.data.cpu().numpy())            
+        labels = torch.argmax(probs,dim=1) # use the maximum probability indices as the labels 
+        loss = nn.CrossEntropyLoss()(probs, labels)
+        loss.backward()
+        '''
+        ############ Normalize gradient ##############
+        
+        gradient = torch.ge(x_params.grad,0)
+        gradient = (gradient.float() - 0.5) * 2
+        # Normalizing the gradient to the same space of image
+        gradient[::, 0] = (gradient[::, 0] )/(63.0/255.0)
+        gradient[::, 1] = (gradient[::, 1] )/(62.1/255.0)
+        #gradient[::, 2] = (gradient[::, 2] )/(66.7/255.0)
 
-        return np.array(features), np.array(labels)
-    '''
+        x = x.to(pl_module.device)
+        tempInputs = torch.add(x, gradient, alpha=0.01)
+
+        import ipdb; ipdb.set_trace()
+
+
+        ############
+        ''' 
+        print(x_params.grad)
+        x = x.to(pl_module.device)
+
+        perturbed_x = torch.add(x,x_params.grad ,alpha=0.01) # adding x with x grad in conjuction with an alpha term to get the different values
+        perturbed_outputs = pl_module.class_forward(perturbed_x)
+
+       
     '''
     def get_scores(self,ftrain, ftest, food, ypred):
         # Nawid - get all the features which belong to each of the different classes
@@ -269,19 +250,3 @@ class ODIN(pl.Callback):
         auroc= get_roc_sklearn(dtest, dood)
         wandb.run.summary[self.summary_key] = auroc
     '''  
-    
-    def normalise(self,ftrain,ftest,food):
-        # Nawid -normalise the featues for the training, test and ood data
-        # standardize data
-        
-        ftrain /= np.linalg.norm(ftrain, axis=-1, keepdims=True) + 1e-10
-        ftest /= np.linalg.norm(ftest, axis=-1, keepdims=True) + 1e-10
-        food /= np.linalg.norm(food, axis=-1, keepdims=True) + 1e-10
-        # Nawid - calculate the mean and std of the traiing features
-        m, s = np.mean(ftrain, axis=0, keepdims=True), np.std(ftrain, axis=0, keepdims=True)
-        # Nawid - normalise data using the mean and std
-        ftrain = (ftrain - m) / (s + 1e-10)
-        ftest = (ftest - m) / (s + 1e-10)
-        food = (food - m) / (s + 1e-10)
-        
-        return ftrain, ftest,food
