@@ -94,9 +94,6 @@ class ODIN(pl.Callback):
         import ipdb; ipdb.set_trace()
     '''
 
- 
-    
-
     '''
     def on_test_epoch_end(self, trainer, pl_module):
         # Perform callback only for the situation
@@ -107,6 +104,41 @@ class ODIN(pl.Callback):
         else:
             pass
     '''
+
+
+       
+    def on_test_batch_end(self, trainer, pl_module, outputs, batch, batch_idx: int, dataloader_idx: int):
+        (img_1, img_2), *labels, indices = batch = batch
+        if isinstance(labels, tuple) or isinstance(labels, list):
+            labels, *coarse_labels = labels
+        torch.set_grad_enabled(True) # need to set grad enabled true during the test step
+        pl_module.eval()
+        self.loss_calculation(trainer, pl_module,img_1, labels)
+    
+    # Second working version of calculating the gradients, able to perturb the input and calculate all the different values present
+    def loss_calculation(self,trainer, pl_module,x,y):
+        x_params = nn.Parameter(x)
+        
+        x_params, y = x_params.to(pl_module.device), y.to(pl_module.device)
+        x_params.retain_grad() # required to obtain the gradient otherwise the UserWarning : UserWarning: The .grad attribute of a Tensor that is not a leaf Tensor is being accessed. Its .grad attribute won't be populated during autograd.backward(). If you indeed want the gradient for a non-leaf Tensor, use .retain_grad() on the non-leaf Tensor. If you access the non-leaf Tensor by mistake, make sure you access the leaf Tensor instead. See github.com/pytorch/pytorch/pull/30531 for more informations.
+
+        logits = pl_module.class_forward(x_params)
+        
+        probs = F.softmax(logits,dim=1)
+        labels = torch.argmax(probs,dim=1) # use the maximum probability indices as the labels 
+        loss = nn.CrossEntropyLoss()(probs, labels)
+        loss.backward()
+        print(x_params.grad)
+        x = x.to(pl_module.device)
+        perturbed_x = torch.add(x,x_params.grad ,alpha=0.01) # adding x with x grad in conjuction with an alpha term to get the different values
+        perturbed_outputs = pl_module.class_forward(perturbed_x)
+
+        #import ipdb; ipdb.set_trace()
+       
+    
+
+
+
     # Performs all the computation in the callback
     def forward_callback(self,trainer,pl_module):
         self.OOD_Datamodule.setup() # SETUP AGAIN TO RESET AFTER PROVIDING THE TRANSFORM FOR THE DATA
