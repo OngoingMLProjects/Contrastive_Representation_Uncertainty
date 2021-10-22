@@ -102,10 +102,12 @@ def dogs_normalization():
 
 # TOY NORMALIZATIONS WHICH ARE NOT ACTUALLY USED, JUST FOR ODIN CONSISTENCY
 def blobs_normalization():
-    normalize = transforms.Normalize(mean = [0.0, 0.0, 0.0], std = [1.0, 1.0, 1.0])
+    #normalize = transforms.Normalize(mean = [0.0, 0.0, 0.0], std = [1.0, 1.0, 1.0])
+    normalize = transforms.Normalize(mean = [], std = [])
     return normalize
 
 
 def twomoons_normalization():
-    normalize = transforms.Normalize(mean = [0.0, 0.0, 0.0], std = [1.0, 1.0, 1.0])
+    #normalize = transforms.Normalize(mean = [0.0, 0.0, 0.0], std = [1.0, 1.0, 1.0])
+    normalize = transforms.Normalize(mean = [], std = [])
     return normalize

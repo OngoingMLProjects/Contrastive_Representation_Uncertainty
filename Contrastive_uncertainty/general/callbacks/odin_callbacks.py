@@ -28,6 +28,7 @@ from Contrastive_uncertainty.general.utils.hybrid_utils import OOD_conf_matrix
 from Contrastive_uncertainty.general.callbacks.general_callbacks import quickloading
 from Contrastive_uncertainty.general.utils.pl_metrics import precision_at_k, mean
 from Contrastive_uncertainty.general.run.model_names import model_names_dict
+from Contrastive_uncertainty.general.callbacks.ood_callbacks import get_roc_sklearn
 
 # Implementation based on these resources
 # https://github.com/facebookresearch/odin/blob/main/code/calData.py
@@ -45,6 +46,7 @@ class ODIN(pl.Callback):
       
         self.OOD_dataname = self.OOD_Datamodule.name
         self.summary_key = f'ODIN AUROC OOD {self.OOD_dataname}'
+        self.temperature = 0.001
     
     '''   
     def on_train_batch_end(self, trainer, pl_module, outputs, batch, batch_idx: int, dataloader_idx: int):
@@ -132,13 +134,45 @@ class ODIN(pl.Callback):
         
         # Obtain representations of the data
             
-        self.get_grads(trainer,pl_module, train_loader)
-        self.get_grads(trainer, pl_module, test_loader)
-        self.get_grads(trainer, pl_module, ood_loader)
-        # Number of classes obtained from the max label value + 1 ( to take into account counting from zero)
+        #self.get_perturbed_scores(trainer,pl_module, train_loader)
+        dtest = self.get_perturbed_scores(trainer, pl_module, test_loader)
+        dood = self.get_perturbed_scores(trainer, pl_module, ood_loader)
         
-    def get_grads(self,trainer,pl_module,dataloader):
+        self.get_eval_results(dtest,dood)
 
+    # Scores when the inputs are not perturbed by a gradient    
+    def get_unperturbed_scores(self,trainer,pl_module,dataloader):
+        collated_scores = []
+        loader = quickloading(self.quick_callback, dataloader)
+        for index, (img, *label, indices) in enumerate(loader):
+            assert len(loader)>0, 'loader is empty'
+            if isinstance(img, tuple) or isinstance(img, list):
+                    img, *aug_img = img # Used to take into accoutn whether the data is a tuple of the different augmentations
+
+            # Selects the correct label based on the desired label level
+            if len(label) > 1:
+                label_index = 0
+                label = label[label_index]
+            else: # Used for the case of the OOD data
+                label = label[0]
+            img = img.to(pl_module.device)
+            
+            ##### MAY NEED TO SUBTRACT LARGEST VALUE TO STABILISE IT 
+            logits = pl_module.class_forward(img)
+            max_logits,_ = torch.max(logits,dim=1)
+            max_logits = max_logits.unsqueeze(dim=1)
+            logits = logits - max_logits
+            #######
+            
+            probs = F.softmax(logits,dim=1)
+
+            scores, _ = torch.max(probs,dim=1) # use the maximum logit value as the scores
+            
+        return np.array(collated_scores)
+
+
+    def get_perturbed_scores(self,trainer,pl_module,dataloader):
+        collated_scores = []
         loader = quickloading(self.quick_callback, dataloader)
         for index, (img, *label, indices) in enumerate(loader):
             assert len(loader)>0, 'loader is empty'
@@ -153,110 +187,79 @@ class ODIN(pl.Callback):
                 label = label[0]
             img = img.to(pl_module.device)
 
-            self.loss_calculation(trainer, pl_module, img)
-
-        return img
+            scores = self.odin_scoring(trainer, pl_module, img)
+            collated_scores += list(scores.data.cpu().numpy())
+        return collated_scores
     
     # Second working version of calculating the gradients, able to perturb the input and calculate all the different values present
-    def loss_calculation(self,trainer, pl_module,x):
+    def odin_scoring(self, trainer, pl_module, x):
+        
+        grad = self.get_grads(trainer,pl_module,x)
+        # Perturb input
+        perturbed_inputs = torch.add(x, grad, alpha=0.01)
+        perturbed_logits = pl_module.class_forward(perturbed_inputs)
+        perturbed_logits = perturbed_logits/self.temperature
+        
+        ####
+        # MAY NEED TO SUBTRACT LARGEST VALUE TO STABILISE IT 
+        max_logits,_ = torch.max(perturbed_logits,dim=1)
+        max_logits = max_logits.unsqueeze(dim=1) # need to change shape from (b) to (b,1)
+        
+        
+        perturbed_logits = perturbed_logits - max_logits # shape (b,num classes ) and (b,1)
+        #####
+        
+        probs = F.softmax(perturbed_logits,dim=1)
+        scores, _ = torch.max(probs,dim=1)
+        return scores
+
+    # Calculates gradient for perturbation
+    def get_grads(self,trainer,pl_module,x):
+        # Calculate gradient
         x_params = nn.Parameter(x)
-        #import ipdb; ipdb.set_trace()
         #x_params, y = x_params.to(pl_module.device), y.to(pl_module.device)
         x_params.retain_grad() # required to obtain the gradient otherwise the UserWarning : UserWarning: The .grad attribute of a Tensor that is not a leaf Tensor is being accessed. Its .grad attribute won't be populated during autograd.backward(). If you indeed want the gradient for a non-leaf Tensor, use .retain_grad() on the non-leaf Tensor. If you access the non-leaf Tensor by mistake, make sure you access the leaf Tensor instead. See github.com/pytorch/pytorch/pull/30531 for more informations.
 
         logits = pl_module.class_forward(x_params)
-        
-        probs = F.softmax(logits,dim=1)
+        logits = logits/self.temperature     
+        #probs = F.softmax(logits,dim=1)
 
-
-        labels = torch.argmax(probs,dim=1) # use the maximum probability indices as the labels 
-        loss = nn.CrossEntropyLoss()(probs, labels)
+        labels = torch.argmax(logits,dim=1) # use the maximum probability indices as the labels 
+        loss = nn.CrossEntropyLoss()(logits, labels)
         loss.backward()
         
-        
-        ############ Normalize gradient ##############
+        # normalize grad
+        grad = self.normalize_grad(x_params.grad)
+        return grad
+
+    # Used to normalize the gradient to the space of images
+    def normalize_grad(self,grad):
         # Can use normalization of the ID dataset for both the ID and OOD data since the OOD data has the same transform
         normalization = self.Datamodule.test_transforms.normalization
+        normalization_mean = normalization.mean
+        # corresponds to the toy dataset case
+        grad = torch.ge(grad,0)
+        grad = (grad.float() - 0.5) * 2
+        if len(normalization_mean) ==0:
+            grad[::, 0] = (grad[::, 0] )/1
+            grad[::, 1] = (grad[::, 1] )/1
+        # corresponds to the grayscale datasets    
+        elif len(normalization_mean) == 1:
+            grad[::, 0] = (grad[::, 0] )/normalization_mean[0]
+            grad[::, 1] = (grad[::, 1] )/normalization_mean[0]
+            grad[::, 2] = (grad[::, 2] )/normalization_mean[0]
+        # correspond to rgb datasets
+        else:
+            grad[::, 0] = (grad[::, 0] )/normalization_mean[0]
+            grad[::, 1] = (grad[::, 1] )/normalization_mean[1]
+            grad[::, 2] = (grad[::, 2] )/normalization_mean[2]
         
-        gradient = torch.ge(x_params.grad,0)
-        gradient = (gradient.float() - 0.5) * 2
-        # Normalizing the gradient to the same space of image
-        
-        gradient[::, 0] = (gradient[::, 0] )/normalization.mean[0]
-        gradient[::, 1] = (gradient[::, 1] )/normalization.mean[1]
+        return grad
 
-        '''
-        gradient[::, 0] = (gradient[::, 0] )/(63.0/255.0)
-        gradient[::, 1] = (gradient[::, 1] )/(62.1/255.0)
-        '''
-        
-        #gradient[::, 2] = (gradient[::, 2] )/(66.7/255.0)
-
-        perturbed_inputs = torch.add(x, gradient, alpha=0.01)
-        perturbed_outputs = pl_module.class_forward(perturbed_inputs)
-
-        #import ipdb; ipdb.set_trace()
-
-        ############
-
-        print(x_params.grad)
-        x = x.to(pl_module.device)
-
-        perturbed_x = torch.add(x,x_params.grad ,alpha=0.01) # adding x with x grad in conjuction with an alpha term to get the different values
-        perturbed_outputs = pl_module.class_forward(perturbed_x)
-
-       
-    '''
-    def get_scores(self,ftrain, ftest, food, ypred):
-        # Nawid - get all the features which belong to each of the different classes
-        xc = [ftrain[ypred == i] for i in np.unique(ypred)] # Nawid - training data which have been predicted to belong to a particular class
-        
-        din = [
-            np.sum(
-                (ftest - np.mean(x, axis=0, keepdims=True)) # Nawid - distance between the data point and the mean
-                * (
-                    np.linalg.pinv(np.cov(x.T, bias=True)).dot(
-                        (ftest - np.mean(x, axis=0, keepdims=True)).T
-                    ) # Nawid - calculating the covariance matrix of the data belonging to a particular class and dot product by the distance of the data point from the mean (distance calculation)
-                ).T,
-                axis=-1,
-            )
-            for x in xc # Nawid - done for all the different classes
-        ]
-        
-        dood = [
-            np.sum(
-                (food - np.mean(x, axis=0, keepdims=True))
-                * (
-                    np.linalg.pinv(np.cov(x.T, bias=True)).dot(
-                        (food - np.mean(x, axis=0, keepdims=True)).T
-                    )
-                ).T,
-                axis=-1,
-            )
-            for x in xc # Nawid- this calculates the score for all the OOD examples 
-        ]
-        # Calculate the indices corresponding to the values
-        indices_din = np.argmin(din,axis = 0)
-        indices_dood = np.argmin(dood, axis=0)
-
-        din = np.min(din, axis=0) # Nawid - calculate the minimum distance 
-        dood = np.min(dood, axis=0)
-
-        return din, dood, indices_din, indices_dood
-    
-
-        
-    def get_eval_results(self,ftrain, ftest, food, labelstrain):
+    def get_eval_results(self,dtest, dood):
         """
             None.
         """
-        ftrain_norm,ftest_norm,food_norm = self.normalise(ftrain,ftest,food)
-        # Nawid - obtain the scores for the test data and the OOD data
-        
-        dtest, dood, indices_dtest, indices_dood = self.get_scores(ftrain_norm, ftest_norm, food_norm, labelstrain)
-
         # Nawid- get false postive rate and asweel as AUROC and aupr
         auroc= get_roc_sklearn(dtest, dood)
         wandb.run.summary[self.summary_key] = auroc
-    '''  
