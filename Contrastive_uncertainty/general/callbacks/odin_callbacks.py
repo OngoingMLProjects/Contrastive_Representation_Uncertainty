@@ -138,6 +138,7 @@ class ODIN(pl.Callback):
         # Number of classes obtained from the max label value + 1 ( to take into account counting from zero)
         
     def get_grads(self,trainer,pl_module,dataloader):
+
         loader = quickloading(self.quick_callback, dataloader)
         for index, (img, *label, indices) in enumerate(loader):
             assert len(loader)>0, 'loader is empty'
@@ -150,17 +151,17 @@ class ODIN(pl.Callback):
                 label = label[label_index]
             else: # Used for the case of the OOD data
                 label = label[0]
-            
-            self.loss_calculation(trainer, pl_module, img, label)
+            img = img.to(pl_module.device)
 
+            self.loss_calculation(trainer, pl_module, img)
 
         return img
     
     # Second working version of calculating the gradients, able to perturb the input and calculate all the different values present
-    def loss_calculation(self,trainer, pl_module,x,y):
+    def loss_calculation(self,trainer, pl_module,x):
         x_params = nn.Parameter(x)
-        
-        x_params, y = x_params.to(pl_module.device), y.to(pl_module.device)
+        #import ipdb; ipdb.set_trace()
+        #x_params, y = x_params.to(pl_module.device), y.to(pl_module.device)
         x_params.retain_grad() # required to obtain the gradient otherwise the UserWarning : UserWarning: The .grad attribute of a Tensor that is not a leaf Tensor is being accessed. Its .grad attribute won't be populated during autograd.backward(). If you indeed want the gradient for a non-leaf Tensor, use .retain_grad() on the non-leaf Tensor. If you access the non-leaf Tensor by mistake, make sure you access the leaf Tensor instead. See github.com/pytorch/pytorch/pull/30531 for more informations.
 
         logits = pl_module.class_forward(x_params)
@@ -171,24 +172,33 @@ class ODIN(pl.Callback):
         labels = torch.argmax(probs,dim=1) # use the maximum probability indices as the labels 
         loss = nn.CrossEntropyLoss()(probs, labels)
         loss.backward()
-        '''
+        
+        
         ############ Normalize gradient ##############
+        # Can use normalization of the ID dataset for both the ID and OOD data since the OOD data has the same transform
+        normalization = self.Datamodule.test_transforms.normalization
         
         gradient = torch.ge(x_params.grad,0)
         gradient = (gradient.float() - 0.5) * 2
         # Normalizing the gradient to the same space of image
+        
+        gradient[::, 0] = (gradient[::, 0] )/normalization.mean[0]
+        gradient[::, 1] = (gradient[::, 1] )/normalization.mean[1]
+
+        '''
         gradient[::, 0] = (gradient[::, 0] )/(63.0/255.0)
         gradient[::, 1] = (gradient[::, 1] )/(62.1/255.0)
+        '''
+        
         #gradient[::, 2] = (gradient[::, 2] )/(66.7/255.0)
 
-        x = x.to(pl_module.device)
-        tempInputs = torch.add(x, gradient, alpha=0.01)
+        perturbed_inputs = torch.add(x, gradient, alpha=0.01)
+        perturbed_outputs = pl_module.class_forward(perturbed_inputs)
 
-        import ipdb; ipdb.set_trace()
-
+        #import ipdb; ipdb.set_trace()
 
         ############
-        ''' 
+
         print(x_params.grad)
         x = x.to(pl_module.device)
 

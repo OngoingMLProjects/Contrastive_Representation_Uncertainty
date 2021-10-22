@@ -43,6 +43,7 @@ def svhn_normalization():
 # Obtained from https://pretagteam.com/question/pytorch-lightning-get-models-output-on-full-train-data-during-training
 def caltech101_normalization():
     normalize = transforms.Normalize(mean = [0.485, 0.456, 0.406], std = [0.229, 0.224, 0.225])
+
     return normalize
 
 
@@ -93,4 +94,18 @@ def cub200_normalization():
 # calculated manually using the procedure described in https://discuss.pytorch.org/t/about-normalization-using-pre-trained-vgg16-networks/23560/6
 def dogs_normalization():
     normalize = transforms.Normalize(mean = [0.4759, 0.4516, 0.3912], std = [0.2051, 0.2003, 0.1985])
+    return normalize
+
+
+
+
+
+# TOY NORMALIZATIONS WHICH ARE NOT ACTUALLY USED, JUST FOR ODIN CONSISTENCY
+def blobs_normalization():
+    normalize = transforms.Normalize(mean = [0.0, 0.0, 0.0], std = [1.0, 1.0, 1.0])
+    return normalize
+
+
+def twomoons_normalization():
+    normalize = transforms.Normalize(mean = [0.0, 0.0, 0.0], std = [1.0, 1.0, 1.0])
     return normalize

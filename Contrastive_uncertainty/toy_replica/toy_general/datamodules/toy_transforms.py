@@ -2,7 +2,7 @@ import random
 import torch
 from torchvision import transforms
 from torch.utils.data import DataLoader, random_split,  Dataset, Subset
-
+from Contrastive_uncertainty.general.datamodules.dataset_normalizations import twomoons_normalization, blobs_normalization
 
 class ToyTrainTwoMoonsTransforms:
     """
@@ -14,6 +14,8 @@ class ToyTrainTwoMoonsTransforms:
         self.train_transform = transforms.Compose([
             transforms.RandomApply([GaussianNoise([0, 0.00001])], p=0.5),
         ])
+        # Used as placeholder for ODIN
+        self.normalization = twomoons_normalization()
 
     def __call__(self, inp):
         q = self.train_transform(inp)
@@ -29,14 +31,12 @@ class ToyEvalTwoMoonsTransforms:
     def __init__(self):
         self.test_transform = transforms.Compose([
         ])
-
+        # Used as placeholder for ODIN
+        self.normalization = twomoons_normalization()
     def __call__(self, inp):
         q = self.test_transform(inp)
         k = self.test_transform(inp)
         return q, k
-
-
-
 
 
 class GaussianNoise(object):
@@ -67,6 +67,8 @@ class ToyTrainBlobsTransforms:
         self.train_transform = transforms.Compose([
             transforms.RandomApply([GaussianNoise([.1, 2.])], p=0.5),
         ])
+        # Used as placeholder for ODIN
+        self.normalization = blobs_normalization()
 
     def __call__(self, inp):
         
@@ -87,6 +89,9 @@ class ToyEvalBlobsTransforms:
     def __init__(self):
         self.test_transform = transforms.Compose([
         ])
+
+        # Used as placeholder for ODIN
+        self.normalization = blobs_normalization()
 
     def __call__(self, inp):
         q = self.test_transform(inp)
