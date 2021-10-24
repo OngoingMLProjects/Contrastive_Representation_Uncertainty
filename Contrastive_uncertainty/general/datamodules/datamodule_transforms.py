@@ -96,6 +96,8 @@ class Moco2TrainCIFAR10Transforms:
             transforms.ToTensor(),
             cifar10_normalization()
         ])
+        self.normalization = cifar10_normalization()
+
 
     def __call__(self, inp):
         
@@ -135,6 +137,7 @@ class Moco2EvalCIFAR10Transforms:
             transforms.ToTensor(),
             cifar10_normalization(),
         ])
+        self.normalization = cifar10_normalization()
 
     def __call__(self, inp):
         if isinstance(inp,Image.Image):
@@ -178,6 +181,7 @@ class Moco2MultiCIFAR10Transforms:
             transforms.ToTensor(),
             cifar10_normalization()
         ])
+        self.normalization = cifar10_normalization()
 
     def __call__(self, inp):
         if isinstance(inp,Image.Image):
@@ -218,6 +222,7 @@ class Moco2TrainCIFAR100Transforms:
             transforms.ToTensor(),
             cifar100_normalization()
         ])
+        self.normalization = cifar100_normalization()
 
     def __call__(self, inp):
 
@@ -253,6 +258,7 @@ class Moco2EvalCIFAR100Transforms:
             transforms.ToTensor(),
             cifar100_normalization(),
         ])
+        self.normalization = cifar100_normalization()
 
     def __call__(self, inp):
 
@@ -294,6 +300,7 @@ class Moco2MultiCIFAR100Transforms:
             transforms.ToTensor(),
             cifar100_normalization()
         ])
+        self.normalization = cifar100_normalization()
 
     def __call__(self, inp):
         if isinstance(inp,Image.Image):
@@ -331,6 +338,7 @@ class Moco2TrainSVHNTransforms:
             transforms.ToTensor(),
             svhn_normalization()
         ])
+        self.normalization = svhn_normalization()
 
     def __call__(self, inp):
         if isinstance(inp,Image.Image):
@@ -364,6 +372,7 @@ class Moco2EvalSVHNTransforms:
             transforms.ToTensor(),
             svhn_normalization(),
         ])
+        self.normalization = svhn_normalization()
 
     def __call__(self, inp):
         if isinstance(inp,Image.Image):
@@ -402,6 +411,8 @@ class Moco2MultiSVHNTransforms:
             transforms.ToTensor(),
             svhn_normalization()
         ])
+        
+        self.normalization = svhn_normalization()
 
     def __call__(self, inp):
         if isinstance(inp,Image.Image):
@@ -441,6 +452,9 @@ class Moco2TrainSTL10Transforms:
             stl10_normalization()
         ])
 
+        self.normalization = stl10_normalization()
+
+
     def __call__(self, inp):
         if isinstance(inp,Image.Image):
             if len(inp.getbands())<3:
@@ -471,6 +485,8 @@ class Moco2EvalSTL10Transforms:
             transforms.ToTensor(),
             stl10_normalization(),
         ])
+
+        self.normalization = stl10_normalization()
 
     def __call__(self, inp):
         if isinstance(inp,Image.Image):
@@ -514,6 +530,8 @@ class Moco2TrainCaltech101Transforms:
             caltech101_normalization()
         ])
 
+        self.normalization = caltech101_normalization()
+
     def __call__(self, inp):
         if isinstance(inp,Image.Image):
             if len(inp.getbands())<3:
@@ -545,6 +563,8 @@ class Moco2EvalCaltech101Transforms:
             transforms.ToTensor(),
             caltech101_normalization(),
         ])
+        self.normalization = caltech101_normalization()
+
 
     def __call__(self, inp):
         if isinstance(inp,Image.Image):
@@ -587,6 +607,7 @@ class Moco2TrainCaltech256Transforms:
             transforms.ToTensor(),
             caltech256_normalization()
         ])
+        self.normalization = caltech256_normalization()
 
     def __call__(self, inp):
         if isinstance(inp,Image.Image):
@@ -619,6 +640,7 @@ class Moco2EvalCaltech256Transforms:
             transforms.ToTensor(),
             caltech256_normalization(),
         ])
+        self.normalization = caltech256_normalization()
 
     def __call__(self, inp):
         if isinstance(inp,Image.Image):
@@ -663,6 +685,7 @@ class Moco2TrainImageNetTransforms:
             transforms.ToTensor(),
             imagenet_normalization()
         ])
+        self.normalization = imagenet_normalization()
 
     def __call__(self, inp):
         if isinstance(inp,Image.Image):
@@ -695,6 +718,8 @@ class Moco2EvalImageNetTransforms:
             transforms.ToTensor(),
             imagenet_normalization(),
         ])
+
+        self.normalization = imagenet_normalization()
 
     def __call__(self, inp):
         if isinstance(inp,Image.Image):
@@ -738,6 +763,8 @@ class Moco2TrainTinyImageNetTransforms:
             tinyimagenet_normalization()
         ])
 
+        self.normalization = tinyimagenet_normalization()
+
     def __call__(self, inp):
         if isinstance(inp,Image.Image):
             if len(inp.getbands())<3:
@@ -769,6 +796,8 @@ class Moco2EvalTinyImageNetTransforms:
             transforms.ToTensor(),
             tinyimagenet_normalization(),
         ])
+
+        self.normalization = tinyimagenet_normalization()
 
     def __call__(self, inp):
         if isinstance(inp,Image.Image):
@@ -812,6 +841,8 @@ class Moco2TrainCub200Transforms:
             cub200_normalization()
         ])
 
+        self.normalization = cub200_normalization()
+
     def __call__(self, inp):
         if isinstance(inp,Image.Image):
             if len(inp.getbands())<3:
@@ -843,6 +874,8 @@ class Moco2EvalCub200Transforms:
             transforms.ToTensor(),
             cub200_normalization(),
         ])
+
+        self.normalization = cub200_normalization()
 
     def __call__(self, inp):
         if isinstance(inp,Image.Image):
@@ -886,6 +919,8 @@ class Moco2TrainDogsTransforms:
             dogs_normalization()
         ])
 
+        self.normalization = dogs_normalization()
+
     def __call__(self, inp):
         if isinstance(inp,Image.Image):
             if len(inp.getbands())<3:
@@ -917,6 +952,7 @@ class Moco2EvalDogsTransforms:
             transforms.ToTensor(),
             dogs_normalization(),
         ])
+        self.normalization = dogs_normalization()
 
     def __call__(self, inp):
         if isinstance(inp,Image.Image):
@@ -959,6 +995,8 @@ class Moco2TrainCelebATransforms:
             celeba_normalization()
         ])
 
+        self.normalization = celeba_normalization()
+
     def __call__(self, inp):
         if isinstance(inp,Image.Image):
             if len(inp.getbands())<3:
@@ -990,6 +1028,8 @@ class Moco2EvalCelebATransforms:
             transforms.ToTensor(),
             celeba_normalization(),
         ])
+
+        self.normalization = celeba_normalization()
 
     def __call__(self, inp):
         if isinstance(inp,Image.Image):
@@ -1032,6 +1072,9 @@ class Moco2TrainWIDERFaceTransforms:
             widerface_normalization(),
         ])
 
+
+        self.normalization = widerface_normalization()
+
     def __call__(self, inp):
         if isinstance(inp,Image.Image):
             if len(inp.getbands())<3:
@@ -1063,6 +1106,7 @@ class Moco2EvalWIDERFaceTransforms:
             transforms.ToTensor(),
             widerface_normalization(),
         ])
+        self.normalization = widerface_normalization()
 
     def __call__(self, inp):
         if isinstance(inp,Image.Image):
@@ -1104,6 +1148,8 @@ class Moco2TrainPlaces365Transforms:
             places365_normalization(),
         ])
 
+        self.normalization = places365_normalization()
+
     def __call__(self, inp):
         if isinstance(inp,Image.Image):
             if len(inp.getbands())<3:
@@ -1135,6 +1181,8 @@ class Moco2EvalPlaces365Transforms:
             transforms.ToTensor(),
             places365_normalization(),
         ])
+
+        self.normalization = places365_normalization()
 
     def __call__(self, inp):
         if isinstance(inp,Image.Image):
@@ -1175,6 +1223,7 @@ class Moco2TrainVOCTransforms:
             transforms.ToTensor(),
             voc_normalization(),
         ])
+        self.normalization = voc_normalization()
 
     def __call__(self, inp):
         if isinstance(inp,Image.Image):
@@ -1207,6 +1256,7 @@ class Moco2EvalVOCTransforms:
             transforms.ToTensor(),
             voc_normalization(),
         ])
+        self.normalization = voc_normalization()
 
     def __call__(self, inp):
         if isinstance(inp,Image.Image):
@@ -1238,6 +1288,7 @@ class Moco2TrainFashionMNISTTransforms:
             transforms.ToTensor(),
             fashionmnist_normalization()
         ])
+        self.normalization = fashionmnist_normalization()
 
     def __call__(self, inp):
         q = self.train_transform(inp)
@@ -1257,6 +1308,8 @@ class Moco2EvalFashionMNISTTransforms:
             transforms.ToTensor(),
             fashionmnist_normalization(),
         ])
+
+        self.normalization = fashionmnist_normalization()
 
     def __call__(self, inp):
         q = self.test_transform(inp)
@@ -1279,6 +1332,8 @@ class Moco2MultiFashionMNISTTransforms:
             fashionmnist_normalization(),
         ])
 
+        self.normalization = fashionmnist_normalization()
+
     def __call__(self, inp):
         multiple_aug_inp = [self.multi_transform(inp) for i in range(self.num_augmentations)]
         return multiple_aug_inp
@@ -1298,6 +1353,8 @@ class Moco2TrainMNISTTransforms:
             transforms.ToTensor(),
             mnist_normalization()
         ])
+        # Required for ODIN
+        self.normalization = mnist_normalization()
 
     def __call__(self, inp):
         q = self.train_transform(inp)
@@ -1317,6 +1374,8 @@ class Moco2EvalMNISTTransforms:
             transforms.ToTensor(),
             mnist_normalization(),
         ])
+        # Required for ODIN
+        self.normalization = mnist_normalization()
 
     def __call__(self, inp):
         q = self.test_transform(inp)
@@ -1338,6 +1397,8 @@ class Moco2MultiMNISTTransforms:
             transforms.ToTensor(),
             mnist_normalization()
         ])
+        # Required for ODIN
+        self.normalization = mnist_normalization()
 
     def __call__(self, inp):
         multiple_aug_inp = [self.multi_transform(inp) for i in range(self.num_augmentations)]
@@ -1359,6 +1420,9 @@ class Moco2TrainKMNISTTransforms:
             kmnist_normalization()
         ])
 
+        # Required for ODIN
+        self.normalization = kmnist_normalization()
+
     def __call__(self, inp):
         q = self.train_transform(inp)
         k = self.train_transform(inp)
@@ -1377,6 +1441,8 @@ class Moco2EvalKMNISTTransforms:
             transforms.ToTensor(),
             kmnist_normalization(),
         ])
+
+        self.normalization = kmnist_normalization()
 
     def __call__(self, inp):
         q = self.test_transform(inp)
@@ -1398,6 +1464,7 @@ class Moco2MultiKMNISTTransforms:
             transforms.ToTensor(),
             kmnist_normalization()
         ])
+        self.normalization = kmnist_normalization()
 
     def __call__(self, inp):
         multiple_aug_inp = [self.multi_transform(inp) for i in range(self.num_augmentations)]
@@ -1417,6 +1484,7 @@ class Moco2TrainEMNISTTransforms:
             transforms.ToTensor(),
             emnist_normalization()
         ])
+        self.normalization = emnist_normalization()
 
     def __call__(self, inp):
         q = self.train_transform(inp)
@@ -1437,6 +1505,8 @@ class Moco2EvalEMNISTTransforms:
             transforms.ToTensor(),
             emnist_normalization(),
         ])
+
+        self.normalization = emnist_normalization()
 
     def __call__(self, inp):
         q = self.test_transform(inp)
@@ -1459,6 +1529,8 @@ class Moco2MultiEMNISTTransforms:
             transforms.ToTensor(),
             emnist_normalization()
         ])
+
+        self.normalization = emnist_normalization()
 
     def __call__(self, inp):
         multiple_aug_inp = [self.multi_transform(inp) for i in range(self.num_augmentations)]

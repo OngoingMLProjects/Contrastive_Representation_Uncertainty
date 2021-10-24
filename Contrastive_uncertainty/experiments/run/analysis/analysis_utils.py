@@ -56,11 +56,17 @@ def ood_dataset_string(key, dataset_dict, ID_dataset):
     split_keys = key.lower().split() # Make the key lower and then split the string at locations where is a space
     #print(key)    
     OOD_dict = dataset_dict[ID_dataset]
+    
     for key in OOD_dict.keys():
-        if key.lower() in split_keys:
+        if ID_dataset.lower() in split_keys:
+            ood_dataset = None
+            return ood_dataset 
+        elif key.lower() in split_keys:
             ood_dataset = key
+            return ood_dataset
 
-    return ood_dataset
+    print(f'{key} does not have OOD dataset')
+    return None 
 
 def generic_saving(desired_key,run_filter):
     desired_key = desired_key.lower()

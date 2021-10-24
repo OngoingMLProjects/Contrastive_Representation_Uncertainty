@@ -43,81 +43,14 @@ class ODIN(pl.Callback):
         self.OOD_Datamodule.test_transforms = self.Datamodule.test_transforms #  Make the transform of the OOD data the same as the actual data
         self.quick_callback = quick_callback # Quick callback used to make dataloaders only use a single batch of the data in order to make the testing process occur quickly
         
-      
+        
         self.OOD_dataname = self.OOD_Datamodule.name
         self.summary_key = f'ODIN AUROC OOD {self.OOD_dataname}'
-        self.temperature = 0.001
+        # https://github.com/facebookresearch/odin/blob/main/code/main.py - default parameters
+        self.temperature = 1000
+        self.epsilon = 0.0014
+
     
-    '''   
-    def on_train_batch_end(self, trainer, pl_module, outputs, batch, batch_idx: int, dataloader_idx: int):
-        (img_1, img_2), *labels, indices = batch = batch
-        if isinstance(labels, tuple) or isinstance(labels, list):
-            labels, *coarse_labels = labels
-        pl_module.eval()
-        self.loss_calculation(trainer, pl_module,img_1, labels)
-    
-    # Second working version of calculating the gradients, able to perturb the input and calculate all the different values present
-    def loss_calculation(self,trainer, pl_module,x,y):
-        
-        x_params = nn.Parameter(x)
-        
-        
-        x_params, y = x_params.to(pl_module.device), y.to(pl_module.device)
-        x_params.retain_grad() # required to obtain the gradient otherwise the UserWarning : UserWarning: The .grad attribute of a Tensor that is not a leaf Tensor is being accessed. Its .grad attribute won't be populated during autograd.backward(). If you indeed want the gradient for a non-leaf Tensor, use .retain_grad() on the non-leaf Tensor. If you access the non-leaf Tensor by mistake, make sure you access the leaf Tensor instead. See github.com/pytorch/pytorch/pull/30531 for more informations.
-
-        logits = pl_module.class_forward(x_params)
-        
-        probs = F.softmax(logits,dim=1)
-        labels = torch.argmax(probs,dim=1) # use the maximum probability indices as the labels 
-        loss = nn.CrossEntropyLoss()(probs, labels)
-        loss.backward()
-        print(x_params.grad)
-        x = x.to(pl_module.device)
-        perturbed_x = torch.add(x,x_params.grad ,alpha=0.01) # adding x with x grad in conjuction with an alpha term to get the different values
-        perturbed_outputs = pl_module.class_forward(perturbed_x)
-        
-       
-    '''
-
-    ''' First working version of calculating the gradients
-    def loss_calculation(self,trainer, pl_module,x,y):
-        
-        x_params = nn.Parameter(x)
-        
-        
-        x_params, y = x_params.to(pl_module.device), y.to(pl_module.device)
-        x_params.retain_grad() # required to obtain the gradient otherwise the UserWarning : UserWarning: The .grad attribute of a Tensor that is not a leaf Tensor is being accessed. Its .grad attribute won't be populated during autograd.backward(). If you indeed want the gradient for a non-leaf Tensor, use .retain_grad() on the non-leaf Tensor. If you access the non-leaf Tensor by mistake, make sure you access the leaf Tensor instead. See github.com/pytorch/pytorch/pull/30531 for more informations.
-
-        logits = pl_module.class_forward(x_params)
-
-        probs = F.softmax(logits,dim=1)
-        loss = nn.CrossEntropyLoss()(probs, y)
-        loss.backward()
-        print(x_params.grad)
-    '''
-
-    '''
-    def on_test_epoch_end(self, trainer, pl_module):
-        # Perform callback only for the situation
-        if pl_module.name == model_names_dict['CE']:
-            pl_module.automatic_optimization= False
-            torch.set_grad_enabled(True)
-            self.forward_callback(trainer=trainer, pl_module=pl_module) 
-        else:
-            pass
-    '''
-
-
-    '''       
-    def on_test_batch_end(self, trainer, pl_module, outputs, batch, batch_idx: int, dataloader_idx: int):
-        (img_1, img_2), *labels, indices = batch = batch
-        if isinstance(labels, tuple) or isinstance(labels, list):
-            labels, *coarse_labels = labels
-        torch.set_grad_enabled(True) # need to set grad enabled true during the test step
-        pl_module.eval()
-        self.loss_calculation(trainer, pl_module,img_1, labels)
-    '''
-
     def on_test_epoch_end(self, trainer, pl_module):
         # Perform callback only for the situation
         torch.set_grad_enabled(True) # need to set grad enabled true during the test step
@@ -196,7 +129,7 @@ class ODIN(pl.Callback):
         
         grad = self.get_grads(trainer,pl_module,x)
         # Perturb input
-        perturbed_inputs = torch.add(x, grad, alpha=0.01)
+        perturbed_inputs = torch.add(x, grad, alpha=self.epsilon)
         perturbed_logits = pl_module.class_forward(perturbed_inputs)
         perturbed_logits = perturbed_logits/self.temperature
         
@@ -246,8 +179,8 @@ class ODIN(pl.Callback):
         # corresponds to the grayscale datasets    
         elif len(normalization_mean) == 1:
             grad[::, 0] = (grad[::, 0] )/normalization_mean[0]
-            grad[::, 1] = (grad[::, 1] )/normalization_mean[0]
-            grad[::, 2] = (grad[::, 2] )/normalization_mean[0]
+            #grad[::, 1] = (grad[::, 1] )/normalization_mean[0]
+            #grad[::, 2] = (grad[::, 2] )/normalization_mean[0]
         # correspond to rgb datasets
         else:
             grad[::, 0] = (grad[::, 0] )/normalization_mean[0]
