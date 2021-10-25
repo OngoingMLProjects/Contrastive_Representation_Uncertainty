@@ -12,6 +12,7 @@ NearestNeighbours1DTypicality, NearestNeighboursClass1DTypicality,NearestNeighbo
 DifferentKNNMarginal1DTypicality, DifferentKNNMarginalTypicality, DifferentKNNClassTypicality
 
 from Contrastive_uncertainty.general.callbacks.softmax_probability_callbacks import Max_Softmax_Probability
+from Contrastive_uncertainty.general.callbacks.cem_callbacks import ContrastiveExplanationMethod
 
 
 def train_run_name(model_name, config, group=None):
@@ -55,6 +56,8 @@ def callback_dictionary(Datamodule,config,data_dict):
                 f'Maximum Softmax Probability {ood_dataset}': Max_Softmax_Probability(Datamodule,OOD_Datamodule,quick_callback=quick_callback), # softmax probability baseline (need to train cross entropy models for the case of this baseline)
 
                 f'ODIN {ood_dataset}': ODIN(Datamodule,OOD_Datamodule,quick_callback=quick_callback),
+
+                'Contrastive Explanation':ContrastiveExplanationMethod(Datamodule,quick_callback=quick_callback),
 
                 f'Mahalanobis OOD Fractions {ood_dataset}': Mahalanobis_OOD_Fractions(Datamodule,OOD_Datamodule,quick_callback=quick_callback),
                 f'Nearest Neighbours {ood_dataset}': NearestNeighbours(Datamodule,OOD_Datamodule,quick_callback=quick_callback),
