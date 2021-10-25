@@ -897,8 +897,8 @@ def knn_auroc_table_v3():
                         pass
                     else:
                         # Get ood dataset specific key
-                        print('ID dataset:',ID_dataset)
-                        print('OOD dataset:',OOD_dataset)
+                        #print('ID dataset:',ID_dataset)
+                        #print('OOD dataset:',OOD_dataset)
 
                         baseline_max_softmax_ood_specific_key = [key for key in baseline_max_softmax_keys if OOD_dataset.lower() in key.lower()]
                         baseline_odin_ood_specific_key = [key for key in baseline_odin_keys if OOD_dataset.lower() in key.lower()]
@@ -914,10 +914,13 @@ def knn_auroc_table_v3():
         column_names = ['Maximum Softmax','ODIN', 'Mahalanobis', f'{fixed_k} NN', f'Quadratic {fixed_k} NN',]
         #column_names = ['Baseline', f'{fixed_k} NN', f'Quadratic {fixed_k} NN',]
         auroc_df = pd.DataFrame(data_array,columns = column_names, index=row_names)
-        latex_table = full_post_process_latex_table(auroc_df)
+        latex_table = full_post_process_latex_table(auroc_df,ID_dataset)
+        
         print(latex_table)
         
-def full_post_process_latex_table(df):
+def full_post_process_latex_table(df,ID_dataset):
+    caption = ID_dataset + ' Dataset'
+    label = f'tab:{ID_dataset}_Dataset'
     num_columns = len(df.columns) # (need an extra column for the case of the dataset situation)
     latex_table = df.to_latex()
     latex_table = latex_table.replace('{}','{Datasets}')
@@ -936,6 +939,8 @@ def full_post_process_latex_table(df):
         latex_table = latex_table.replace(f'{string[index]}',f'{updated_string[index]}') 
 
     latex_table = post_process_latex_table(latex_table)
+    latex_table = '\\begin{table}[]\n\\centering\n' + latex_table + '\n\\caption{'+ caption + '}\n\\label{' + label + '}\n\\end{table}'
+
 
     return latex_table
 
