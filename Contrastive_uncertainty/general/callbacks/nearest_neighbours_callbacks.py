@@ -643,10 +643,9 @@ class DifferentKNNClass1DTypicality(NearestNeighboursClass1DTypicality):
     def normalise(self, ftrain, ftest, food):
         return super().normalise(ftrain, ftest, food)
     
-    def get_nearest_neighbours(self, ftest, food):
-        return super().get_nearest_neighbours(ftest, food)
 
 
+    # Uses self.K instead of K
     def get_nearest_neighbours(self, ftest, food,K):
         num_ID = len(ftest)
         collated_features = np.concatenate((ftest, food))
@@ -710,6 +709,76 @@ class DifferentKNNClass1DTypicality(NearestNeighboursClass1DTypicality):
         table = wandb.Table(dataframe=table_df)
         wandb.log({wandb_name:table})
 
+
+
+
+
+# Performs 1D typicality using the different K values and saves them in a table
+class DifferentKNNQuadraticClass1DTypicality(DifferentKNNClass1DTypicality):
+    def __init__(self, Datamodule,OOD_Datamodule,
+        quick_callback:bool = True,K:int = 10):
+
+        super().__init__(Datamodule,OOD_Datamodule, quick_callback,K)
+        # Used to save the summary value
+
+    def on_test_epoch_end(self, trainer, pl_module):
+        return super().on_test_epoch_end(trainer, pl_module)
+
+    def forward_callback(self, trainer, pl_module):
+         return super().forward_callback(trainer, pl_module)
+    
+        
+    def get_features(self, pl_module, dataloader):
+        return super().get_features(pl_module, dataloader)
+    
+    def normalise(self, ftrain, ftest, food):
+        return super().normalise(ftrain, ftest, food)
+
+    # The case of the different k, has an additional parameter k to use different k values (though should change code to make it different)
+    def get_nearest_neighbours(self, ftest, food,K):
+        return super().get_nearest_neighbours(ftest, food,K)
+    
+    # get the features of the data which also has the KNN in either the test set or the OOD dataset
+    def get_knn_features(self, ftest, food, knn_indices):
+        return super().get_knn_features(ftest, food, knn_indices)
+
+    def get_1d_train(self, ftrain, ypred):
+        return super().get_1d_train(ftrain, ypred)
+    
+    def get_thresholds(self, fdata, means, eigvalues, eigvectors, dtrain_1d_mean, dtrain_1d_std,K):
+        thresholds = []
+        num_batches = len(fdata)//K
+        # Currently goes through a single data point at a time which is not very efficient
+        for i in range(num_batches):
+            fdata_batch = fdata[(i*K):((i+1)*K)]
+            ddata = [np.matmul(eigvectors[class_num].T,(fdata_batch - means[class_num]).T)**2/eigvalues[class_num] for class_num in range(len(means))] # Calculate the 1D scores for all the different classes 
+        
+            # obtain the normalised the scores for the different classes
+            ddata = [ddata[class_num] - dtrain_1d_mean[class_num]/(dtrain_1d_std[class_num]  +1e-10) for class_num in range(len(means))] # shape (dim, batch)
+            
+            # shape (dim) average of all data in batch size
+            ddata = [np.mean(ddata[class_num],axis=1) for class_num in range(len(means))] # shape dim
+
+            ###### Only change from the previous class is this line ###########
+            # Obtain the sum of absolute normalised scores squared (to emphasis the larger penalty when the deviation of a dimension is larger)
+            scores = [np.sum(np.abs(ddata[class_num]**2),axis=0) for class_num in range(len(means))]
+            ##################################################################
+
+            # Obtain the scores corresponding to the lowest class
+            ddata = np.min(scores,axis=0)
+
+            thresholds.append(ddata)
+
+        return thresholds
+
+    # Only difference is the change of the name for the logging of the tables
+    def get_eval_results(self, ftrain, ftest, food,labelstrain):
+        ftrain_norm, ftest_norm, food_norm = self.normalise(ftrain, ftest, food)
+        name = f'Different K Normalized Quadratic One Dim Class Typicality KNN OOD - {self.OOD_Datamodule.name}'
+        self.datasaving(ftrain_norm,ftest_norm,food_norm,labelstrain,name)
+
+    def datasaving(self, ftrain, ftest, food, labelstrain, wandb_name):
+        return super().datasaving(ftrain, ftest, food, labelstrain, wandb_name)
 
 
 # Ablation studies
