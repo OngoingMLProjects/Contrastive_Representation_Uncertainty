@@ -1,6 +1,7 @@
 # Plotting the AUROC as the value of K changes for the group typicality approach
 # Also works on making tables for the ID and OOD datasets
 
+from numpy.core.numeric import full
 from torch.utils.data import dataset
 from Contrastive_uncertainty.general.callbacks.ood_callbacks import Mahalanobis_OOD
 import wandb
@@ -914,21 +915,40 @@ def knn_auroc_table_v3():
         column_names = ['Maximum Softmax','ODIN', 'Mahalanobis', f'{fixed_k} NN', f'Quadratic {fixed_k} NN',]
         #column_names = ['Baseline', f'{fixed_k} NN', f'Quadratic {fixed_k} NN',]
         auroc_df = pd.DataFrame(data_array,columns = column_names, index=row_names)
-        latex_table = full_post_process_latex_table(auroc_df,ID_dataset)
+        caption = ID_dataset + ' Dataset'
+        label = f'tab:{ID_dataset}_Dataset'
+        latex_table = full_post_process_latex_table(auroc_df, caption, label)
+        #latex_table = full_post_process_latex_table(auroc_df,ID_dataset)
         
         print(latex_table)
         
-def full_post_process_latex_table(df,ID_dataset):
-    caption = ID_dataset + ' Dataset'
-    label = f'tab:{ID_dataset}_Dataset'
-    num_columns = len(df.columns) # (need an extra column for the case of the dataset situation)
+def full_post_process_latex_table(df,caption,label):
+    
     latex_table = df.to_latex()
+    latex_table = replace_headings(df,latex_table)
+    
+    latex_table = bold_max_value(df,latex_table,)
+    latex_table = post_process_latex_table(latex_table)
+    latex_table = initial_table_info(latex_table)
+    latex_table = add_caption(latex_table,caption)
+    latex_table = add_label(latex_table,label) 
+    latex_table = end_table_info(latex_table)
+    #latex_table = '\\begin{table}[]\n\\centering\n' + latex_table + '\n\\caption{'+ caption + '}\n\\label{' + label + '}\n\\end{table}'
+
+    return latex_table
+
+# replace the headings 
+def replace_headings(df,latex_table):
+    num_columns = len(df.columns) # (need an extra column for the case of the dataset situation)
     latex_table = latex_table.replace('{}','{Datasets}')
     original_headings = 'l' +'r'*num_columns
     updated_headings = '|p{3cm}|' + 'c|'*num_columns 
     latex_table = latex_table.replace(original_headings,updated_headings)
-    
-    
+    return latex_table
+
+# Make the max value in a column bold
+def bold_max_value(df,latex_table):
+    num_columns = len(df.columns)
     desired_key = "&\s+\d+\.\d+\s+" *(num_columns)
     string = re.findall(desired_key,latex_table)
     updated_string = []
@@ -939,11 +959,24 @@ def full_post_process_latex_table(df,ID_dataset):
         #string[index] = string[index].replace(f'{max_number}',f'\textbf{ {max_number} }') # Need to put spaces around otherwise it just shows max number
         updated_string.append(string[index].replace(f'{max_number}',fr'\textbf{ {max_number} }')) # Need to put spaces around otherwise it just shows max number), also need to be place to make it so that \t does not act as space
         latex_table = latex_table.replace(f'{string[index]}',f'{updated_string[index]}') 
-
-    latex_table = post_process_latex_table(latex_table)
-    latex_table = '\\begin{table}[]\n\\centering\n' + latex_table + '\n\\caption{'+ caption + '}\n\\label{' + label + '}\n\\end{table}'
+    return latex_table
 
 
+
+def initial_table_info(latex_table):
+    latex_table = '\\begin{table}[]\n\\centering\n' + latex_table
+    return latex_table
+
+def add_caption(latex_table,caption):
+    latex_table = latex_table + '\n\\caption{'+ caption + '}'
+    return latex_table
+
+def add_label(latex_table,label):
+    latex_table = latex_table + '\n\\label{' + label + '}'
+    return latex_table
+
+def end_table_info(latex_table):
+    latex_table = latex_table + '\n\\end{table}'
     return latex_table
 
 

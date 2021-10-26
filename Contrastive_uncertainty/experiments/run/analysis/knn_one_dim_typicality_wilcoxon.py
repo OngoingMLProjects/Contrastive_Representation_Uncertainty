@@ -16,7 +16,8 @@ import json
 import re
 
 from Contrastive_uncertainty.experiments.run.analysis.analysis_utils import dataset_dict, key_dict, ood_dataset_string
-from Contrastive_uncertainty.experiments.run.analysis.knn_one_dim_typicality_diagrams import knn_vector, full_post_process_latex_table,post_process_latex_table
+from Contrastive_uncertainty.experiments.run.analysis.knn_one_dim_typicality_diagrams import knn_vector, full_post_process_latex_table,post_process_latex_table,\
+    replace_headings, bold_max_value, initial_table_info, add_caption, add_label, end_table_info
 
 # Performs one sided-test to see the importance
 def knn_auroc_wilcoxon_v2():
@@ -185,9 +186,19 @@ def knn_auroc_wilcoxon_v2():
     dataset_row_names[-1] = 'ID:Aggregate'
     column_names = [f'Linear {fixed_k} NN', f'Quadratic {fixed_k} NN']
     
+    caption =  'Wilcoxon Signed Rank test - P values'
+    label = f'tab:Wilcoxon_test'
     # Post pr
     auroc_df = pd.DataFrame(collated_rank_score, columns = column_names, index=dataset_row_names)
     latex_table = auroc_df.to_latex()
+    
+    latex_table = replace_headings(auroc_df,latex_table)
+    latex_table = post_process_latex_table(latex_table)
+    latex_table = initial_table_info(latex_table)
+    latex_table = add_caption(latex_table,caption)
+    latex_table = add_label(latex_table,label) 
+    latex_table = end_table_info(latex_table)
+
     latex_table = latex_table.replace('{}','{Datasets}')
     latex_table = latex_table.replace("lrr","|p{3cm}|c|c|")
     latex_table = post_process_latex_table(latex_table)
