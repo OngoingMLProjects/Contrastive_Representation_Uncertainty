@@ -7,6 +7,7 @@ from Contrastive_uncertainty.toy_replica.toy_experiments.config.trainer_params i
 run_paths = []
 api = wandb.Api()
 # Gets the runs corresponding to a specific filter
+
 '''
 runs = api.runs(path="nerdk312/Toy_evaluation", filters={"config.group": "Toy Group practice"})
 for i in range(len(runs)):

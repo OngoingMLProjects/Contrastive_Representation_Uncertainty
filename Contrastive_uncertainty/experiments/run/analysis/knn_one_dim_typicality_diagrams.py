@@ -927,6 +927,8 @@ def full_post_process_latex_table(df,ID_dataset):
     original_headings = 'l' +'r'*num_columns
     updated_headings = '|p{3cm}|' + 'c|'*num_columns 
     latex_table = latex_table.replace(original_headings,updated_headings)
+    
+    
     desired_key = "&\s+\d+\.\d+\s+" *(num_columns)
     string = re.findall(desired_key,latex_table)
     updated_string = []
