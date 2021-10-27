@@ -185,10 +185,10 @@ def knn_auroc_wilcoxon_v2():
 
     dataset_row_names[-1] = 'ID:Aggregate'
     column_names = [f'Linear {fixed_k} NN', f'Quadratic {fixed_k} NN']
-    
+        
+    # Post processing latex table
     caption =  'Wilcoxon Signed Rank test - P values'
     label = f'tab:Wilcoxon_test'
-    # Post pr
     auroc_df = pd.DataFrame(collated_rank_score, columns = column_names, index=dataset_row_names)
     latex_table = auroc_df.to_latex()
     
@@ -198,14 +198,192 @@ def knn_auroc_wilcoxon_v2():
     latex_table = add_caption(latex_table,caption)
     latex_table = add_label(latex_table,label) 
     latex_table = end_table_info(latex_table)
-
-    latex_table = latex_table.replace('{}','{Datasets}')
-    latex_table = latex_table.replace("lrr","|p{3cm}|c|c|")
-    latex_table = post_process_latex_table(latex_table)
-
+    
     print(latex_table)
+
+
+# Calculates wilcoxon for the CE baselines as well
+def knn_auroc_wilcoxon_v3(baseline):
+    # Fixed value of k of interest
+    fixed_k = 10
+    # Desired ID,OOD and Model  
+    root_dir = 'run_data/'
+
+    api = wandb.Api()
+    # Gets the runs corresponding to a specific filter
+    # https://github.com/wandb/client/blob/v0.10.31/wandb/apis/public.py
+
+
+    key_dict = {'dataset':{'MNIST':0, 'FashionMNIST':1,'KMNIST':2, 'CIFAR10':3, 'CIFAR100':4,'Caltech101':5,'Caltech256':6,'TinyImageNet':7,'Cub200':8,'Dogs':9},
+                'model_type':{'CE':0,'SupCon':1}}
+
+    # Makes array for the ranking of each of the dataset, as well as an empty list which should aggregate the scores from the datasets together 
+    num_ID = len(key_dict['dataset'])
+    collated_rank_score = np.empty((num_ID+1,2)) # + 1 to take into account an additional wilcoxon score which takes into account the entire dataset
+    collated_rank_score[:] = np.nan
+    collated_difference_linear = [None] * num_ID # Make an empty list to take into account all the different values
+    collated_difference_quadratic = [None] * num_ID
+    dataset_row_names = [None] * (num_ID+1) # empty list to take into account all the different dataset as well as the aggregate
+    
+    all_ID = ['MNIST','FashionMNIST','KMNIST', 'CIFAR10','CIFAR100','Caltech101','Caltech256','TinyImageNet','Cub200','Dogs']
+    for ID_dataset in all_ID: # Go through the different ID dataset                
+        runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"OOD hierarchy baselines","config.epochs": 300, 'state':'finished',"config.dataset": f"{ID_dataset}","$or": [{"config.model_type":"SupCon" }, {"config.model_type": "CE"}]})
+        summary_list, config_list= [], []
+        # number of OOd datasets for this particular ID dataset
+        num_ood = len(dataset_dict[ID_dataset])
+        # data array
+        data_array = np.empty((num_ood,3)) # 5 different measurements
+        data_array[:] = np.nan
+    
+        for i, run in enumerate(runs): 
+            # .summary contains the output keys/values for metrics like accuracy.
+            #  We call ._json_dict to omit large files 
+
+            summary_list.append(run.summary._json_dict)
+            # .config contains the hyperparameters.
+            #  We remove special values that start with _.
+            config_list.append(
+                {k: v for k,v in run.config.items()
+                 if not k.startswith('_')})
+
+            group_name = config_list[i]['group'] # get the name of the group
+            path_list = runs[i].path
+
+            # include the group name in the run path
+            path_list.insert(-1, group_name)
+            run_path = '/'.join(path_list)
+
+            model_type = config_list[i]['model_type']
+            Model_name = 'SupCLR' if model_type=='SupCon' else model_type
+            # Make a data array, where the number values are equal to the number of OOD classes present in the datamodule dict or equal to the number of keys
+
+            # name for the different rows of a table
+            # https://stackoverflow.com/questions/10712002/create-an-empty-list-in-python-with-certain-size
+            row_names = [None] * num_ood # Make an empty list to take into account all the different values 
+            # go through the different knn keys
+
+            if Model_name =='SupCLR':
+                desired_string = 'Different K Normalized One Dim Class Typicality KNN OOD'.lower()
+                knn_keys = [key for key, value in summary_list[i].items() if desired_string in key.lower()]
+
+                quadratic_string = 'Normalized One Dim Class Quadratic Typicality KNN'.lower()
+                quadratic_typicality_keys = [key for key, value in summary_list[i].items() if quadratic_string in key.lower()]
+
+                for key in knn_keys:
+                    OOD_dataset = ood_dataset_string(key, dataset_dict, ID_dataset)
+                    if OOD_dataset is None:
+                        pass
+                    else:
+                        # Get ood dataset specific key
+                        quadratic_ood_dataset_specific_key = [key for key in quadratic_typicality_keys if OOD_dataset.lower() in key.lower()]
+                        quadratic_auroc = round(summary_list[i][quadratic_ood_dataset_specific_key[0]],3)
+                        #print(f'ID: {ID_dataset}, OOD {OOD_dataset}:{round(mahalanobis_AUROC,3)}')
+                        data_dir = summary_list[i][key]['path']
+                        run_dir = root_dir + run_path
+                        read_dir = run_dir + '/' + data_dir
+                        with open(read_dir) as f: 
+                            data = json.load(f)
+                        knn_values = knn_vector(data)
+                        #### obtain for specific k value
+                        indices = knn_values[:,0] # get all the values in the first column (get all the k values as indices)
+                        knn_df = pd.DataFrame(knn_values,index = indices)
+                        fixed_k_knn_value = knn_df.loc[fixed_k][1] # obtains the k value and the AUROC for the k value which is the fixed k, then takes index 1 which is the AUROC value
+                        ###### obtain optimal value ########
+                        data_index = dataset_dict[ID_dataset][OOD_dataset]
+                        #print(f'ID: {ID_dataset}, OOD {OOD_dataset}:{round(mahalanobis_AUROC,3)}:index {data_index}') 
+                        data_array[data_index,1] = fixed_k_knn_value
+                        data_array[data_index,2] = quadratic_auroc
+                        #row_names[data_index] = f'ID:{ID_dataset}, OOD:{OOD_dataset}' 
+                        #row_names.append(f'ID:{ID_dataset}, OOD:{OOD_dataset}')
+            else:
+                baseline_max_softmax_string = 'Maximum Softmax Probability'.lower()
+                baseline_odin_string = 'ODIN'.lower()
+                
+                baseline_max_softmax_keys = [key for key, value in summary_list[i].items() if baseline_max_softmax_string in key.lower()]
+                baseline_odin_keys = [key for key, value in summary_list[i].items() if baseline_odin_string in key.lower()]
+                
+                for key in baseline_max_softmax_keys:
+                    OOD_dataset = ood_dataset_string(key, dataset_dict, ID_dataset)
+                    if OOD_dataset is None:
+                        pass
+                    else:
+                        # Get ood dataset specific key
+                        #print('ID dataset:',ID_dataset)
+                        #print('OOD dataset:',OOD_dataset)
+
+                        baseline_max_softmax_ood_specific_key = [key for key in baseline_max_softmax_keys if OOD_dataset.lower() in key.lower()]
+                        baseline_odin_ood_specific_key = [key for key in baseline_odin_keys if OOD_dataset.lower() in key.lower()]
+                        # get the specific mahalanobis keys for the specific OOD dataset
+                        max_softmax_AUROC = round(summary_list[i][baseline_max_softmax_ood_specific_key[0]],3)
+                        odin_AUROC = round(summary_list[i][baseline_odin_ood_specific_key[0]],3)
+
+                        data_index = dataset_dict[ID_dataset][OOD_dataset]
+                        if baseline =='Maximum-Probability':
+                            data_array[data_index,0] = max_softmax_AUROC
+                        elif baseline == 'ODIN': 
+                            data_array[data_index,1] = odin_AUROC
+                        else:
+                            print('incorrect baseline')
+
+
+        # Calculate the differences in the results for a particular dataset
+
+        linear_difference =  data_array[:,0] - data_array[:,1]
+        quadratic_difference = data_array[:,0] - data_array[:,2] 
+        
+        # print('baseline',data_array[:,0])
+        # print('quadratic',data_array[:,2])
+        # print('quadratic difference',quadratic_difference)
+        
+        # calculate scores for a particular dataest
+        stat_linear, p_linear  = wilcoxon(linear_difference,alternative='less')
+        stat_quadratic, p_quadratic  = wilcoxon(quadratic_difference,alternative='less')
+        #stat_linear, p_linear  = wilcoxon(linear_difference)
+        #stat_quadratic, p_quadratic  = wilcoxon(quadratic_difference)
+        # Calculate P values for a particular dataset
+        collated_rank_score[key_dict['dataset'][ID_dataset],0] = p_linear
+        collated_rank_score[key_dict['dataset'][ID_dataset],1] = p_quadratic
+
+        # Collate values into an array
+        collated_difference_linear[key_dict['dataset'][ID_dataset]] = linear_difference
+        collated_difference_quadratic[key_dict['dataset'][ID_dataset]] = quadratic_difference
+        
+        # Name for the dataset
+        dataset_row_names[key_dict['dataset'][ID_dataset]] = f'ID:{ID_dataset}'    
+
+    # Calculate the score for the aggregated score
+    collated_difference_linear = np.concatenate(collated_difference_linear)
+    collated_difference_quadratic = np.concatenate(collated_difference_quadratic)
+
+    # To confirm that the differences can assume to be negative (baseline - typicality is negative), we use alternative is less. The null hypothesis is that the median difference is positive whilst the alternative is that the median difference is negative.
+
+    stat_linear, p_linear  = wilcoxon(collated_difference_linear,alternative='less')     
+    stat_quadratic, p_quadratic  = wilcoxon(collated_difference_quadratic,alternative='less')
+    
+    collated_rank_score[-1,0] = p_linear
+    collated_rank_score[-1,1] = p_quadratic
+
+    dataset_row_names[-1] = 'ID:Aggregate'
+    column_names = [f'Linear {fixed_k} NN', f'Quadratic {fixed_k} NN']
+        
+    # Post processing latex table
+    caption =  f'{baseline} Wilcoxon Signed Rank test - P values'
+    label = f'tab:{baseline}_Wilcoxon_test'
+    auroc_df = pd.DataFrame(collated_rank_score, columns = column_names, index=dataset_row_names)
+    latex_table = auroc_df.to_latex()
+    
+    latex_table = replace_headings(auroc_df,latex_table)
+    latex_table = post_process_latex_table(latex_table)
+    latex_table = initial_table_info(latex_table)
+    latex_table = add_caption(latex_table,caption)
+    latex_table = add_label(latex_table,label) 
+    latex_table = end_table_info(latex_table)
+    
+    print(latex_table)
+
 
 if __name__== '__main__':
     
-    knn_auroc_wilcoxon_v2()
-    
+    #knn_auroc_wilcoxon_v2()
+    #knn_auroc_wilcoxon_v3('Maximum-Probability')
+    knn_auroc_wilcoxon_v3('ODIN')

@@ -12,7 +12,7 @@ NearestNeighbours1DTypicality, NearestNeighboursClass1DTypicality,NearestNeighbo
 DifferentKNNMarginal1DTypicality, DifferentKNNMarginalTypicality, DifferentKNNClassTypicality, DifferentKNNQuadraticClass1DTypicality
 
 from Contrastive_uncertainty.general.callbacks.softmax_probability_callbacks import Max_Softmax_Probability
-from Contrastive_uncertainty.general.callbacks.cem_callbacks import ContrastiveExplanationMethod
+from Contrastive_uncertainty.general.callbacks.cem_callbacks import ContrastiveExplanationMethod, ContrastiveExplanationDistance
 
 
 def train_run_name(model_name, config, group=None):
@@ -58,6 +58,7 @@ def callback_dictionary(Datamodule,config,data_dict):
                 f'ODIN {ood_dataset}': ODIN(Datamodule,OOD_Datamodule,quick_callback=quick_callback),
 
                 'Contrastive Explanation':ContrastiveExplanationMethod(Datamodule,quick_callback=quick_callback),
+                'Contrastive Explanation Distance':ContrastiveExplanationDistance(Datamodule,quick_callback=quick_callback),
 
                 f'Mahalanobis OOD Fractions {ood_dataset}': Mahalanobis_OOD_Fractions(Datamodule,OOD_Datamodule,quick_callback=quick_callback),
                 f'Nearest Neighbours {ood_dataset}': NearestNeighbours(Datamodule,OOD_Datamodule,quick_callback=quick_callback),

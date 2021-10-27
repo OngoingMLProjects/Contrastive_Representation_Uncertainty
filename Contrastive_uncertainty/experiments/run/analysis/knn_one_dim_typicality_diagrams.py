@@ -904,7 +904,6 @@ def knn_auroc_table_v3():
                         baseline_max_softmax_ood_specific_key = [key for key in baseline_max_softmax_keys if OOD_dataset.lower() in key.lower()]
                         baseline_odin_ood_specific_key = [key for key in baseline_odin_keys if OOD_dataset.lower() in key.lower()]
                         # get the specific mahalanobis keys for the specific OOD dataset
-                        OOD_dataset_specific_mahalanobis_keys = [key for key in baseline_mahalanobis_keys if OOD_dataset.lower() in key.lower()]
                         max_softmax_AUROC = round(summary_list[i][baseline_max_softmax_ood_specific_key[0]],3)
                         odin_AUROC = round(summary_list[i][baseline_odin_ood_specific_key[0]],3)
                         data_index = dataset_dict[ID_dataset][OOD_dataset]
