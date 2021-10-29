@@ -57,7 +57,7 @@ def callback_dictionary(Datamodule,config,data_dict):
 
                 f'ODIN {ood_dataset}': ODIN(Datamodule,OOD_Datamodule,quick_callback=quick_callback),
 
-                'Contrastive Explanation':ContrastiveExplanationMethod(Datamodule,quick_callback=quick_callback),
+                'Contrastive Explanation Method':ContrastiveExplanationMethod(Datamodule,quick_callback=quick_callback),
                 'Contrastive Explanation Distance':ContrastiveExplanationDistance(Datamodule,quick_callback=quick_callback),
 
                 f'Mahalanobis OOD Fractions {ood_dataset}': Mahalanobis_OOD_Fractions(Datamodule,OOD_Datamodule,quick_callback=quick_callback),

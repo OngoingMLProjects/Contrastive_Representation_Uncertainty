@@ -39,7 +39,7 @@ class ContrastiveExplanationMethod(pl.Callback):
         c_converge: float = 0.1,
         beta: float = 0.1,
         iterations: int = 1000,
-        n_searches: int = 3, #9,
+        n_searches: int = 9,
         learning_rate: float = 0.01,
         input_shape: tuple = (1, 28, 28),
         quick_callback:bool = True):
@@ -83,6 +83,7 @@ class ContrastiveExplanationMethod(pl.Callback):
         self.learning_rate = learning_rate
     
         self.input_shape = input_shape
+        self.logging = 'Class explanations'
     
     def on_test_epoch_end(self, trainer, pl_module):
         # Perform callback only for the situation
@@ -113,18 +114,15 @@ class ContrastiveExplanationMethod(pl.Callback):
                     delta = self.explain(img,pl_module)
                     collated_delta.append(delta)
 
-                #import ipdb; ipdb.set_trace()
                 collated_delta = torch.cat(collated_delta)
                 collated_imgs = torch.cat((imgs,collated_delta))
                 grid_imgs = torchvision.utils.make_grid(collated_imgs,nrow=self.Datamodule.batch_size)    
                 images = wandb.Image(grid_imgs, caption="Top: Input, Bottom: Counterfactual")
-                wandb.log({"examples": images})
+                wandb.log({self.logging: images})
             else:
                 break
 
-                #img = img.to(pl_module.device)
-                
-
+                #img = img.to(pl_module.device)      
             ''' Enables plotting the imgs and the counterfactuals on top of one another  
             #delta = delta[0]
             deltas = torch.cat(8*[delta])
@@ -337,17 +335,14 @@ class ContrastiveExplanationMethod(pl.Callback):
 
         return best_delta
 
-
-
-
 class ContrastiveExplanationDistance(ContrastiveExplanationMethod):
     def __init__(self, Datamodule,
-        kappa: float = 0.0,#10.0,
-        c_init: float = 0.0,#10.0,
+        kappa: float = 10.0,
+        c_init: float = 10.0,
         c_converge: float = 0.1,
         beta: float = 0.1,
-        iterations: int = 10,#1000,
-        n_searches: int = 2, #9,
+        iterations: int = 1000,
+        n_searches: int = 9,
         learning_rate: float = 0.01,
         input_shape: tuple = (1, 28, 28),
         quick_callback:bool = True):
@@ -363,17 +358,20 @@ class ContrastiveExplanationDistance(ContrastiveExplanationMethod):
         input_shape,
         quick_callback)
 
+        self.logging = 'OOD explanations'
+
     def on_test_epoch_end(self, trainer, pl_module):
         return super().on_test_epoch_end(trainer, pl_module)
-
-    def explain_callback(self, trainer, pl_module):
-        return super().explain_callback(trainer, pl_module)
     
     def explain_callback(self,trainer,pl_module):
         train_loader = self.Datamodule.deterministic_train_dataloader()
         test_loader = self.Datamodule.test_dataloader()
         self.get_centroids(pl_module, train_loader)
         self.get_explanation(trainer,pl_module,test_loader)
+
+
+    def get_explanation(self, trainer, pl_module, dataloader):
+        return super().get_explanation(trainer, pl_module, dataloader)
     
     def get_centroids(self,pl_module,dataloader):
         features, labels = [], []

@@ -56,7 +56,7 @@ practice_trainer_hparams = dict(
 # Miscellaneous arguments in common
 seed = 26,
 epochs = 300,
-bsz = 16,
+bsz = 4,
 
 # Trainer configurations in common
 fast_run = True,
@@ -66,7 +66,7 @@ validation_ratio = 1.0,
 test_ratio = 1.0,
 val_check = 20,
 model_saving = 200, # Used to control how often the model is saved
-callbacks = ['Contrastive Explanation Distance'],
+callbacks = ['Contrastive Explanation Method'],
 #callbacks = ['Mahalanobis Distance','Maximum Softmax Probability','ODIN'],
 #callbacks = ['Nearest 10 Neighbours Class Quadratic 1D Typicality'],
 #callbacks = ['Different K Nearest Neighbours Class 1D Typicality'],
