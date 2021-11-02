@@ -532,7 +532,6 @@ def knn_auroc_wilcoxon_v4():
             collated_rank_score[key_dict['dataset'][ID_dataset],i] = p_value
             # Place the difference for a particular baseline for a particular ID dataset
             collated_difference[i][key_dict['dataset'][ID_dataset]] = difference
-            #import ipdb; ipdb.set_trace()
         
         dataset_row_names[key_dict['dataset'][ID_dataset]] = f'ID:{ID_dataset}'   
 
@@ -566,9 +565,6 @@ def knn_auroc_wilcoxon_v4():
     
     print(latex_table)
     
-
-
-
 # Includes the softmax mahalanobis as an additional baseline
 def knn_auroc_wilcoxon_v5():
     num_baselines = 5
@@ -731,7 +727,6 @@ def knn_auroc_wilcoxon_v5():
             collated_rank_score[key_dict['dataset'][ID_dataset],i] = p_value
             # Place the difference for a particular baseline for a particular ID dataset
             collated_difference[i][key_dict['dataset'][ID_dataset]] = difference
-            #import ipdb; ipdb.set_trace()
         
         dataset_row_names[key_dict['dataset'][ID_dataset]] = f'ID:{ID_dataset}'   
 
@@ -765,10 +760,207 @@ def knn_auroc_wilcoxon_v5():
     
     print(latex_table)
 
+# Calcualate the P value when a particular OOD dataset is fixed
+def knn_auroc_wilcoxon_v6():
+
+    reverse_dataset_dict = {'MNIST':[], 'FashionMNIST':[],'KMNIST':[], 'CIFAR10':[], 'CIFAR100':[],'Caltech101':[],'Caltech256':[],'TinyImageNet':[],'Cub200':[],'Dogs':[]} # Used to get the OOD dataset
+    # Invert the dataset dict in order to get index and key for particular OOD datasets in reverse
+    for k in dataset_dict: # go through the different original dicts
+        reverse_dataset_dict[k] = {v: k for k, v in dataset_dict[k].items()}
+
+    num_baselines = 5
+    # Fixed value of k of interest
+    fixed_k = 10
+    # Desired ID,OOD and Model  
+    root_dir = 'run_data/'
+
+    api = wandb.Api()
+    # Gets the runs corresponding to a specific filter
+    # https://github.com/wandb/client/blob/v0.10.31/wandb/apis/public.py
+
+    key_dict = {'dataset':{'MNIST':0, 'FashionMNIST':1,'KMNIST':2, 'CIFAR10':3, 'CIFAR100':4,'Caltech101':5,'Caltech256':6,'TinyImageNet':7,'Cub200':8,'Dogs':9},
+                'model_type':{'CE':0,'SupCon':1}}
+
+    # Makes array for the ranking of each of the dataset, as well as an empty list which should aggregate the scores from the datasets together 
+
+    # https://thispointer.com/how-to-create-and-initialize-a-list-of-lists-in-python/ -  Important to initialise list effectively (with separate lists rather than pointing to the same list)
+    dataset_row_names = []# [None] * (num_ID+1) # empty list to take into account all the different dataset as well as the aggregate
+ 
+    
+    all_ID = ['MNIST','FashionMNIST','KMNIST', 'CIFAR10','CIFAR100','Caltech101','Caltech256','TinyImageNet','Cub200','Dogs']
+    all_OOD = {'MNIST':[],'FashionMNIST':[],'KMNIST':[],'EMNIST':[],'CelebA':[],'WIDERFace':[],'VOC':[], 'Places365':[],'STL10':[],'CIFAR10':[],'CIFAR100':[],'SVHN':[],'Caltech101':[],'Caltech256':[],'TinyImageNet':[],'Cub200':[],'Dogs':[]}
+    
+    collated_rank_score = np.empty((len(all_OOD),num_baselines)) # + 1 to take into account an additional wilcoxon score which takes into account the entire dataset
+    collated_rank_score[:] = np.nan
+
+    for ID_dataset in all_ID: # Go through the different ID dataset                
+        runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"OOD hierarchy baselines","config.epochs": 300, "config.dataset": f"{ID_dataset}","$or": [{"config.model_type":"SupCon" }, {"config.model_type": "CE"}]})
+        summary_list, config_list= [], []
+        # number of OOd datasets for this particular ID dataset
+        num_ood = len(dataset_dict[ID_dataset])
+        # data array
+        data_array = np.empty((num_ood,num_baselines+1)) # 6 different measurements
+        data_array[:] = np.nan 
+
+    
+        for i, run in enumerate(runs): 
+            # .summary contains the output keys/values for metrics like accuracy.
+            #  We call ._json_dict to omit large files 
+
+            summary_list.append(run.summary._json_dict)
+            # .config contains the hyperparameters.
+            #  We remove special values that start with _.
+            config_list.append(
+                {k: v for k,v in run.config.items()
+                 if not k.startswith('_')})
+
+            group_name = config_list[i]['group'] # get the name of the group
+            path_list = runs[i].path
+
+            # include the group name in the run path
+            path_list.insert(-1, group_name)
+            run_path = '/'.join(path_list)
+
+            model_type = config_list[i]['model_type']
+            Model_name = 'SupCLR' if model_type=='SupCon' else model_type
+            # Make a data array, where the number values are equal to the number of OOD classes present in the datamodule dict or equal to the number of keys
+
+            # name for the different rows of a table
+            # https://stackoverflow.com/questions/10712002/create-an-empty-list-in-python-with-certain-size
+            row_names = [None] * num_ood # Make an empty list to take into account all the different values 
+            # go through the different knn keys
+
+            if Model_name =='SupCLR':
+                desired_string = 'Different K Normalized One Dim Class Typicality KNN OOD'.lower()
+                knn_keys = [key for key, value in summary_list[i].items() if desired_string in key.lower()]
+
+                baseline_string_1, baseline_string_2 = 'Mahalanobis AUROC OOD'.lower(), 'Mahalanobis AUROC: instance vector'.lower() 
+                baseline_mahalanobis_keys_1 = [key for key, value in summary_list[i].items() if baseline_string_1 in key.lower()]
+                baseline_mahalanobis_keys_1 = [key for key in baseline_mahalanobis_keys_1 if 'relative' not in key.lower()]
+
+                baseline_mahalanobis_keys_2 = [key for key, value in summary_list[i].items() if baseline_string_2 in key.lower()]
+                baseline_mahalanobis_keys_2 = [key for key in baseline_mahalanobis_keys_2 if 'relative' not in key.lower()]
+                baseline_mahalanobis_keys = [*baseline_mahalanobis_keys_1,*baseline_mahalanobis_keys_2] 
+
+                quadratic_string = 'Normalized One Dim Class Quadratic Typicality KNN'.lower()
+                quadratic_typicality_keys = [key for key, value in summary_list[i].items() if quadratic_string in key.lower()]
+
+                for key in knn_keys:
+                    OOD_dataset = ood_dataset_string(key, dataset_dict, ID_dataset)
+                    if OOD_dataset is None:
+                        pass
+                    else:
+                        # Get ood dataset specific key
+                        quadratic_ood_dataset_specific_key = [key for key in quadratic_typicality_keys if OOD_dataset.lower() in key.lower()]
+
+                        # get the specific mahalanobis keys for the specific OOD dataset
+                        OOD_dataset_specific_mahalanobis_keys = [key for key in baseline_mahalanobis_keys if OOD_dataset.lower() in key.lower()]
+                        # https://stackoverflow.com/questions/16380326/check-if-substring-is-in-a-list-of-strings/16380569
+                        OOD_dataset_specific_mahalanobis_key = [key for key in OOD_dataset_specific_mahalanobis_keys if baseline_string_1 in key.lower()] 
+                        # Make it so that I choose baseline string 2 if the first case has no strings 
+                        if len(OOD_dataset_specific_mahalanobis_key) == 0:
+                            OOD_dataset_specific_mahalanobis_key = [key for key in OOD_dataset_specific_mahalanobis_keys if baseline_string_2 in key.lower()]
+
+                            # if there is no mahalanobis key for the KNN situation, pass otherwise plot graph
+                        if len(OOD_dataset_specific_mahalanobis_key) == 0:
+                            pass
+                        else:
+                            mahalanobis_AUROC = round(summary_list[i][OOD_dataset_specific_mahalanobis_key[0]],3)
+
+                            quadratic_auroc = round(summary_list[i][quadratic_ood_dataset_specific_key[0]],3)
+                            #print(f'ID: {ID_dataset}, OOD {OOD_dataset}:{round(mahalanobis_AUROC,3)}')
+                            data_dir = summary_list[i][key]['path']
+                            run_dir = root_dir + run_path
+                            read_dir = run_dir + '/' + data_dir
+                            with open(read_dir) as f: 
+                                data = json.load(f)
+                            knn_values = knn_vector(data)
+                            #### obtain for specific k value
+                            indices = knn_values[:,0] # get all the values in the first column (get all the k values as indices)
+                            knn_df = pd.DataFrame(knn_values,index = indices)
+                            fixed_k_knn_value = knn_df.loc[fixed_k][1] # obtains the k value and the AUROC for the k value which is the fixed k, then takes index 1 which is the AUROC value
+                            ###### obtain optimal value ########
+                            data_index = dataset_dict[ID_dataset][OOD_dataset]
+                            #print(f'ID: {ID_dataset}, OOD {OOD_dataset}:{round(mahalanobis_AUROC,3)}:index {data_index}')
+                            data_array[data_index,3] = mahalanobis_AUROC 
+                            data_array[data_index,4] = fixed_k_knn_value
+                            data_array[data_index,5] = quadratic_auroc
+                            row_names[data_index] = f'ID:{ID_dataset}, OOD:{OOD_dataset}' 
+                            #row_names.append(f'ID:{ID_dataset}, OOD:{OOD_dataset}')
+            else:
+                softmax_mahalanobis_baseline_string = 'Mahalanobis AUROC OOD'.lower()
+                softmax_mahalanobis_keys = [key for key, value in summary_list[i].items() if softmax_mahalanobis_baseline_string in key.lower()]
+
+                baseline_max_softmax_string = 'Maximum Softmax Probability'.lower()
+                baseline_odin_string = 'ODIN'.lower()
+                
+                baseline_max_softmax_keys = [key for key, value in summary_list[i].items() if baseline_max_softmax_string in key.lower()]
+                baseline_odin_keys = [key for key, value in summary_list[i].items() if baseline_odin_string in key.lower()]
+                
+                for key in baseline_max_softmax_keys:
+                    OOD_dataset = ood_dataset_string(key, dataset_dict, ID_dataset)
+                    if OOD_dataset is None:
+                        pass
+                    else:
+                        baseline_max_softmax_ood_specific_key = [key for key in baseline_max_softmax_keys if OOD_dataset.lower() in key.lower()]
+                        baseline_odin_ood_specific_key = [key for key in baseline_odin_keys if OOD_dataset.lower() in key.lower()]
+                        baseline_softmax_mahalanobis_ood_specific_key = [key for key in softmax_mahalanobis_keys if OOD_dataset.lower() in key.lower()] 
+                        #OOD_dataset_softmax_mahalanobis_key = [key for key in softmax_mahalanobis_keys if OOD_dataset.lower() in key.lower()]
+                
+                        # get the specific mahalanobis keys for the specific OOD dataset
+                        max_softmax_AUROC = round(summary_list[i][baseline_max_softmax_ood_specific_key[0]],3)
+                        odin_AUROC = round(summary_list[i][baseline_odin_ood_specific_key[0]],3)
+
+                        softmax_mahalanobis_AUROC = round(summary_list[i][baseline_softmax_mahalanobis_ood_specific_key[0]],3)
+                        data_index = dataset_dict[ID_dataset][OOD_dataset]
+                        data_array[data_index,0] = max_softmax_AUROC 
+                        data_array[data_index,1] = odin_AUROC
+                        data_array[data_index,2] = softmax_mahalanobis_AUROC
+                        row_names[data_index] = f'ID:{ID_dataset}, OOD:{OOD_dataset}'
+        
+        
+        # Place in the array
+        for i in range(len(data_array)):
+            OOD_difference = data_array[i,:-1] - data_array[i,-1] # subtract the quadtract score from the remianing baselines
+            OOD_data_value = np.expand_dims(OOD_difference,axis=0)
+
+            OOD = reverse_dataset_dict[ID_dataset][i] # Get the particualr OOD dataset
+            all_OOD[OOD].append(OOD_data_value) # place the differences in the array 
+
+    # Goes through all the different OOD datasets and collates the different measurements           
+    for i, key in enumerate(all_OOD): # go through the different OOD datasets
+        collated_OOD_differences = np.concatenate(all_OOD[key],axis=0) # Differnces for a particualr OOD dataset
+        dataset_row_names.append(f'OOD:{key}') # Add the OOD dataset name
+        
+        for j in range(num_baselines):
+            stat, p_value  = wilcoxon(collated_OOD_differences[:,j],alternative='less') # calculate scores for a particular OOD dataset
+            collated_rank_score[i,j] = p_value
+    
+
+    column_names = ['Maximum Softmax', 'ODIN','Softmax Mahalanobis', 'Contrastive Mahalanobis',f'Linear {fixed_k} NN']
+        
+    # Post processing latex table
+    caption =  f'Wilcoxon Signed Rank test - P values'
+    label = f'tab:Wilcoxon_test'
+    # https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.set_option.html
+    pd.set_option('display.precision',3) 
+
+    auroc_df = pd.DataFrame(collated_rank_score, columns = column_names, index=dataset_row_names)
+    latex_table = auroc_df.to_latex()
+    
+    latex_table = replace_headings(auroc_df,latex_table)
+    latex_table = post_process_latex_table(latex_table)
+    latex_table = initial_table_info(latex_table)
+    latex_table = add_caption(latex_table,caption)
+    latex_table = add_label(latex_table,label) 
+    latex_table = end_table_info(latex_table)
+    
+    print(latex_table)
 
 if __name__== '__main__':
     
     #knn_auroc_wilcoxon_v2()
     #knn_auroc_wilcoxon_v3('Maximum-Probability')
     #knn_auroc_wilcoxon_v3('ODIN')
-    knn_auroc_wilcoxon_v5()
+    #knn_auroc_wilcoxon_v5()
+    knn_auroc_wilcoxon_v6()

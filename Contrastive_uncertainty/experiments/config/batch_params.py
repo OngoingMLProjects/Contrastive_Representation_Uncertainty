@@ -15,8 +15,8 @@ weight_decay = 1e-4,
 # Training parameters in common
 emb_dim = 128,
 instance_encoder = 'resnet50', # Use resnet 18 for confusion log probability 
-dataset = 'TinyImageNet',
-#dataset = 'Cub200',
+#dataset = 'TinyImageNet',
+dataset = 'Cub200',
 #OOD_dataset = ['CIFAR10'],
 #dataset = 'CIFAR100',
 #OOD_dataset = ['SVHN'],
@@ -25,8 +25,8 @@ pretrained_network = None,
 # Wandb parameters in common
 project = 'evaluation',
 
-group = 'OOD hierarchy baselines', #'New Model Testing',
-notes = 'Baselines for the OOD detection for the ID and OOD data', #'Testing whether new models are able to train effectively',  # Add notes to the specific models each time
+group = 'Baselines Repeats', #'New Model Testing',
+notes = 'Repeating the hierarchical baselines', #'Testing whether new models are able to train effectively',  # Add notes to the specific models each time
 
 # Cross entropy Specific parameters
 label_smoothing = False,
@@ -54,7 +54,7 @@ else:
 trainer1_hparams = dict(
 
 # Miscellaneous arguments in common
-seed = 42,
+seed = 25,
 epochs = 300, #300,
 bsz = 256, #512,
 
@@ -68,7 +68,7 @@ val_check = 20,
 model_saving = 200, # Used to control how often the model is saved
 
 
-callbacks = ['Model_saving','Mahalanobis Distance','Maximum Softmax Probability'], #'Model_saving'
+callbacks = ['Model_saving','Mahalanobis Distance','Nearest 10 Neighbours Class 1D Typicality','Nearest 10 Neighbours Class Quadratic 1D Typicality'], #'Model_saving'
 )
 
 
@@ -98,8 +98,9 @@ pretrained_network = None,
 # Wandb parameters in common
 project = 'evaluation',
 
-group = 'OOD hierarchy baselines', #'New Model Testing',
-notes = 'Baselines for the OOD detection for the ID and OOD data', #'Testing whether new models are able to train effectively',  # Add notes to the specific models each time
+
+group = 'Baselines Repeats', #'New Model Testing',
+notes = 'Repeating the hierarchical baselines', #'Testing whether new models are able to train effectively',  # Add notes to the specific models each time
 
 # Cross entropy Specific parameters
 label_smoothing = False,
@@ -128,7 +129,7 @@ else:
 trainer2_hparams = dict(
 
 # Miscellaneous arguments in common
-seed = 42,
+seed = 25,
 epochs = 300, #300,
 bsz = 256, #512,
 
@@ -142,7 +143,7 @@ val_check = 20,
 model_saving = 200, # Used to control how often the model is saved
 
 
-callbacks = ['Model_saving','Mahalanobis Distance','Maximum Softmax Probability'], #'Model_saving'
+callbacks = ['Model_saving','Mahalanobis Distance','Nearest 10 Neighbours Class 1D Typicality','Nearest 10 Neighbours Class Quadratic 1D Typicality'], #'Model_saving'
 )
 
 
@@ -172,8 +173,8 @@ pretrained_network = None,
 # Wandb parameters in common
 project = 'evaluation',
 
-group = 'OOD hierarchy baselines', #'New Model Testing',
-notes = 'Baselines for the OOD detection for the ID and OOD data', #'Testing whether new models are able to train effectively',  # Add notes to the specific models each time
+group = 'Baselines Repeats', #'New Model Testing',
+notes = 'Repeating the hierarchical baselines', #'Testing whether new models are able to train effectively',  # Add notes to the specific models each time
 
 # Cross entropy Specific parameters
 label_smoothing = False,
@@ -202,7 +203,7 @@ else:
 trainer3_hparams = dict(
 
 # Miscellaneous arguments in common
-seed = 42,
+seed = 25,
 epochs = 300, #300,
 bsz = 256, #512,
 
@@ -216,7 +217,7 @@ val_check = 20,
 model_saving = 200, # Used to control how often the model is saved
 
 
-callbacks = ['Model_saving','Mahalanobis Distance','Maximum Softmax Probability'], #'Model_saving'
+callbacks = ['Model_saving','Mahalanobis Distance','Nearest 10 Neighbours Class 1D Typicality','Nearest 10 Neighbours Class Quadratic 1D Typicality'], #'Model_saving'
 )
 
 
@@ -244,8 +245,8 @@ pretrained_network = None,
 # Wandb parameters in common
 project = 'evaluation',
 
-group = 'OOD hierarchy baselines', #'New Model Testing',
-notes = 'Baselines for the OOD detection for the ID and OOD data', #'Testing whether new models are able to train effectively',  # Add notes to the specific models each time
+group = 'Baselines Repeats', #'New Model Testing',
+notes = 'Repeating the hierarchical baselines', #'Testing whether new models are able to train effectively',  # Add notes to the specific models each time
 
 # Cross entropy Specific parameters
 label_smoothing = False,
@@ -274,7 +275,7 @@ else:
 trainer4_hparams = dict(
 
 # Miscellaneous arguments in common
-seed = 42,
+seed = 25,
 epochs = 300, #300,
 bsz = 256, #512,
 
@@ -288,17 +289,17 @@ val_check = 20,
 model_saving = 200, # Used to control how often the model is saved
 
 
-callbacks = ['Model_saving','Mahalanobis Distance','Maximum Softmax Probability'], #'Model_saving'
+callbacks = ['Model_saving','Mahalanobis Distance','Nearest 10 Neighbours Class 1D Typicality','Nearest 10 Neighbours Class Quadratic 1D Typicality'], #'Model_saving'
 )
 
-
+'''
 batch_base_hparams = [base1_hparams]
 batch_trainer_hparams = [trainer1_hparams]
-
 '''
+
 batch_base_hparams = [base1_hparams, base2_hparams,base3_hparams, base4_hparams]
 batch_trainer_hparams = [trainer1_hparams, trainer2_hparams,trainer3_hparams, trainer4_hparams]
-'''
+
 '''
 batch_base_hparams = [base1_hparams, base2_hparams, base3_hparams]
 batch_trainer_hparams = [trainer1_hparams, trainer2_hparams, trainer3_hparams]

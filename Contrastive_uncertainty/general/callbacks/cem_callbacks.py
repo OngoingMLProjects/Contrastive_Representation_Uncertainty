@@ -89,6 +89,7 @@ class ContrastiveExplanationMethod(pl.Callback):
         # Perform callback only for the situation
         torch.set_grad_enabled(True) # need to set grad enabled true during the test step
         pl_module.eval()
+        pl_module.automatic_optimization = False # check if automatic optimization turns off the training and test steps
         self.explain_callback(trainer,pl_module)
     
     # Performs all the computation in the callback
@@ -99,6 +100,7 @@ class ContrastiveExplanationMethod(pl.Callback):
     # Scores when the inputs are not perturbed by a gradient    
     def get_explanation(self,trainer,pl_module,dataloader):
         collated_delta = []
+        collated_imgs = []
         loader = quickloading(self.quick_callback, dataloader)
         
         for index, (imgs, *label, indices) in enumerate(loader):
@@ -112,13 +114,17 @@ class ContrastiveExplanationMethod(pl.Callback):
             if index == 0:
                 for img in imgs: # Go through individual imgs
                     delta = self.explain(img,pl_module)
-                    collated_delta.append(delta)
-
-                collated_delta = torch.cat(collated_delta)
-                collated_imgs = torch.cat((imgs,collated_delta))
-                grid_imgs = torchvision.utils.make_grid(collated_imgs,nrow=self.Datamodule.batch_size)    
-                images = wandb.Image(grid_imgs, caption="Top: Input, Bottom: Counterfactual")
-                wandb.log({self.logging: images})
+                    if delta is not None:
+                        collated_delta.append(delta)
+                        collated_imgs.append(img)
+                
+                if len(collated_delta)>0:
+                    collated_delta = torch.cat(collated_delta) # collate delta
+                    collated_imgs =  torch.cat(collated_imgs) # collate the images 
+                    collated_imgs = torch.cat((imgs,collated_delta)) # collate images and delta
+                    grid_imgs = torchvision.utils.make_grid(collated_imgs,nrow=self.Datamodule.batch_size)    
+                    images = wandb.Image(grid_imgs, caption="Top: Input, Bottom: Counterfactual")
+                    wandb.log({self.logging: images})
             else:
                 break
 
@@ -190,11 +196,12 @@ class ContrastiveExplanationMethod(pl.Callback):
             optim = torch.optim.SGD([adv_img_slack], lr=self.learning_rate)
             # Nawid - number of iterations
             for step in range(1, self.iterations + 1):
-                print('step:',step)
+                #print('step:',step)
                 # - Optimisation objective; (eq. 1) and (eq. 3) - #
 
                 # reset the computational graph
                 optim.zero_grad()
+                pl_module.optimizers().zero_grad() #  Double check that the gradient is off 
                 adv_img_slack.requires_grad_(True)
 
                 # Optimise for image + delta, this is more stable (negative sample)
@@ -242,6 +249,7 @@ class ContrastiveExplanationMethod(pl.Callback):
 
                 # optimise for the slack variable, adjust lr
                 loss_to_optimise.backward()
+                
                 optim.step()
                 # Nawid - slow down the learing rate 
                 optim.param_groups[0]['lr'] = (self.learning_rate - 0.0) *\
