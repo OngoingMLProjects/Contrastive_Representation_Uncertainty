@@ -57,7 +57,7 @@ validation_ratio = 1.0,
 test_ratio = 1.0,
 val_check = 1,
 model_saving = 1, # Used to control how often the model is saved
-callbacks = ['Model_saving','Metrics'],#['Model_saving'],
+callbacks = ['Model_saving','Nearest 10 Neighbours Class Quadratic 1D Typicality'],#['Model_saving'],
 )
 ####################################
 
@@ -245,7 +245,7 @@ validation_ratio = 1.0,
 test_ratio = 1.0,
 val_check = 1,
 model_saving = 1, # Used to control how often the model is saved
-callbacks = ['Metrics'],#['Model_saving'],
+callbacks = ['Nearest 10 Neighbours Class Quadratic 1D Typicality'],#['Model_saving'],
 )
 
 

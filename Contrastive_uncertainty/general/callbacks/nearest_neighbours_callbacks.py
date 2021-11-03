@@ -297,6 +297,7 @@ class NearestNeighbours1DTypicality(NearestNeighbours):
         eigvalues, eigvectors = np.linalg.eigh(cov)
         eigvalues = np.expand_dims(eigvalues,axis=1)
         
+        
         dtrain = np.matmul(eigvectors.T,(ftrain - mean).T)**2/eigvalues
         # calculate the mean and the standard deviations of the different values
         dtrain_1d_mean = np.mean(dtrain,axis= 1,keepdims=True) # shape (dim,1)
@@ -458,7 +459,7 @@ class NearestNeighboursClass1DTypicality(NearestNeighbours1DTypicality):
         # Currently goes through a single data point at a time which is not very efficient
         for i in range(num_batches):
             fdata_batch = fdata[(i*self.K):((i+1)*self.K)]
-            ddata = [np.matmul(eigvectors[class_num].T,(fdata_batch - means[class_num]).T)**2/eigvalues[class_num] for class_num in range(len(means))] # Calculate the 1D scores for all the different classes 
+            ddata = [np.matmul(eigvectors[class_num].T,(fdata_batch - means[class_num]).T)**2/(eigvalues[class_num] + (np.sign(eigvalues[class_num])*1e-8)) for class_num in range(len(means))] # Calculate the 1D scores for all the different classes 
         
             # obtain the normalised the scores for the different classes
             ddata = [ddata[class_num] - dtrain_1d_mean[class_num]/(dtrain_1d_std[class_num]  +1e-10) for class_num in range(len(means))] # shape (dim, batch)
@@ -531,7 +532,8 @@ class NearestNeighboursQuadraticClass1DTypicality(NearestNeighboursClass1DTypica
         # Currently goes through a single data point at a time which is not very efficient
         for i in range(num_batches):
             fdata_batch = fdata[(i*self.K):((i+1)*self.K)]
-            ddata = [np.matmul(eigvectors[class_num].T,(fdata_batch - means[class_num]).T)**2/eigvalues[class_num] for class_num in range(len(means))] # Calculate the 1D scores for all the different classes 
+            # Added additional constant to the eignvalue for the purpose of numerical stability
+            ddata = [np.matmul(eigvectors[class_num].T,(fdata_batch - means[class_num]).T)**2/(eigvalues[class_num] + (np.sign(eigvalues[class_num])*1e-8)) for class_num in range(len(means))] # Calculate the 1D scores for all the different classes 
         
             # obtain the normalised the scores for the different classes
             ddata = [ddata[class_num] - dtrain_1d_mean[class_num]/(dtrain_1d_std[class_num]  +1e-10) for class_num in range(len(means))] # shape (dim, batch)
@@ -667,7 +669,7 @@ class DifferentKNNClass1DTypicality(NearestNeighboursClass1DTypicality):
         # Currently goes through a single data point at a time which is not very efficient
         for i in range(num_batches):
             fdata_batch = fdata[(i*K):((i+1)*K)]
-            ddata = [np.matmul(eigvectors[class_num].T,(fdata_batch - means[class_num]).T)**2/eigvalues[class_num] for class_num in range(len(means))] # Calculate the 1D scores for all the different classes 
+            ddata = [np.matmul(eigvectors[class_num].T,(fdata_batch - means[class_num]).T)**2/(eigvalues[class_num] + (np.sign(eigvalues[class_num])*1e-8)) for class_num in range(len(means))] # Calculate the 1D scores for all the different classes 
         
             # obtain the normalised the scores for the different classes
             ddata = [ddata[class_num] - dtrain_1d_mean[class_num]/(dtrain_1d_std[class_num]  +1e-10) for class_num in range(len(means))] # shape (dim, batch)
@@ -751,7 +753,7 @@ class DifferentKNNQuadraticClass1DTypicality(DifferentKNNClass1DTypicality):
         # Currently goes through a single data point at a time which is not very efficient
         for i in range(num_batches):
             fdata_batch = fdata[(i*K):((i+1)*K)]
-            ddata = [np.matmul(eigvectors[class_num].T,(fdata_batch - means[class_num]).T)**2/eigvalues[class_num] for class_num in range(len(means))] # Calculate the 1D scores for all the different classes 
+            ddata = [np.matmul(eigvectors[class_num].T,(fdata_batch - means[class_num]).T)**2/(eigvalues[class_num] + (np.sign(eigvalues[class_num])*1e-8)) for class_num in range(len(means))] # Calculate the 1D scores for all the different classes 
         
             # obtain the normalised the scores for the different classes
             ddata = [ddata[class_num] - dtrain_1d_mean[class_num]/(dtrain_1d_std[class_num]  +1e-10) for class_num in range(len(means))] # shape (dim, batch)
