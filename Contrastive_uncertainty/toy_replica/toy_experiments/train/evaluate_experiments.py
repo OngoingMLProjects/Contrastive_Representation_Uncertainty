@@ -11,6 +11,7 @@ def evaluate(run_paths,update_dict):
         # Obtain previous information such as the model type to be able to choose appropriate methods
         previous_run = api.run(path=run_path)
         previous_config = previous_run.config
+        
         model_type = previous_config['model_type']
         # Choosing appropriate methods to resume the training        
         evaluate_method = model_dict[model_type]['evaluate']
@@ -19,3 +20,9 @@ def evaluate(run_paths,update_dict):
         model_data_dict = model_dict[model_type]['data_dict']
         model_ood_dict = model_dict[model_type]['ood_dict']
         evaluate_method(run_path, update_dict, model_module, model_instance_method, model_data_dict,model_ood_dict)
+
+
+
+
+
+

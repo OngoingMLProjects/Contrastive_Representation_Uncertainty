@@ -7,7 +7,7 @@ from Contrastive_uncertainty.experiments.train.automatic_train_experiments impor
 def train(base_dict, trainer_dict):   
     # first obtain a base dict and a trainer dict
     model_types = [model_names_dict['SupCon']]
-    seeds = [25,50]
+    seeds = [21]
     datasets = ['Blobs']
 
     # Update the parameters of each model

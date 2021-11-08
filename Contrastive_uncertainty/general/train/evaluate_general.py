@@ -59,7 +59,6 @@ def evaluation(run_path, update_dict, model_module, model_function,datamodule_di
 
     callback_dict = callback_dictionary(datamodule, config, datamodule_dict)
     desired_callbacks = specific_callbacks(callback_dict, config['callbacks'])
-    
     #wandb.config.update(config, allow_val_change=True) # Updates the config (particularly used to increase the number of epochs present)        
         
     wandb_logger.watch(model, log='gradients', log_freq=100) # logs the gradients

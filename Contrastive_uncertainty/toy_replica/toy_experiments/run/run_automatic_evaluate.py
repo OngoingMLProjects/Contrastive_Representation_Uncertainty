@@ -1,7 +1,7 @@
 import wandb
 
 # Import general params
-from Contrastive_uncertainty.toy_replica.toy_experiments.train.evaluate_experiments import evaluate
+from Contrastive_uncertainty.toy_replica.toy_experiments.train.automatic_evaluate_experiments import evaluate
 from Contrastive_uncertainty.toy_replica.toy_experiments.config.trainer_params import trainer_hparams
 
 run_paths = []
@@ -21,6 +21,6 @@ for i in range(len(runs)):
 #run_paths = ['nerdk312/Toy_evaluation/1f917a5g']
 
 #run_paths = ['nerdk312/Toy_evaluation/1f1xz0bk']
-run_paths = ['nerdk312/Toy_evaluation/1km57k8u']
-
+#run_paths = ['nerdk312/Toy_evaluation/1km57k8u']
+run_paths = ['nerdk312/Toy_evaluation/3p812zaq']
 evaluate(run_paths, trainer_hparams)
