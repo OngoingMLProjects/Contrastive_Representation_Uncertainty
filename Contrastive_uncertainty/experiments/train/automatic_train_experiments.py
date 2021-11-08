@@ -1,14 +1,15 @@
 import sys
 import wandb
-from Contrastive_uncertainty.toy_replica.toy_experiments.train.experimental_dict import model_dict
+from Contrastive_uncertainty.experiments.train.experimental_dict import model_dict
 from Contrastive_uncertainty.general.run.model_names import model_names_dict
-from Contrastive_uncertainty.experiments.train.automatic_train_experiments import runs_present
 
 def train(base_dict, trainer_dict):   
     # first obtain a base dict and a trainer dict
     model_types = [model_names_dict['SupCon']]
     seeds = [25,50]
-    datasets = ['Blobs']
+    datasets = ['Caltech101']
+
+    
 
     # Update the parameters of each model
     # the seeds as well as updating the dataset
@@ -44,7 +45,25 @@ def train(base_dict, trainer_dict):
                         # Try statement to allow the code to continue even if a single run fails
                         train_method(base_params,trainer_dict, model_module, model_instance_method,model_data_dict)
 
+# Checks if there is a run present for a particular run           
+def runs_present(base_params, trainer_params):
+    runs_present = False
+    api = wandb.Api()
+    params = {}
+    # place base params and trainer params in the dictionary
+    params.update(base_params)
+    params.update(trainer_params)
+    
+    run_filter={"config.epochs":params['epochs'],"config.group":params['group'],"config.model_type":params['model_type'] ,"config.dataset": params['dataset'],"config.seed":params['seed']}
+    project_path = 'nerdk312/' +base_params['project'] # Need to make sure I get the correct path for projects
+    runs = api.runs(path=project_path, filters=run_filter)
+    if len(runs)> 0:
+        print('runs present:',len(runs))
+        runs_present = True
+    else:
+        print('no runs present:',len(runs))
+        runs_present = False
 
+    return runs_present
 
-
-
+    
