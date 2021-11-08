@@ -17,6 +17,7 @@ import re
 
 
 from Contrastive_uncertainty.experiments.run.analysis.analysis_utils import dataset_dict, key_dict, ood_dataset_string
+from Contrastive_uncertainty.experiments.run.analysis.Typicality_analysis.knn_one_dim_typicality_tables import obtain_ood_datasets
 
 def knn_vector(json_data):
     data = np.array(json_data['data'])
@@ -37,90 +38,128 @@ def knn_auroc_robustness():
     api = wandb.Api()
     # Gets the runs corresponding to a specific filter
     # https://github.com/wandb/client/blob/v0.10.31/wandb/apis/public.py
-    runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"OOD hierarchy baselines","config.model_type": "SupCon","config.epochs": 300})
-
-    summary_list, config_list, name_list = [], [], []
     
+
+    run_filter={"config.group":"OOD hierarchy baselines","config.model_type": "SupCon","config.dataset": "CIFAR100"}    
+    runs = api.runs(path="nerdk312/evaluation", filters=run_filter)
+    #runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"OOD hierarchy baselines","config.model_type": "SupCon","config.epochs": 300})
+    higher_counter = 0
+    lower_counter = 0    
     key_dict = {'dataset':{'CIFAR10':0, 'CIFAR100':1,'Caltech101':2,'Caltech256':3,'TinyImageNet':4,'Cub200':4,'Dogs':5},
                 'model_type':{'SupCon':0}}
-    
-    for i, run in enumerate(runs): 
-        # .summary contains the output keys/values for metrics like accuracy.
-        #  We call ._json_dict to omit large files 
-
-        summary_list.append(run.summary._json_dict)
-        # .config contains the hyperparameters.
-        #  We remove special values that start with _.
-        config_list.append(
-            {k: v for k,v in run.config.items()
-             if not k.startswith('_')})
-           
-        group_name = config_list[i]['group'] # get the name of the group
-        path_list = runs[i].path
-
-        # include the group name in the run path
-        path_list.insert(-1, group_name)
-        run_path = '/'.join(path_list)
-
-        ID_dataset = config_list[i]['dataset']
-        model_type = config_list[i]['model_type']
-        Model_name = 'SupCLR' if model_type=='SupCon' else model_type
-        # .name is the human-readable name of the run.dir
-        name_list.append(run.name)
-        desired_quadratic_string = 'Different K Normalized Quadratic One Dim Class Typicality KNN'.lower()
+    all_ID = ['CIFAR10','CIFAR100','Caltech101','Caltech256','TinyImageNet','Cub200','Dogs']
+    for ID_dataset in all_ID: # Go through the different ID dataset                
         
-        quadratic_knn_keys = [key for key, value in summary_list[i].items() if desired_quadratic_string in key.lower()]
+        runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"OOD hierarchy baselines","config.epochs": 300, 'state':'finished',"config.dataset": f"{ID_dataset}","config.model_type":"SupCon" })
+        for i,run in enumerate(runs):
+            run_summary = run.summary._json_dict
+            # .config contains the hyperparameters.
+            #  We remove special values that start with _.
+            run_config = {k: v for k,v in run.config.items()
+                 if not k.startswith('_')} 
 
-        desired_linear_string = 'Different K Normalized One Dim Class Typicality KNN OOD'.lower()
-        quadratic_knn_keys = [key for key, value in summary_list[i].items() if desired_quadratic_string in key.lower()]
+            group_name = run_config['group']
+            path_list = run.path
+            # include the group name in the run path
+            path_list.insert(-1, group_name)
+            run_path = '/'.join(path_list)
 
-        # Make a function which can give me the quadratic value for a particular ID and OOD dataset
-        # Make a function which can give me the linear typicality for a particular ID and OOD dataset
-        # Make it so that I can show the different values for the approach.
+            ID_dataset = run_config['dataset']
+            model_type = run_config['model_type']
+            Model_name = 'SupCLR' if model_type=='SupCon' else model_type
 
+            desired_string = 'Different K Normalized Quadratic One Dim Class Typicality KNN'.lower()
+            linear_string = 'Different K Normalized One Dim Class Typicality KNN OOD'.lower()
 
-        # go through the different knn keys
-        for key in knn_keys:
-            OOD_dataset = ood_dataset_string(key, dataset_dict, ID_dataset)
-            if OOD_dataset is None:
-                pass
-            else:
-                # get the specific mahalanobis keys for the specific OOD dataset
-                OOD_dataset_specific_mahalanobis_keys = [key for key in baseline_mahalanobis_keys if OOD_dataset.lower() in key.lower()]
-                # https://stackoverflow.com/questions/16380326/check-if-substring-is-in-a-list-of-strings/16380569
-                OOD_dataset_specific_mahalanobis_key = [key for key in OOD_dataset_specific_mahalanobis_keys if baseline_string_1 in key.lower()] 
-                # Make it so that I choose baseline string 2 if the first case has no strings 
-                if len(OOD_dataset_specific_mahalanobis_key) == 0:
-                    OOD_dataset_specific_mahalanobis_key = [key for key in OOD_dataset_specific_mahalanobis_keys if baseline_string_2 in key.lower()]
+            all_OOD_datasets = obtain_ood_datasets(desired_string, run_summary,ID_dataset)
 
-                # if there is no mahalanobis key for the KNN situation, pass otherwise plot graph
-                if len(OOD_dataset_specific_mahalanobis_key) == 0:
-                    pass
+            for OOD_dataset in all_OOD_datasets:
+                quadratic_std = knn_std(desired_string,OOD_dataset,run_summary,root_dir,run_path)
+                linear_std = knn_std(linear_string,OOD_dataset,run_summary,root_dir,run_path)
+                
+                higher_counter += quadratic_std
+                lower_counter += linear_std
+                '''
+                if quadratic_std < linear_std:
+                    print('yes')
+                    lower_counter += 1
                 else:
-                    mahalanobis_AUROC = summary_list[i][OOD_dataset_specific_mahalanobis_key[0]]
-                    print(f'ID: {ID_dataset}, OOD {OOD_dataset}:{round(mahalanobis_AUROC,3)}')
-                    data_dir = summary_list[i][key]['path']
+                    print('no')
+                    higher_counter +=1
+                '''
+                #print('quadratic std',quadratic_std)
+                #print('linear std',linear_std)
+    '''
+    for ID_dataset in all_ID: # Go through the different ID dataset                
+        
+        runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"OOD hierarchy baselines","config.epochs": 300, 'state':'finished',"config.dataset": f"{ID_dataset}","config.model_type":"SupCon" })
+        
+        for i, run in enumerate(runs): 
+            
+
+            summary_list.append(run.summary._json_dict)
+            # .config contains the hyperparameters.
+            #  We remove special values that start with _.
+            config_list.append(
+                {k: v for k,v in run.config.items()
+                 if not k.startswith('_')})
+
+            group_name = config_list[i]['group'] # get the name of the group
+            path_list = runs[i].path
+
+            # include the group name in the run path
+            path_list.insert(-1, group_name)
+            run_path = '/'.join(path_list)
+
+            ID_dataset = config_list[i]['dataset']
+            model_type = config_list[i]['model_type']
+            Model_name = 'SupCLR' if model_type=='SupCon' else model_type
+            # .name is the human-readable name of the run.dir
+            name_list.append(run.name)
+
+            desired_string = 'Different K Normalized Quadratic One Dim Class Typicality KNN'.lower()
+            linear_string = 'Different K Normalized One Dim Class Typicality KNN OOD'.lower()
+
+            keys = [key for key, value in summary_list[i].items() if desired_string in key.lower()]
+            keys = [key for key in keys if 'table' not in key.lower()]
+            for key in keys:
+                if run_path == 'nerdk312/evaluation/OOD hierarchy baselines/p4ojvcp2':
+                    data_dir = summary_list[i][key]['path'] 
                     run_dir = root_dir + run_path
-                    read_dir = run_dir + '/' + data_dir
-                    with open(read_dir) as f: 
-                        data = json.load(f)
+                    print('Initial data dir',data_dir)
+                
+            all_OOD_datasets = obtain_ood_datasets(desired_string, summary_list[i],ID_dataset)
+            
+            for OOD_dataset in all_OOD_datasets:
+                quadratic_std = knn_std(desired_string,OOD_dataset,summary_list[i],root_dir,run_path)
+                #linear_std = knn_std(linear_string,OOD_dataset,summary_list[i],root_dir,run_path)
+    '''         
 
-                    knn_values = knn_vector(data)
-                    df = pd.DataFrame(knn_values)
-                    columns = ['K', 'AUROC']
-                    df.columns = columns
+            
+                        
 
-                    fit = np.polyfit(df['K'], df['AUROC'], 1)
-                    fig = plt.figure(figsize=(10, 7))
-                    plt.hlines(mahalanobis_AUROC,xmin= knn_values[0,0],xmax = knn_values[-1,0],linestyles='dotted')
-                    sns.regplot(x = df['K'], y = df['AUROC'],color='blue')
-                    plt.annotate('y={:.3f}+{:.4f}*x'.format(fit[1], fit[0]), xy=(0.05, 0.95), xycoords='axes fraction')
-                    #plt.text(3.2, -7.12, 'y={:.2f}+{:.2f}*x'.format(fit[1], fit[0]), color='darkblue', size=12)
-                    plt.title(f'AUROC for different K values  {ID_dataset}-{OOD_dataset} pair using {Model_name} model', size=12)
 
-                    # regression equations
-                    folder = f'Scatter_Plots/{Model_name}/{ID_dataset}/{approach}'
-                    if not os.path.exists(folder):
-                        os.makedirs(folder)
-                    plt.savefig(f'{folder}/AUROC for different K values {ID_dataset}-{OOD_dataset} {Model_name}.png')
-                    plt.close()
+def knn_std(string,OOD_dataset,summary,root_dir,run_path):
+    
+    keys = [key for key, value in summary.items() if string in key.lower()]
+    
+    ood_dataset_specific_key = [key for key in keys if OOD_dataset.lower() in str.split(key.lower())]
+    #print(ood_dataset_specific_key)
+    data_dir = summary[ood_dataset_specific_key[0]]['path']
+    '''
+    if run_path == 'nerdk312/evaluation/OOD hierarchy baselines/p4ojvcp2':
+        print('data dir:',data_dir)
+        #import ipdb; ipdb.set_trace()
+    '''
+    run_dir = root_dir + run_path
+    read_dir = run_dir + '/' + data_dir
+    with open(read_dir) as f: 
+        data = json.load(f)
+    knn_values = knn_vector(data)
+    knn_auroc_values = knn_values[:,1]
+    knn_std = round(np.std(knn_auroc_values),4)
+    return knn_std
+
+
+if __name__ == '__main__':
+    knn_auroc_robustness()

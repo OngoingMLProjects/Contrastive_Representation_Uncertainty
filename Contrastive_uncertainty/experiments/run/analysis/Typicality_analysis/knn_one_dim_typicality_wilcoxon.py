@@ -17,8 +17,9 @@ import json
 import re
 import copy
 from Contrastive_uncertainty.experiments.run.analysis.analysis_utils import dataset_dict, key_dict, ood_dataset_string
-from Contrastive_uncertainty.experiments.run.analysis.knn_one_dim_typicality_diagrams import knn_vector, full_post_process_latex_table,post_process_latex_table,\
+from Contrastive_uncertainty.experiments.run.analysis.Typicality_analysis.knn_one_dim_typicality_diagrams import knn_vector, full_post_process_latex_table,post_process_latex_table,\
     replace_headings, bold_max_value, initial_table_info, add_caption, add_label, end_table_info
+from Contrastive_uncertainty.experiments.run.analysis.Typicality_analysis.knn_one_dim_typicality_tables import obtain_ood_datasets,obtain_knn_value, obtain_baseline_mahalanobis
 
 # Performs one sided-test to see the importance
 def knn_auroc_wilcoxon_v2():
@@ -760,8 +761,120 @@ def knn_auroc_wilcoxon_v5():
     
     print(latex_table)
 
-# Calcualate the P value when a particular OOD dataset is fixed
+# Comparing mahalanobis to the quadratic typicality only but with updated code
 def knn_auroc_wilcoxon_v6():
+    num_baselines = 1
+    # Desired ID,OOD and Model  
+    root_dir = 'run_data/'
+
+    api = wandb.Api()
+    # Gets the runs corresponding to a specific filter
+    # https://github.com/wandb/client/blob/v0.10.31/wandb/apis/public.py
+
+
+    key_dict = {'dataset':{'MNIST':0, 'FashionMNIST':1,'KMNIST':2, 'CIFAR10':3, 'CIFAR100':4,'Caltech101':5,'Caltech256':6,'TinyImageNet':7,'Cub200':8,'Dogs':9},
+                'model_type':{'CE':0,'SupCon':1}}
+
+    # Makes array for the ranking of each of the dataset, as well as an empty list which should aggregate the scores from the datasets together 
+    num_ID = len(key_dict['dataset'])
+    collated_rank_score = np.empty((num_ID+1,num_baselines)) # + 1 to take into account an additional wilcoxon score which takes into account the entire dataset
+    collated_rank_score[:] = np.nan
+    # https://thispointer.com/how-to-create-and-initialize-a-list-of-lists-in-python/ -  Important to initialise list effectively (with separate lists rather than pointing to the same list)
+    collated_difference = [[None] * num_ID for i in range(num_baselines)] 
+    dataset_row_names = [None] * (num_ID+1) # empty list to take into account all the different dataset as well as the aggregate
+ 
+    
+    all_ID = ['MNIST','FashionMNIST','KMNIST', 'CIFAR10','CIFAR100','Caltech101','Caltech256','TinyImageNet','Cub200','Dogs']
+    for ID_dataset in all_ID: # Go through the different ID dataset                
+        runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"OOD hierarchy baselines","config.epochs": 300, "config.dataset": f"{ID_dataset}","config.model_type":"SupCon"})
+        # number of OOd datasets for this particular ID dataset
+        num_ood = len(dataset_dict[ID_dataset])
+        # data array
+        data_array = np.empty((num_ood,num_baselines+1)) # 6 different measurements
+        data_array[:] = np.nan
+    
+        for i, run in enumerate(runs): 
+            # .summary contains the output keys/values for metrics like accuracy.
+            #  We call ._json_dict to omit large files 
+
+            run_summary = run.summary._json_dict
+            # .config contains the hyperparameters.
+            #  We remove special values that start with _.
+            run_config = {k: v for k,v in run.config.items()
+                 if not k.startswith('_')} 
+
+            group_name = run_config['group']
+            path_list = run.path
+            # include the group name in the run path
+            path_list.insert(-1, group_name)
+            run_path = '/'.join(path_list)
+
+            model_type = run_config['model_type']
+            Model_name = 'SupCLR' if model_type=='SupCon' else model_type
+            # Make a data array, where the number values are equal to the number of OOD classes present in the datamodule dict or equal to the number of keys
+
+            # name for the different rows of a table
+            # https://stackoverflow.com/questions/10712002/create-an-empty-list-in-python-with-certain-size
+            row_names = [None] * num_ood # Make an empty list to take into account all the different values 
+            # go through the different knn keys
+            desired_string = 'Normalized One Dim Class Quadratic Typicality KNN'.lower()
+
+            # Obtain all the OOD datasets for a particular desired string
+            all_OOD_datasets = obtain_ood_datasets(desired_string, run_summary,ID_dataset)
+            for OOD_dataset in all_OOD_datasets:
+
+                quadratic_auroc = obtain_knn_value(desired_string,run_summary,OOD_dataset)
+                mahalanobis_auroc = obtain_baseline_mahalanobis(run_summary,OOD_dataset)
+                data_index = dataset_dict[ID_dataset][OOD_dataset]
+                data_array[data_index,0] = mahalanobis_auroc 
+                data_array[data_index,1] = quadratic_auroc
+                
+                row_names[data_index] = f'ID:{ID_dataset}, OOD:{OOD_dataset}' 
+            
+
+        print(f'ID:{ID_dataset}')
+        for i in range(num_baselines):
+            difference = data_array[:,i] - data_array[:,-1] # Calculate the differences in the results for a particular dataset
+            stat, p_value  = wilcoxon(difference,alternative='less') # calculate scores for a particular dataest
+            # Calculate P values for a particular dataset
+            collated_rank_score[key_dict['dataset'][ID_dataset],i] = p_value
+            # Place the difference for a particular baseline for a particular ID dataset
+            collated_difference[i][key_dict['dataset'][ID_dataset]] = difference
+        
+        dataset_row_names[key_dict['dataset'][ID_dataset]] = f'ID:{ID_dataset}'   
+
+    # Calculate the score for the aggregated score
+    
+    aggregated_difference = [np.concatenate(collated_difference[i]) for i in range(num_baselines)] # Make a list for the different baseline
+    # To confirm that the differences can assume to be negative (baseline - typicality is negative), we use alternative is less. The null hypothesis is that the median difference is positive whilst the alternative is that the median difference is negative.
+    # Go through all the differentn baselines, perform wilcoxon test and then place into rank score array
+    for i in range(num_baselines):
+        stat, p_value = wilcoxon(aggregated_difference[i],alternative='less')
+        collated_rank_score[-1,i] = p_value
+    
+    dataset_row_names[-1] = 'ID:Aggregate'
+    column_names = ['Contrastive Mahalanobis']
+        
+    # Post processing latex table
+    caption =  f'Wilcoxon Signed Rank test - P values'
+    label = f'tab:Wilcoxon_test'
+    # https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.set_option.html
+    pd.set_option('display.precision',3) 
+
+    auroc_df = pd.DataFrame(collated_rank_score, columns = column_names, index=dataset_row_names)
+    latex_table = auroc_df.to_latex()
+    
+    latex_table = replace_headings(auroc_df,latex_table)
+    latex_table = post_process_latex_table(latex_table)
+    latex_table = initial_table_info(latex_table)
+    latex_table = add_caption(latex_table,caption)
+    latex_table = add_label(latex_table,label) 
+    latex_table = end_table_info(latex_table)
+    
+    print(latex_table)
+
+# Calcualate the P value when a particular OOD dataset is fixed
+def knn_auroc_wilcoxon_ood():
 
     reverse_dataset_dict = {'MNIST':[], 'FashionMNIST':[],'KMNIST':[], 'CIFAR10':[], 'CIFAR100':[],'Caltech101':[],'Caltech256':[],'TinyImageNet':[],'Cub200':[],'Dogs':[]} # Used to get the OOD dataset
     # Invert the dataset dict in order to get index and key for particular OOD datasets in reverse

@@ -41,7 +41,6 @@ def knn_auroc_table():
     all_ID = ['MNIST','FashionMNIST','KMNIST', 'CIFAR10','CIFAR100','Caltech101','Caltech256','TinyImageNet','Cub200','Dogs']
     for ID_dataset in all_ID: # Go through the different ID dataset                
         runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"OOD hierarchy baselines","config.epochs": 300, 'state':'finished',"config.dataset": f"{ID_dataset}","$or": [{"config.model_type":"SupCon" }, {"config.model_type": "CE"}]})
-        summary_list, config_list= [], []
         # number of OOd datasets for this particular ID dataset
         num_ood = len(dataset_dict[ID_dataset])
         # data array
@@ -49,24 +48,20 @@ def knn_auroc_table():
         data_array[:] = np.nan
         row_names = [None] * num_ood # Make an empty list to take into account all the different values 
         for i, run in enumerate(runs): 
-            # .summary contains the output keys/values for metrics like accuracy.
-            #  We call ._json_dict to omit large files 
-
-            summary_list.append(run.summary._json_dict)
+            run_summary = run.summary._json_dict
             # .config contains the hyperparameters.
             #  We remove special values that start with _.
-            config_list.append(
-                {k: v for k,v in run.config.items()
-                 if not k.startswith('_')})
+            run_config = {k: v for k,v in run.config.items()
+                 if not k.startswith('_')} 
 
-            group_name = config_list[i]['group'] # get the name of the group
-            path_list = runs[i].path
-
+            group_name = run_config['group']
+            path_list = run.path
             # include the group name in the run path
             path_list.insert(-1, group_name)
             run_path = '/'.join(path_list)
 
-            model_type = config_list[i]['model_type']
+            ID_dataset = run_config['dataset']
+            model_type = run_config['model_type']
             Model_name = 'SupCLR' if model_type=='SupCon' else model_type
             # Make a data array, where the number values are equal to the number of OOD classes present in the datamodule dict or equal to the number of keys
 
@@ -82,17 +77,16 @@ def knn_auroc_table():
             desired_string = 'Normalized One Dim Class Quadratic Typicality KNN'.lower()
 
             # Obtain all the OOD datasets for a particular desired string
-            all_OOD_datasets = obtain_ood_datasets(desired_string, summary_list[i],ID_dataset)
+            all_OOD_datasets = obtain_ood_datasets(desired_string, run_summary,ID_dataset)
             for OOD_dataset in all_OOD_datasets:
                 #print(f'ID:{ID_dataset}, OOD:{OOD_dataset}') 
-                quadratic_auroc = obtain_knn_value(desired_string,summary_list[i],OOD_dataset)
-                mahalanobis_auroc = obtain_baseline_mahalanobis(summary_list[i],OOD_dataset)
+                quadratic_auroc = obtain_knn_value(desired_string,run_summary,OOD_dataset)
+                mahalanobis_auroc = obtain_baseline_mahalanobis(run_summary,OOD_dataset)
                 data_index = dataset_dict[ID_dataset][OOD_dataset]
                 #print(f'ID:{ID_dataset}, OOD:{OOD_dataset},Data index: {data_index}')
                 data_array[data_index,0] = mahalanobis_auroc 
                 data_array[data_index,1] = quadratic_auroc
                 row_names[data_index] = f'ID:{ID_dataset}, OOD:{OOD_dataset}' 
-                #print('ROW NAMES:',row_names[data_index])
 
             
         column_names = ['Mahalanobis', f'Quadratic {fixed_k} NN',]
@@ -121,9 +115,8 @@ def obtain_ood_datasets(desired_string,summary,ID_dataset):
 # obtain the value from a specific OOD dataset
 def obtain_knn_value(desired_string,summary,OOD_dataset):
     keys = [key for key, value in summary.items() if desired_string in key.lower()]
-    
+    # Need to split the key so that I can remove the datasets where the name is part of another name eg MNIST and KMNIST, or CIFAR10 and CIFAR100
     ood_dataset_specific_key = [key for key in keys if OOD_dataset.lower() in str.split(key.lower())]
-    print('specific key',ood_dataset_specific_key)
     knn_auroc = round(summary[ood_dataset_specific_key[0]],3)
     return knn_auroc
 
@@ -154,6 +147,4 @@ def obtain_baseline_mahalanobis(summary,OOD_dataset):
 
 
 if __name__== '__main__':
-    #knn_auroc_table()
-    #knn_auroc_table_v2()
     knn_auroc_table()
