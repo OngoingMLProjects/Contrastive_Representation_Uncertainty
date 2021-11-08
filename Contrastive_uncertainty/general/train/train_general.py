@@ -12,6 +12,7 @@ from Contrastive_uncertainty.general.run.general_run_setup import train_run_name
 
 # Train takes in params, a particular training module as well a model_function to instantiate the model
 def train(base_params,trainer_params, model_module,model_function,datamodule_dict):
+    
     params = {}
     # place base params and trainer params in the dictionary
     params.update(base_params)
