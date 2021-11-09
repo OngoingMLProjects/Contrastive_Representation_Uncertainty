@@ -1,9 +1,12 @@
 # Automatic version which checks the callbacks for the particular file
 import wandb
-
 import copy
-from Contrastive_uncertainty.toy_replica.toy_experiments.train.experimental_dict import model_dict
-from Contrastive_uncertainty.experiments.train.automatic_evaluate_experiments import desired_key_dict, callback_filter
+from Contrastive_uncertainty.experiments.train.experimental_dict import model_dict
+desired_key_dict = {'Mahalanobis Distance':'Mahalanobis AUROC OOD',
+'Nearest 10 Neighbours Class Quadratic 1D Typicality':'Normalized One Dim Class Quadratic Typicality KNN -10 OOD',
+'Nearest 10 Neighbours Class 1D Typicality': 'Normalized One Dim Class Typicality KNN - 10 OOD',
+'Maximum Softmax Probability': 'Maximum Softmax Probability AUROC OOD',
+'ODIN':'ODIN AUROC OOD'}
 
 def evaluate(run_paths,update_dict):    
     
@@ -30,8 +33,22 @@ def evaluate(run_paths,update_dict):
         model_ood_dict = model_dict[model_type]['ood_dict']
         evaluate_method(run_path, filtered_update_dict, model_module, model_instance_method, model_data_dict,model_ood_dict)
 
+
+
+
+def callback_filter(summary_info,evaluation_dict):
+    callbacks = evaluation_dict['callbacks']
+    filtered_callbacks = []
+    
+    # Make a dict connecting the callbacks and the inputs from the callbacks
+    for callback in callbacks:
+        desired_string = desired_key_dict[callback].lower() 
+        desired_keys = [key for key, value in summary_info.items() if desired_string in key.lower()]
+        # if there are no keys already present, then the callback has not been used yet
+        if len(desired_keys) == 0:
+            filtered_callbacks.append(callback)
+
+    return filtered_callbacks 
+
     
     
-
-
-
