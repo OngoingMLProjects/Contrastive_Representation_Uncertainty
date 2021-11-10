@@ -20,11 +20,15 @@ def evaluate(run_paths,update_dict):
         previous_run = api.run(path=run_path)
         previous_config = previous_run.config
         model_type = previous_config['model_type']
-        # Filter the callbacks and then update the dict for evaluation
+        # Filter the callbacks, amd OOD and then update the dict for evaluation
         filtered_callbacks = callback_filter(previous_run.summary._json_dict, update_dict)
+        filtered_OOD_datasets = OOD_dataset_filter(previous_config)
+
         # Choosing appropriate methods to resume the training        
         filtered_update_dict = copy.deepcopy(update_dict)
         filtered_update_dict['callbacks'] = filtered_callbacks
+        filtered_update_dict['OOD_dataset'] = filtered_OOD_datasets
+
 
         evaluate_method = model_dict[model_type]['evaluate']
         model_module = model_dict[model_type]['model_module'] 
@@ -50,5 +54,13 @@ def callback_filter(summary_info,evaluation_dict):
 
     return filtered_callbacks 
 
-    
+# Used to choose a specific OOD dataset based on the ID dataset
+def OOD_dataset_filter(config):
+    MNIST_variants = ['MNIST','FashionMNIST','KMNIST']
+    # Checks if the ID dataset is an MNIST dataset
+    if config['dataset'] in MNIST_variants:
+        OOD_dataset = ['MNIST','FashionMNIST','KMNIST','EMNIST']
+    else:
+        OOD_dataset = ['STL10', 'CelebA','WIDERFace','SVHN', 'Caltech101','Caltech256','CIFAR10','CIFAR100', 'VOC', 'Places365','TinyImageNet','Cub200','Dogs', 'MNIST', 'FashionMNIST', 'KMNIST', 'EMNIST']
+    return OOD_dataset
     
