@@ -21,12 +21,24 @@ def evaluate(run_paths,update_dict):
         previous_config = previous_run.config
         model_type = previous_config['model_type']
         # Filter the callbacks, amd OOD and then update the dict for evaluation
-        filtered_callbacks = callback_filter(previous_run.summary._json_dict, update_dict)
+
+        # If finished, then filter the callbacks
+        if previous_run.state =='finished':
+            filtered_callbacks = callback_filter(previous_run.summary._json_dict, update_dict)
+        # if failed or crashed, do not filter the callbacks
+        elif previous_run.state =='failed' or previous_run.state =='crashed':
+            filtered_callbacks = copy.deepcopy(update_dict['callbacks'])
+
         filtered_OOD_datasets = OOD_dataset_filter(previous_config)
 
         # Choosing appropriate methods to resume the training        
         filtered_update_dict = copy.deepcopy(update_dict)
+
+        # if state finished
         filtered_update_dict['callbacks'] = filtered_callbacks
+        # if state crash:
+        # filtered_callbacks = copy.deepcopy(update_dict['callbacks'])
+        
         filtered_update_dict['OOD_dataset'] = filtered_OOD_datasets
 
 
