@@ -23,12 +23,15 @@ def evaluate(run_paths,update_dict):
         filtered_update_dict = copy.deepcopy(update_dict)
         filtered_update_dict['callbacks'] = filtered_callbacks
 
+        
         evaluate_method = model_dict[model_type]['evaluate']
         model_module = model_dict[model_type]['model_module'] 
         model_instance_method = model_dict[model_type]['model_instance']
         model_data_dict = model_dict[model_type]['data_dict']
         model_ood_dict = model_dict[model_type]['ood_dict']
-        evaluate_method(run_path, filtered_update_dict, model_module, model_instance_method, model_data_dict,model_ood_dict)
+        # Perform the evaluation if there are any callbacks to perform
+        if len(filtered_callbacks) > 0:
+            evaluate_method(run_path, filtered_update_dict, model_module, model_instance_method, model_data_dict,model_ood_dict)
 
     
     
