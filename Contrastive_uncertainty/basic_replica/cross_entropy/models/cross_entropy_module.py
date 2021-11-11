@@ -7,7 +7,7 @@ import torchvision
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from pytorch_lightning.loggers import WandbLogger
 
-from Contrastive_uncertainty.cross_entropy.models.resnet_models import custom_resnet18,custom_resnet34,custom_resnet50
+from Contrastive_uncertainty.basic_replica.cross_entropy.models.encoder_model import Classification_Backbone
 from Contrastive_uncertainty.general.utils.hybrid_utils import label_smoothing, LabelSmoothingCrossEntropy
 from Contrastive_uncertainty.general.utils.pl_metrics import precision_at_k,mean
 from Contrastive_uncertainty.general.run.model_names import model_names_dict
@@ -20,8 +20,7 @@ class CrossEntropyModule(pl.LightningModule):
         momentum: float = 0.9,
         weight_decay: float = 1e-4,
         datamodule: pl.LightningDataModule = None,
-        label_smoothing:bool = False,
-        instance_encoder:str = 'resnet50',
+        label_smoothing:bool = False,   
         ):
 
         super().__init__()
@@ -34,11 +33,7 @@ class CrossEntropyModule(pl.LightningModule):
         # create the encoders
         # num_classes is the output fc dimension
         self.encoder = self.init_encoders()
-        '''
-        if self.hparams.pretrained_network is not None:
-            self.encoder_loading(self.hparams.pretrained_network)
-            print('loaded model')
-        '''
+
     @property
     def name(self):
         ''' return name of model'''
@@ -48,15 +43,7 @@ class CrossEntropyModule(pl.LightningModule):
         """
         Override to add your own encoders
         """
-        if self.hparams.instance_encoder == 'resnet18':
-            print('using resnet18')
-            encoder  = custom_resnet18(latent_size = self.hparams.emb_dim,num_channels = self.num_channels,num_classes=self.num_classes)
-            
-        elif self.hparams.instance_encoder =='resnet50':
-            print('using resnet50')
-            encoder = custom_resnet50(latent_size = self.hparams.emb_dim,num_channels = self.num_channels,num_classes=self.num_classes)
-
-        return encoder
+        encoder = Classification_Backbone(emb_dim=self.hparams.emb_dim, num_classes=self.num_classes)
 
     def callback_vector(self, x): # vector for the representation before using separate branches for the task
         """
@@ -84,7 +71,7 @@ class CrossEntropyModule(pl.LightningModule):
     def class_forward(self, x):
         z = self.encoder(x)
         z = nn.functional.normalize(z, dim=1)
-        logits = self.encoder.class_fc2(z)
+        logits = self.encoder.class_forward(z)
         return logits
 
     def loss_function(self, batch):
@@ -136,7 +123,3 @@ class CrossEntropyModule(pl.LightningModule):
                                         weight_decay=self.hparams.weight_decay)
         return optimizer
     
-    # Loads both network as a target state dict
-    def encoder_loading(self,pretrained_network):
-        checkpoint = torch.load(pretrained_network)
-        self.encoder.load_state_dict(checkpoint['encoder_state_dict'])

@@ -1,8 +1,8 @@
 from Contrastive_uncertainty.general.run.model_names import model_names_dict
 
 cross_entropy_hparams = dict(
-emb_dim = 128,
-instance_encoder = 'resnet50',
+emb_dim = 64,
+
 
 # optimizer args
 optimizer = 'sgd',
@@ -10,13 +10,13 @@ learning_rate= 0.03,#3e-4,
 momentum= 0.9,
 weight_decay = 1e-4,
 
-dataset = 'CIFAR100',
-OOD_dataset = ['SVHN', 'CIFAR10'],
+dataset = 'MNIST',
+#OOD_dataset = ['SVHN', 'CIFAR10'],
 
 label_smoothing =False,
 
 model_type = model_names_dict['CE'],
-project = 'evaluation',# evaluation, Moco_training
+project = 'basic_evaluation',# evaluation, Moco_training
 group = None,
 notes = None,
 )
