@@ -1382,6 +1382,7 @@ class Moco2EvalMNISTTransforms:
         k = self.test_transform(inp)
         return q, k
 
+
 class Moco2MultiMNISTTransforms:
     """
     Moco 2 augmentation:
