@@ -1,0 +1,5 @@
+# Import general params
+from Contrastive_uncertainty.basic_replica.basic_experiments.config.base_params import batch_base_hparams, batch_trainer_hparams
+from Contrastive_uncertainty.basic_replica.basic_experiments.train.train_experiments import train
+
+train(batch_base_hparams,batch_trainer_hparams)

@@ -33,7 +33,7 @@ def train(base_params,trainer_params, model_module,model_function,datamodule_dic
     # Run setup
     #wandb.run.name = run_name(config)
     pl.seed_everything(config['seed'])
-
+    
     datamodule = Datamodule_selection(datamodule_dict,config['dataset'],config)
     callback_dict = callback_dictionary(datamodule, config,datamodule_dict)
     desired_callbacks = specific_callbacks(callback_dict, config['callbacks'])

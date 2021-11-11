@@ -44,7 +44,7 @@ class CrossEntropyModule(pl.LightningModule):
         Override to add your own encoders
         """
         encoder = Classification_Backbone(emb_dim=self.hparams.emb_dim, num_classes=self.num_classes)
-
+        return encoder
     def callback_vector(self, x): # vector for the representation before using separate branches for the task
         """
         Input:

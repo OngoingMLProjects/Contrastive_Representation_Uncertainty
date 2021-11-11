@@ -11,7 +11,7 @@ momentum= 0.9,
 weight_decay = 1e-4,
 
 dataset = 'MNIST',
-#OOD_dataset = ['SVHN', 'CIFAR10'],
+OOD_dataset = ['FashionMNIST'],
 
 label_smoothing =False,
 

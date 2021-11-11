@@ -19,20 +19,19 @@ class Classification_Backbone(nn.Module):
         self.conv2 = nn.Conv2d(in_channels=6, out_channels=12,kernel_size=3)
         
         # Could look at increasing the conv layers present, 
-        self.fc1 = nn.Linear(2, emb_dim)
+        self.fc1 = nn.Linear(12*5*5, emb_dim)
         self.fc2 = nn.Linear(emb_dim, emb_dim)
         # classification layer
         self.fc3 = nn.Linear(emb_dim, num_classes)
         
-        self.apply(weight_init)
+        #self.apply(weight_init)
         
     def forward(self, x):
 
         x = F.relu(self.conv1(x))
         x = F.relu(self.conv2(x))
-
         # fc1
-        x = x.reshape(-1,128)
+        x = x.reshape(-1,12*5*5) # 12 channesl and height adnd width of 5 and 5
         x = F.relu(self.fc1(x))
 
         x = self.fc2(x) # output (batch, emb_dim)
@@ -42,6 +41,24 @@ class Classification_Backbone(nn.Module):
 
         class_output = self.fc3(F.relu(z)) # output (batch, num classes)
         return class_output
+
+'''
+class Classification_Backbone(nn.Module):
+    def __init__(self, hidden_dim, emb_dim):
+        super().__init__()
+
+        self.fc1 = nn.Linear(2, hidden_dim)
+        self.fc2 = nn.Linear(hidden_dim, hidden_dim)
+        self.fc3 = nn.Linear(hidden_dim, emb_dim)
+        
+        #self.apply(weight_init)
+        
+    def forward(self, x):
+        x = F.relu(self.fc1(x))
+        x = F.relu(self.fc2(x))
+        x = self.fc3(x)  # Nawid -output (batch, features)
+        return x
+'''
 
 
 
@@ -57,7 +74,7 @@ class Backbone(nn.Module):
         self.fc2 = nn.Linear(hidden_dim, emb_dim)
         # classification layer
         
-        self.apply(weight_init)
+        #self.apply(weight_init)
         
     def forward(self, x):
 
