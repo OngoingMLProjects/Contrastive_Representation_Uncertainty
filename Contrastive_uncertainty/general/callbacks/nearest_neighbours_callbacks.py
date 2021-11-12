@@ -24,7 +24,7 @@ import plotly.graph_objs as go
 from plotly.subplots import SubplotRef, make_subplots
 from sklearn.metrics import roc_auc_score
 
-
+from Contrastive_uncertainty.general.utils.ood_utils import get_measures # Used to calculate the AUROC, FPR and AUPR
 from Contrastive_uncertainty.general.utils.hybrid_utils import OOD_conf_matrix
 #from Contrastive_uncertainty.Contrastive.models.loss_functions import class_discrimination
 from Contrastive_uncertainty.general.callbacks.general_callbacks import quickloading
@@ -256,6 +256,9 @@ class NearestNeighbours1DTypicality(NearestNeighbours):
         super().__init__(Datamodule,OOD_Datamodule, quick_callback,K)
         # Used to save the summary value
         self.summary_key = f'Normalized One Dim Marginal Typicality KNN - {self.K} OOD - {self.OOD_Datamodule.name}'
+        self.summary_aupr = f'Normalized One Dim Marginal Typicality KNN - {self.K} AUPR OOD - {self.OOD_Datamodule.name}'
+        self.summary_fpr = f'Normalized One Dim Marginal Typicality KNN - {self.K} FPR OOD - {self.OOD_Datamodule.name}'
+
 
     def forward_callback(self, trainer, pl_module):
         self.OOD_Datamodule.setup() # SETUP AGAIN TO RESET AFTER PROVIDING THE TRANSFORM FOR THE DATA
@@ -385,8 +388,17 @@ class NearestNeighbours1DTypicality(NearestNeighbours):
     def get_eval_results(self, ftrain, ftest, food):
         ftrain_norm, ftest_norm, food_norm = self.normalise(ftrain, ftest, food)
         din, dood = self.get_scores(ftrain_norm,ftest_norm, food_norm)
+        
+        auroc, aupr, fpr = get_measures(dood,din)
+        
+        wandb.run.summary[self.summary_key] = auroc
+        wandb.run.summary[self.summary_aupr] = aupr
+        wandb.run.summary[self.summary_fpr] = fpr
+
+        '''
         AUROC = get_roc_sklearn(din, dood)
         wandb.run.summary[self.summary_key] = AUROC
+        '''
 
 
 # Performs 1D typicality using the nearest neighbours as the batch for the data, and obtaining specific classes for the data
@@ -398,6 +410,9 @@ class NearestNeighboursClass1DTypicality(NearestNeighbours1DTypicality):
         # Used to save the summary value
         self.K = K
         self.summary_key = f'Normalized One Dim Class Typicality KNN - {self.K} OOD - {self.OOD_Datamodule.name}'
+
+        self.summary_aupr = f'Normalized One Dim Class Typicality KNN - {self.K} AUPR OOD - {self.OOD_Datamodule.name}'
+        self.summary_fpr = f'Normalized One Dim Class Typicality KNN - {self.K} FPR OOD - {self.OOD_Datamodule.name}'
 
     def forward_callback(self, trainer, pl_module):
         self.OOD_Datamodule.setup() # SETUP AGAIN TO RESET AFTER PROVIDING THE TRANSFORM FOR THE DATA
@@ -496,8 +511,18 @@ class NearestNeighboursClass1DTypicality(NearestNeighbours1DTypicality):
     def get_eval_results(self, ftrain, ftest, food,labelstrain):
         ftrain_norm, ftest_norm, food_norm = self.normalise(ftrain, ftest, food)
         din, dood = self.get_scores(ftrain_norm,ftest_norm, food_norm,labelstrain)
+        
+        auroc, aupr, fpr = get_measures(dood,din)
+        
+        wandb.run.summary[self.summary_key] = auroc
+        wandb.run.summary[self.summary_aupr] = aupr
+        wandb.run.summary[self.summary_fpr] = fpr
+
+        '''
         AUROC = get_roc_sklearn(din, dood)
         wandb.run.summary[self.summary_key] = AUROC
+        '''
+        
 
 
 # Performs 1D typicality using a quadratic summation using the nearest neighbours as the batch for the data, and obtaining specific classes for the data
@@ -509,7 +534,9 @@ class NearestNeighboursQuadraticClass1DTypicality(NearestNeighboursClass1DTypica
         # Used to save the summary value
         self.K = K
         self.summary_key = f'Normalized One Dim Class Quadratic Typicality KNN - {self.K} OOD - {self.OOD_Datamodule.name}'
-
+        self.summary_aupr = f'Normalized One Dim Class Quadratic Typicality KNN - {self.K} AUPR OOD - {self.OOD_Datamodule.name}'
+        self.summary_fpr = f'Normalized One Dim Class Quadratic Typicality KNN - {self.K} FPR OOD - {self.OOD_Datamodule.name}'
+    
     def forward_callback(self, trainer, pl_module):
         return super().forward_callback(trainer, pl_module)
         
@@ -620,9 +647,16 @@ class OracleNearestNeighboursClass1DTypicality(NearestNeighboursClass1DTypicalit
     def get_eval_results(self, ftrain, ftest, food,labelstrain):
         ftrain_norm, ftest_norm, food_norm = self.normalise(ftrain, ftest, food)
         din, dood = self.get_scores(ftrain_norm,ftest_norm, food_norm,labelstrain)
+        
+        auroc, aupr, fpr = get_measures(dood,din)
+        
+        wandb.run.summary[self.summary_key] = auroc
+        wandb.run.summary[self.summary_aupr] = aupr
+        wandb.run.summary[self.summary_fpr] = fpr
+        '''
         AUROC = get_roc_sklearn(din, dood)
         wandb.run.summary[self.summary_key] = AUROC
-
+        '''
 
 
 

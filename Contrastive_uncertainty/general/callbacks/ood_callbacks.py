@@ -21,11 +21,13 @@ import plotly.graph_objs as go
 from plotly.subplots import make_subplots
 from sklearn.metrics import roc_auc_score
 
-
+from Contrastive_uncertainty.general.utils.ood_utils import get_measures # Used to calculate the AUROC, FPR and AUPR
 from Contrastive_uncertainty.general.utils.hybrid_utils import OOD_conf_matrix
 #from Contrastive_uncertainty.Contrastive.models.loss_functions import class_discrimination
 from Contrastive_uncertainty.general.callbacks.general_callbacks import quickloading
 from Contrastive_uncertainty.general.utils.pl_metrics import precision_at_k, mean
+
+
 
 
 
@@ -43,6 +45,8 @@ class Mahalanobis_OOD(pl.Callback):
       
         self.OOD_dataname = self.OOD_Datamodule.name
         self.summary_key = f'Mahalanobis AUROC OOD {self.OOD_dataname}'
+        self.summary_aupr = self.summary_key.replace("AUROC", "AUPR")
+        self.summary_fpr = self.summary_key.replace("AUROC", "FPR")
     
     '''
     def on_validation_epoch_end(self, trainer, pl_module):
@@ -181,9 +185,13 @@ class Mahalanobis_OOD(pl.Callback):
         
         dtest, dood, indices_dtest, indices_dood = self.get_scores(ftrain_norm, ftest_norm, food_norm, labelstrain)
 
-        # Nawid- get false postive rate and asweel as AUROC and aupr
-        auroc= get_roc_sklearn(dtest, dood)
+        # Nawid- get false postive rate and asweel as AUROC and aupr       
+        auroc, aupr, fpr = get_measures(dood,dtest)
+
+        #auroc= get_roc_sklearn(dtest, dood)
         wandb.run.summary[self.summary_key] = auroc
+        wandb.run.summary[self.summary_aupr] = aupr
+        wandb.run.summary[self.summary_fpr] = fpr
         
     
     def normalise(self,ftrain,ftest,food):
