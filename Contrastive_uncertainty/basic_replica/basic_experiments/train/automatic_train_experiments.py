@@ -8,7 +8,8 @@ from Contrastive_uncertainty.basic_replica.basic_experiments.train.experimental_
 
 def train(base_dict, trainer_dict):   
     # first obtain a base dict and a trainer dict
-    model_types = [model_names_dict['CE']]
+    #model_types = [model_names_dict['CE']]
+    model_types = [model_names_dict['Moco']]
     seeds = [25]
     datasets = ['MNIST','FashionMNIST','KMNIST']
     

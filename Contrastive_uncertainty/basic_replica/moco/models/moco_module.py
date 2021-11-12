@@ -8,9 +8,8 @@ import torchvision
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from pytorch_lightning.loggers import WandbLogger
 
-from Contrastive_uncertainty.moco.models.resnet_models import custom_resnet18,custom_resnet34,custom_resnet50
+from Contrastive_uncertainty.basic_replica.moco.models.encoder_model import Backbone
 from Contrastive_uncertainty.general.utils.pl_metrics import precision_at_k, mean
-
 from Contrastive_uncertainty.general.run.model_names import model_names_dict
 
 class MocoModule(pl.LightningModule):
@@ -24,8 +23,6 @@ class MocoModule(pl.LightningModule):
         momentum: float = 0.9,
         weight_decay: float = 1e-4,
         datamodule: pl.LightningDataModule = None,
-        instance_encoder:str = 'resnet50',
-        pretrained_network:str = None,
         ):
 
         super().__init__()
@@ -59,15 +56,9 @@ class MocoModule(pl.LightningModule):
         """
         Override to add your own encoders
         """
-        if self.hparams.instance_encoder == 'resnet18':
-            print('using resnet18')
-            encoder_q = custom_resnet18(latent_size = self.hparams.emb_dim,num_channels = self.num_channels,num_classes = self.num_classes)
-            encoder_k = custom_resnet18(latent_size = self.hparams.emb_dim,num_channels = self.num_channels,num_classes = self.num_classes)
-        elif self.hparams.instance_encoder =='resnet50':
-            print('using resnet50')
-            encoder_q = custom_resnet50(latent_size = self.hparams.emb_dim,num_channels = self.num_channels,num_classes = self.num_classes)
-            encoder_k = custom_resnet50(latent_size = self.hparams.emb_dim,num_channels = self.num_channels,num_classes = self.num_classes)
-        
+        encoder_q = Backbone(emb_dim=self.hparams.emb_dim)
+        encoder_k = Backbone(emb_dim=self.hparams.emb_dim)
+
         return encoder_q, encoder_k
 
     @torch.no_grad()
@@ -208,10 +199,3 @@ class MocoModule(pl.LightningModule):
                                         weight_decay=self.hparams.weight_decay)
         return optimizer
     
-
-    # Loads both network as a target state dict
-    def encoder_loading(self,pretrained_network):
-        print('checkpoint loaded')
-        checkpoint = torch.load(pretrained_network)
-        self.encoder_q.load_state_dict(checkpoint['target_encoder_state_dict'])
-        self.encoder_k.load_state_dict(checkpoint['target_encoder_state_dict'])

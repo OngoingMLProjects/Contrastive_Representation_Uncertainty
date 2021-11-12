@@ -1,13 +1,12 @@
 from Contrastive_uncertainty.general.run.model_names import model_names_dict
 
-
 moco_hparams = dict(
 
 emb_dim = 128,
 num_negatives = 65536,
 encoder_momentum = 0.999,
 softmax_temperature = 0.07,
-instance_encoder = 'resnet50',
+
 
 # optimizer args
 optimizer = 'sgd',
@@ -19,7 +18,7 @@ dataset = 'MNIST',
 OOD_dataset = ['FashionMNIST'],
 
 model_type = model_names_dict['Moco'],
-project = 'evaluation',# evaluation, Moco_training
+project = 'basic_evaluation',# evaluation, Moco_training
 group = None,
 notes = None,
 )

@@ -15,9 +15,7 @@ from torchvision import transforms
 from torch.utils.data import DataLoader, random_split,  Dataset, Subset
 
 
-
     
-
 # MNIST Coarse labels
 MNIST_coarse_labels = np.array([ 0, 2, 1,  4,  3,  4,  0,  2, 1, 3])
 

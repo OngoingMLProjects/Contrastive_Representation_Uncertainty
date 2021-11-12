@@ -64,15 +64,15 @@ class Classification_Backbone(nn.Module):
 
 # Neural network
 class Backbone(nn.Module):
-    def __init__(self, hidden_dim, emb_dim):
+    def __init__(self, emb_dim):
         super().__init__()
         self.conv1 = nn.Conv2d(in_channels=1,out_channels=6, kernel_size=3)
         self.conv2 = nn.Conv2d(in_channels=6, out_channels=12,kernel_size=3)
         
         # Could look at increasing the conv layers present, 
-        self.fc1 = nn.Linear(2, hidden_dim)
-        self.fc2 = nn.Linear(hidden_dim, emb_dim)
-        # classification layer
+        
+        self.fc1 = nn.Linear(12*5*5, emb_dim)
+        self.fc2 = nn.Linear(emb_dim, emb_dim)
         
         #self.apply(weight_init)
         
@@ -81,7 +81,7 @@ class Backbone(nn.Module):
         x = F.relu(self.conv1(x))
         x = F.relu(self.conv2(x))
         # fc1
-        x = x.reshape(-1,128)
+        x = x.reshape(-1,12*5*5)
         x = F.relu(self.fc1(x))
         # fc2
         x = self.fc2(x) # output (batch, embedding dim)
