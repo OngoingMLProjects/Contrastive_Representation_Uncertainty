@@ -4,7 +4,7 @@ sup_con_hparams = dict(
 emb_dim = 128,
 softmax_temperature = 0.07,
 contrast_mode = 'one',
-instance_encoder = 'resnet50',
+
 
 # optimizer args
 optimizer = 'sgd',
@@ -16,7 +16,7 @@ dataset = 'MNIST',
 OOD_dataset = ['FashionMNIST'],
 
 model_type = model_names_dict['SupCon'],
-project = 'evaluation',# evaluation, Moco_training
+project = 'basic_evaluation',# evaluation, Moco_training
 group = None,
 notes = None,
 )

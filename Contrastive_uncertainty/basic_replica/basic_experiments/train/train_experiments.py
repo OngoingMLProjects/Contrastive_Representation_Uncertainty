@@ -6,8 +6,8 @@ from Contrastive_uncertainty.basic_replica.basic_experiments.train.experimental_
 def train(batch_base_dict, batch_trainer_dict):   
     acceptable_single_models = ['Baselines',
     #model_names_dict['CE'],
-    model_names_dict['Moco'],
-    #model_names_dict['SupCon'],
+    #model_names_dict['Moco'],
+    model_names_dict['SupCon'],
     
     ]
 
