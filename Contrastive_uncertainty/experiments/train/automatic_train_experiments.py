@@ -35,12 +35,14 @@ def train(base_dict, trainer_dict):
             
             base_params = model_dict[model_k]['params']
             # update dataset as well as model
-            # remove incomplete runs related to a specific model
-            remove_incomplete(base_params)
+            
+            
             for seed in seeds:
                 trainer_dict['seed'] = seed
                 for dataset in datasets:
                     base_params['dataset'] = dataset
+                    # remove incomplete runs related to a specific model and specific dataset
+                    remove_incomplete(base_params)
                     already_present = runs_present(base_params, trainer_dict)
                     # if there is not a run present, then train a model
                     if not already_present:
@@ -104,5 +106,3 @@ def remove_incomplete(base_dict):
         run = wandb.init(id=previous_run.id,resume='allow',project=previous_config['project'],group=previous_config['group'], notes=previous_config['notes'])
         wandb.config.update(previous_config, allow_val_change=True) # Updates the config (particularly used to increase the number of epochs present)
         run.finish()
-
-
