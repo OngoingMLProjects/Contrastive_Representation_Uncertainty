@@ -35,6 +35,8 @@ def train(base_dict, trainer_dict):
             
             base_params = model_dict[model_k]['params']
             # update dataset as well as model
+            # remove incomplete runs related to a specific model
+            remove_incomplete(base_params)
             for seed in seeds:
                 trainer_dict['seed'] = seed
                 for dataset in datasets:
@@ -67,3 +69,40 @@ def runs_present(base_params, trainer_params):
     return runs_present
 
     
+# Remove runs which are incomplete (num of epochs does not match)
+def remove_incomplete(base_dict):
+    run_paths = []
+    api = wandb.Api()
+    project_path ="nerdk312/" +base_dict['project']
+    runs = api.runs(path=project_path, filters={"config.group":base_dict['group'],"config.model_type": base_dict['model_type'],"config.dataset":base_dict['dataset'], "$or": [{'state':'finished'}, {'state':'crashed'},{'state':'failed'}]})
+    # Make the run paths
+    for i in range(len(runs)):
+        # Joins together the path of the runs which are separated into different parts in a list
+        run_path = '/'.join(runs[i].path)
+        run_paths.append(run_path)
+    
+    for run_path in run_paths:
+        previous_run = api.run(path=run_path)
+        previous_config = previous_run.config
+        
+        summary_dict = previous_run.summary._json_dict
+
+        if 'epoch' in summary_dict: 
+            if previous_config['epochs']-1 <= summary_dict['epoch']: # Should be alright if the summary dict is more than config amount
+                pass
+            else:
+                previous_config['group'] = 'to_delete'
+                previous_config['notes'] = 'incomplete run as training epochs did not reach end'
+                # During run, this is when the group, notes and config are able to change for the task
+                
+    
+        else: 
+            previous_config['group'] = 'to_delete'
+            previous_config['notes'] = 'incomplete run as training epochs did not reach end'
+
+        # During run, this is when the group, notes and config are able to change for the task
+        run = wandb.init(id=previous_run.id,resume='allow',project=previous_config['project'],group=previous_config['group'], notes=previous_config['notes'])
+        wandb.config.update(previous_config, allow_val_change=True) # Updates the config (particularly used to increase the number of epochs present)
+        run.finish()
+
+
