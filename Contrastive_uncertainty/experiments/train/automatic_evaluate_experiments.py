@@ -2,11 +2,11 @@
 import wandb
 import copy
 from Contrastive_uncertainty.experiments.train.experimental_dict import model_dict
-desired_key_dict = {'Mahalanobis Distance':'Mahalanobis AUROC OOD',
-'Nearest 10 Neighbours Class Quadratic 1D Typicality':'Normalized One Dim Class Quadratic Typicality KNN -10 OOD',
-'Nearest 10 Neighbours Class 1D Typicality': 'Normalized One Dim Class Typicality KNN - 10 OOD',
-'Maximum Softmax Probability': 'Maximum Softmax Probability AUROC OOD',
-'ODIN':'ODIN AUROC OOD'}
+desired_key_dict = {'Mahalanobis Distance':['Mahalanobis AUROC OOD','Mahalanobis AUPR OOD','Mahalanobis FPR OOD'],
+'Nearest 10 Neighbours Class Quadratic 1D Typicality':['Normalized One Dim Class Quadratic Typicality KNN -10 OOD','Normalized One Dim Class Quadratic Typicality KNN -10 AUPR OOD','Normalized One Dim Class Quadratic Typicality KNN -10 FPR OOD'],
+'Nearest 10 Neighbours Class 1D Typicality': ['Normalized One Dim Class Typicality KNN - 10 OOD','Normalized One Dim Class Typicality KNN - 10 AUPR OOD','Normalized One Dim Class Typicality KNN - 10 FPR OOD'],
+'Maximum Softmax Probability': ['Maximum Softmax Probability AUROC OOD','Maximum Softmax Probability AUPR OOD','Maximum Softmax Probability FPR OOD'],
+'ODIN':['ODIN AUROC OOD']}
 
 def evaluate(run_paths,update_dict):    
     
@@ -58,7 +58,18 @@ def evaluate(run_paths,update_dict):
 def callback_filter(summary_info,evaluation_dict):
     callbacks = evaluation_dict['callbacks']
     filtered_callbacks = []
-    
+    # Make a dict connecting the callbacks and the inputs from the callbacks
+    for callback in callbacks:
+        desired_strings = desired_key_dict[callback] # get the summary strings related to the callback
+        # iterate throguh the strings
+        for desired_string in desired_strings:
+            desired_keys = [key for key, value in summary_info.items() if desired_string.lower() in key.lower()] # check if the key has the desired string
+            if len(desired_keys) == 0: # if any of the strings in a callback is zero, append the callback to filtered callback and go to the next callback
+                filtered_callbacks.append(callback)
+                break
+    return filtered_callbacks
+
+    '''
     # Make a dict connecting the callbacks and the inputs from the callbacks
     for callback in callbacks:
         desired_string = desired_key_dict[callback].lower() 
@@ -68,6 +79,7 @@ def callback_filter(summary_info,evaluation_dict):
             filtered_callbacks.append(callback)
 
     return filtered_callbacks 
+    '''
 
 # Used to choose a specific OOD dataset based on the ID dataset
 def OOD_dataset_filter(config):
