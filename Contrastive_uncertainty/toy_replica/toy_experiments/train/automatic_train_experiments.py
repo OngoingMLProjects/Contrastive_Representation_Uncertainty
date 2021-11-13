@@ -9,7 +9,7 @@ from Contrastive_uncertainty.experiments.train.automatic_train_experiments impor
 def train(base_dict, trainer_dict):   
     # first obtain a base dict and a trainer dict
     model_types = [model_names_dict['SupCon']]
-    seeds = [21]
+    seeds = [21,25,42,50,75,100,125,150]
     datasets = ['Blobs']
 
     # Update the parameters of each model
@@ -25,8 +25,6 @@ def train(base_dict, trainer_dict):
                 # update model key with base params
                 model_dict[model_k]['params'][base_k] = base_v
 
-    
-    
     # Update the seeds as well as the datasets
 
     for model_k, model_v in model_dict.items():
@@ -38,8 +36,7 @@ def train(base_dict, trainer_dict):
             
             base_params = model_dict[model_k]['params']
             # update dataset as well as model
-            
-            
+                        
             for seed in seeds:
                 trainer_dict['seed'] = seed
                 for dataset in datasets:
@@ -51,7 +48,3 @@ def train(base_dict, trainer_dict):
                     if not already_present:
                         # Try statement to allow the code to continue even if a single run fails
                         train_method(base_params,trainer_dict, model_module, model_instance_method,model_data_dict)
-
-
-
-

@@ -3,7 +3,7 @@ import wandb
 import copy
 from Contrastive_uncertainty.experiments.train.experimental_dict import model_dict
 desired_key_dict = {'Mahalanobis Distance':['Mahalanobis AUROC OOD','Mahalanobis AUPR OOD','Mahalanobis FPR OOD'],
-'Nearest 10 Neighbours Class Quadratic 1D Typicality':['Normalized One Dim Class Quadratic Typicality KNN -10 OOD','Normalized One Dim Class Quadratic Typicality KNN -10 AUPR OOD','Normalized One Dim Class Quadratic Typicality KNN -10 FPR OOD'],
+'Nearest 10 Neighbours Class Quadratic 1D Typicality':['Normalized One Dim Class Quadratic Typicality KNN - 10 OOD','Normalized One Dim Class Quadratic Typicality KNN - 10 AUPR OOD','Normalized One Dim Class Quadratic Typicality KNN - 10 FPR OOD'],
 'Nearest 10 Neighbours Class 1D Typicality': ['Normalized One Dim Class Typicality KNN - 10 OOD','Normalized One Dim Class Typicality KNN - 10 AUPR OOD','Normalized One Dim Class Typicality KNN - 10 FPR OOD'],
 'Maximum Softmax Probability': ['Maximum Softmax Probability AUROC OOD','Maximum Softmax Probability AUPR OOD','Maximum Softmax Probability FPR OOD'],
 'ODIN':['ODIN AUROC OOD']}
@@ -28,6 +28,8 @@ def evaluate(run_paths,update_dict):
         # if failed or crashed, do not filter the callbacks
         elif previous_run.state =='failed' or previous_run.state =='crashed':
             filtered_callbacks = copy.deepcopy(update_dict['callbacks'])
+        elif previous_run.state =='running':
+            filtered_callbacks = [] # Manually set to zero to skip this run if it is already running
 
         filtered_OOD_datasets = OOD_dataset_filter(previous_config)
 

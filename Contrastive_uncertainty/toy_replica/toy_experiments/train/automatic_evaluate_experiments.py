@@ -17,24 +17,39 @@ def evaluate(run_paths,update_dict):
         previous_run = api.run(path=run_path)
         previous_config = previous_run.config
         model_type = previous_config['model_type']
-        # Filter the callbacks and then update the dict for evaluation
-        filtered_callbacks = callback_filter(previous_run.summary._json_dict, update_dict)
+        # Filter the callbacks, amd OOD and then update the dict for evaluation
+
+        # If finished, then filter the callbacks
+        if previous_run.state =='finished':
+            filtered_callbacks = callback_filter(previous_run.summary._json_dict, update_dict)
+        # if failed or crashed, do not filter the callbacks
+        elif previous_run.state =='failed' or previous_run.state =='crashed':
+            filtered_callbacks = copy.deepcopy(update_dict['callbacks'])
+        elif previous_run.state =='running':
+            filtered_callbacks = [] # Manually set to zero to skip this run if it is already running
+
+        filtered_OOD_datasets = previous_config['OOD_dataset']
+
         # Choosing appropriate methods to resume the training        
         filtered_update_dict = copy.deepcopy(update_dict)
-        filtered_update_dict['callbacks'] = filtered_callbacks
 
+        # if state finished
+        filtered_update_dict['callbacks'] = filtered_callbacks
+        # if state crash:
+        # filtered_callbacks = copy.deepcopy(update_dict['callbacks'])
         
+        filtered_update_dict['OOD_dataset'] = filtered_OOD_datasets
+
+
         evaluate_method = model_dict[model_type]['evaluate']
         model_module = model_dict[model_type]['model_module'] 
         model_instance_method = model_dict[model_type]['model_instance']
         model_data_dict = model_dict[model_type]['data_dict']
         model_ood_dict = model_dict[model_type]['ood_dict']
-        # Perform the evaluation if there are any callbacks to perform
+
+        # Checks if there are any callbacks to perform, if there is,then evaluate, otherwise look at next run
         if len(filtered_callbacks) > 0:
             evaluate_method(run_path, filtered_update_dict, model_module, model_instance_method, model_data_dict,model_ood_dict)
-
-    
-    
 
 
 

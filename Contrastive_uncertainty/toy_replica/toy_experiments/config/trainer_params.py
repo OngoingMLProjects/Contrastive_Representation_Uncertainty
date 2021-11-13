@@ -16,7 +16,7 @@ typicality_bootstrap = 50,
 typicality_batch = 25,
 
 
-callbacks = ['Mahalanobis Distance'],
+callbacks = ['Nearest 10 Neighbours Class Quadratic 1D Typicality','Mahalanobis Distance'],
 
 #callbacks =['Visualisation'],
 # Updating for the test run
