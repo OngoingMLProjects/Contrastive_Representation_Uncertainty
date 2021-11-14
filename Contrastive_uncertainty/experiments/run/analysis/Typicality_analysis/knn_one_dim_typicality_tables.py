@@ -1,5 +1,6 @@
 # Code for making tables for the ID and OOD datasets
 
+from numpy.core.defchararray import count
 from Contrastive_uncertainty.experiments.run.analysis.Typicality_analysis.knn_one_dim_typicality_diagrams import knn_auroc_table_v2
 from numpy.core.numeric import full
 from torch.utils.data import dataset
@@ -97,6 +98,95 @@ def knn_auroc_table():
         latex_table = full_post_process_latex_table(auroc_df, caption, label)
         
         print(latex_table)
+
+
+# Calculates the mean AUROC value compared to a single value
+def knn_auroc_table_mean():
+    # Fixed value of k of interest
+    fixed_k = 10
+    # Desired ID,OOD and Model  
+    root_dir = 'run_data/'
+
+    api = wandb.Api()
+    # Gets the runs corresponding to a specific filter
+    # https://github.com/wandb/client/blob/v0.10.31/wandb/apis/public.py
+
+
+    key_dict = {'dataset':{'MNIST':0, 'FashionMNIST':1,'KMNIST':2, 'CIFAR10':3, 'CIFAR100':4,'Caltech101':5,'Caltech256':6,'TinyImageNet':7,'Cub200':8,'Dogs':9},
+                'model_type':{'CE':0,'SupCon':1}}
+    
+    all_ID = ['MNIST','FashionMNIST','KMNIST', 'CIFAR10','CIFAR100','Caltech101','Caltech256','TinyImageNet','Cub200','Dogs']
+    for ID_dataset in all_ID: # Go through the different ID dataset                
+        #runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"OOD hierarchy baselines","config.epochs": 300, 'state':'finished',"config.dataset": f"{ID_dataset}","$or": [{"config.model_type":"SupCon" }, {"config.model_type": "CE"}]})
+        runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.epochs": 300, "config.dataset": f"{ID_dataset}","config.model_type":"SupCon"})
+        # number of OOd datasets for this particular ID dataset
+        num_ood = len(dataset_dict[ID_dataset])
+        # data array
+        data_array = np.zeros((num_ood,2)) # 5 different measurements
+        count_array = np.zeros((num_ood,2)) # 5 different measurements
+        
+
+        '''
+        data_array = np.empty((num_ood,2)) # 5 different measurements
+        data_array[:] = np.nan
+
+        count_array = np.empty((num_ood,2)) # 5 different measurements
+        count_array[:] = np.nan
+        '''
+
+        row_names = [None] * num_ood # Make an empty list to take into account all the different values 
+        for i, run in enumerate(runs): 
+            run_summary = run.summary._json_dict
+            # .config contains the hyperparameters.
+            #  We remove special values that start with _.
+            run_config = {k: v for k,v in run.config.items()
+                 if not k.startswith('_')} 
+
+            group_name = run_config['group']
+            path_list = run.path
+            # include the group name in the run path
+            path_list.insert(-1, group_name)
+            run_path = '/'.join(path_list)
+
+            ID_dataset = run_config['dataset']
+            model_type = run_config['model_type']
+            Model_name = 'SupCLR' if model_type=='SupCon' else model_type
+            # Make a data array, where the number values are equal to the number of OOD classes present in the datamodule dict or equal to the number of keys
+
+            # name for the different rows of a table
+            #row_names = []
+            # https://stackoverflow.com/questions/10712002/create-an-empty-list-in-python-with-certain-size
+            
+            # go through the different knn keys
+            
+            # Obtain the ID and OOD dataset
+            # Make function to obtain quadratic typicality for a particular ID and OOD dataset
+            # Make function to obtain mahalanobis from a particular ID and OOD dataset
+            desired_string = 'Normalized One Dim Class Quadratic Typicality KNN - 10 OOD'.lower() # Only get the key for the AUROC
+
+            # Obtain all the OOD datasets for a particular desired string
+            all_OOD_datasets = obtain_ood_datasets(desired_string, run_summary,ID_dataset)
+            for OOD_dataset in all_OOD_datasets:
+                #print(f'ID:{ID_dataset}, OOD:{OOD_dataset}') 
+                quadratic_auroc = obtain_knn_value(desired_string,run_summary,OOD_dataset)
+                mahalanobis_auroc = obtain_baseline_mahalanobis(run_summary,OOD_dataset)
+                data_index = dataset_dict[ID_dataset][OOD_dataset] # index location
+                #print(f'ID:{ID_dataset}, OOD:{OOD_dataset},Data index: {data_index}')
+                data_array[data_index,0] += mahalanobis_auroc 
+                data_array[data_index,1] += quadratic_auroc
+                count_array[data_index,0] += 1
+                count_array[data_index,1] += 1
+                row_names[data_index] = f'ID:{ID_dataset}, OOD:{OOD_dataset}' 
+        #import ipdb; ipdb.set_trace()
+        data_array = np.round(data_array/count_array,decimals=3)    
+        column_names = ['Mahalanobis', f'Quadratic {fixed_k} NN',]
+        auroc_df = pd.DataFrame(data_array,columns = column_names, index=row_names)
+        
+        caption = ID_dataset + ' Dataset'
+        label = f'tab:{ID_dataset}_Dataset'
+        latex_table = full_post_process_latex_table(auroc_df, caption, label)
+        
+        print(latex_table)
         
 # Obtain the OOD datasets for a particular string
 def obtain_ood_datasets(desired_string,summary,ID_dataset):
@@ -147,4 +237,5 @@ def obtain_baseline_mahalanobis(summary,OOD_dataset):
 
 
 if __name__== '__main__':
-    knn_auroc_table()
+    #knn_auroc_table()
+    knn_auroc_table_mean()
