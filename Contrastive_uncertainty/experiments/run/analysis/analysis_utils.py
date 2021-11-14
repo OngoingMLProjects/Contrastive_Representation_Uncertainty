@@ -1,3 +1,4 @@
+from numpy.core.defchararray import join
 import wandb
 import pandas as pd
 import numpy as np
@@ -132,18 +133,70 @@ def full_post_process_latex_table(df,caption,label,value = 'max'):
         latex_table = bold_min_value(df,latex_table)
     else: 
         assert value =='max' or value =='min', 'Incorrect value'
-        
 
+   
     latex_table = post_process_latex_table(latex_table)
     latex_table = initial_table_info(latex_table)
     latex_table = add_caption(latex_table,caption)
     latex_table = add_label(latex_table,label) 
     latex_table = end_table_info(latex_table)
-    #latex_table = '\\begin{table}[]\n\\centering\n' + latex_table + '\n\\caption{'+ caption + '}\n\\label{' + label + '}\n\\end{table}'
 
+    #latex_table = '\\begin{table}[]\n\\centering\n' + latex_table + '\n\\caption{'+ caption + '}\n\\label{' + label + '}\n\\end{table}'
+    
     return latex_table
 
-# replace the headings 
+# Utils for the latex table
+def single_baseline_post_process_latex_table(df,caption,label,value = 'max'):
+    
+    latex_table = df.to_latex()
+    latex_table = replace_headings(df,latex_table)
+    
+    if value == 'max':
+        latex_table = bold_max_value(df,latex_table)
+    elif value == 'min':
+        latex_table = bold_min_value(df,latex_table)
+    else: 
+        assert value =='max' or value =='min', 'Incorrect value'
+
+    
+    # used to get the pattern of &, then empy space, then any character, empty space,  then & then empty space
+    latex_table = join_columns(latex_table)
+    
+    latex_table = post_process_latex_table(latex_table)
+    latex_table = initial_table_info(latex_table)
+    latex_table = add_caption(latex_table,caption)
+    latex_table = add_label(latex_table,label) 
+    latex_table = end_table_info(latex_table)
+
+    #latex_table = '\\begin{table}[]\n\\centering\n' + latex_table + '\n\\caption{'+ caption + '}\n\\label{' + label + '}\n\\end{table}'
+    
+    return latex_table
+
+def join_columns(latex_table):
+    desired_key = "&\s+.+\s+&\s+.+\s+" 
+    string = re.findall(desired_key,latex_table)
+    #import ipdb; ipdb.set_trace()
+    updated_string = []
+    for index in range(len(string)):
+
+        if index ==0:
+            updated_string.append('& Metric \\\\\n')
+        else:
+            updated_string.append(replace_nth('&','/',string[index],2))
+        latex_table = latex_table.replace(f'{string[index]}',f'{updated_string[index]}')
+    return latex_table
+    
+
+# replace nth entry of sub in a text (txt) and join the different values together using replace (replace) 
+def replace_nth(sub,repl,txt,nth):
+    arr=txt.split(sub)
+    part1=sub.join(arr[:nth])
+    part2=sub.join(arr[nth:])
+    
+    return part1+repl+part2
+
+
+# replace the headings  - makes it to datasets as well as changing the number of columns
 def replace_headings(df,latex_table):
     num_columns = len(df.columns) # (need an extra column for the case of the dataset situation)
     latex_table = latex_table.replace('{}','{Datasets}')
@@ -182,19 +235,22 @@ def bold_min_value(df,latex_table):
         latex_table = latex_table.replace(f'{string[index]}',f'{updated_string[index]}') 
     return latex_table
 
-
+# Adds the part related to the beginning of the latex table
 def initial_table_info(latex_table):
     latex_table = '\\begin{table}[]\n\\centering\n' + latex_table
     return latex_table
 
+# adds the caption
 def add_caption(latex_table,caption):
     latex_table = latex_table + '\n\\caption{'+ caption + '}'
     return latex_table
 
+# adds the labels
 def add_label(latex_table,label):
     latex_table = latex_table + '\n\\label{' + label + '}'
     return latex_table
 
+# Adds the part related to the end of the latex table
 def end_table_info(latex_table):
     latex_table = latex_table + '\n\\end{table}'
     return latex_table

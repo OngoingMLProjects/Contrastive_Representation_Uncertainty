@@ -18,7 +18,7 @@ from scipy.stats import wilcoxon
 import json
 import re
 
-from Contrastive_uncertainty.experiments.run.analysis.analysis_utils import dataset_dict, key_dict, ood_dataset_string, post_process_latex_table,full_post_process_latex_table
+from Contrastive_uncertainty.experiments.run.analysis.analysis_utils import dataset_dict, key_dict, ood_dataset_string, post_process_latex_table,full_post_process_latex_table, single_baseline_post_process_latex_table
 
 def knn_vector(json_data):
     data = np.array(json_data['data'])
@@ -213,7 +213,8 @@ def knn_auroc_table_mean():
         
         caption = ID_dataset + ' Dataset'
         label = f'tab:{ID_dataset}_Dataset'
-        latex_table = full_post_process_latex_table(auroc_df, caption, label,value)
+        latex_table = single_baseline_post_process_latex_table(auroc_df, caption, label,value)
+        #latex_table = full_post_process_latex_table(auroc_df, caption, label,value)
         
         print(latex_table)
         
