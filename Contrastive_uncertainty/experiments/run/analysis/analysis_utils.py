@@ -121,12 +121,19 @@ def generic_saving(desired_key,run_filter):
 
 
 # Utils for the latex table
-def full_post_process_latex_table(df,caption,label):
+def full_post_process_latex_table(df,caption,label,value = 'max'):
     
     latex_table = df.to_latex()
     latex_table = replace_headings(df,latex_table)
     
-    latex_table = bold_max_value(df,latex_table,)
+    if value == 'max':
+        latex_table = bold_max_value(df,latex_table)
+    elif value == 'min':
+        latex_table = bold_min_value(df,latex_table)
+    else: 
+        assert value =='max' or value =='min', 'Incorrect value'
+        
+
     latex_table = post_process_latex_table(latex_table)
     latex_table = initial_table_info(latex_table)
     latex_table = add_caption(latex_table,caption)
@@ -160,6 +167,20 @@ def bold_max_value(df,latex_table):
         latex_table = latex_table.replace(f'{string[index]}',f'{updated_string[index]}') 
     return latex_table
 
+# Make the max value in a column bold
+def bold_min_value(df,latex_table):
+    num_columns = len(df.columns)
+    desired_key = "&\s+\d+\.\d+\s+" *(num_columns)
+    string = re.findall(desired_key,latex_table)
+    updated_string = []
+    for index in range(len(string)):
+        numbers = re.findall("\d+\.\d+", string[index]) # fnd all the numbers in the substring (gets rid of the &)
+        #max_number = max(numbers,key=lambda x:float(x))
+        min_number = float(min(numbers,key=lambda x:float(x))) #  Need to get the output as a float
+        #string[index] = string[index].replace(f'{max_number}',f'\textbf{ {max_number} }') # Need to put spaces around otherwise it just shows max number
+        updated_string.append(string[index].replace(f'{min_number}',fr'\textbf{ {min_number} }')) # Need to put spaces around otherwise it just shows max number), also need to be place to make it so that \t does not act as space
+        latex_table = latex_table.replace(f'{string[index]}',f'{updated_string[index]}') 
+    return latex_table
 
 
 def initial_table_info(latex_table):
