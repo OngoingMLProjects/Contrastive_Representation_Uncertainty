@@ -1,6 +1,7 @@
 # Code for making tables for the ID and OOD datasets
 
 from numpy.core.defchararray import count
+from pandas.core import base
 from Contrastive_uncertainty.experiments.run.analysis.Typicality_analysis.knn_one_dim_typicality_diagrams import knn_auroc_table_v2
 from numpy.core.numeric import full
 from torch.utils.data import dataset
@@ -102,18 +103,32 @@ def knn_auroc_table():
 
 # Calculates the mean AUROC value compared to a single value
 def knn_auroc_table_mean():
-
+    suffix = 'FPR'
+    desired_string = 'Normalized One Dim Class Quadratic Typicality KNN - 10 '
+    baseline_string_1 = 'Mahalanobis '
+    if suffix == 'OOD':
+        desired_string = (desired_string + suffix).lower()
+        baseline_string_1 = (baseline_string_1 +'AUROC '+ suffix).lower()
+    else:
+        desired_string = (desired_string + suffix).lower()
+        baseline_string_1 = (baseline_string_1 + suffix).lower()
+    
+    baseline_string_2 = baseline_string_1    
+    value = 'min' if suffix =='FPR' else 'max'
+    
+    
     # Make it so that the desired string and the baseline strings are decided by the suffix (ood, FPR, AUPR)
 
     #desired_string = 'Normalized One Dim Class Quadratic Typicality KNN - 10 OOD'.lower() # Only get the key for the AUROC
-    desired_string = 'Normalized One Dim Class Quadratic Typicality KNN - 10 AUPR'.lower()
+    #desired_string = 'Normalized One Dim Class Quadratic Typicality KNN - 10 AUPR'.lower()
+
     #desired_string = 'Normalized One Dim Class Quadratic Typicality KNN - 10 FPR'.lower()
     #baseline_string_1,baseline_string_2 = 'Mahalanobis FPR'.lower(),'Mahalanobis FPR'.lower()
-
+    '''
     baseline_string_1, baseline_string_2 = 'Mahalanobis AUPR'.lower(),'Mahalanobis AUPR'.lower()
     FPR= False
     value = 'min' if FPR else 'max' # Used to control whether to bold the max or the min values
-    
+    '''
     # Fixed value of k of interest
     fixed_k = 10
     # Desired ID,OOD and Model  
