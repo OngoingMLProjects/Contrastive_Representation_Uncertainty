@@ -1,3 +1,4 @@
+from types import LambdaType
 from numpy.core.defchararray import join
 import wandb
 import pandas as pd
@@ -172,22 +173,89 @@ def single_baseline_post_process_latex_table(df,caption,label,value = 'max'):
     
     return latex_table
 
-def join_columns(latex_table):
+
+
+# Utils for the latex table
+def collated_baseline_post_process_latex_table(df_auroc, df_aupr, df_fpr,caption,label):
+    
+    latex_table_auroc = df_auroc.to_latex()
+    latex_table_auroc = replace_headings(df_auroc,latex_table_auroc)
+    latex_table_auroc = bold_max_value(df_auroc,latex_table_auroc)
+
+    latex_table_aupr = df_aupr.to_latex()
+    latex_table_aupr = replace_headings(df_aupr,latex_table_aupr)
+    latex_table_aupr = bold_max_value(df_aupr,latex_table_aupr)
+
+    latex_table_fpr = df_fpr.to_latex()
+    latex_table_fpr = replace_headings(df_fpr,latex_table_fpr)
+    latex_table_fpr = bold_min_value(df_fpr,latex_table_fpr)
+
+    
+    # used to get the pattern of &, then empy space, then any character, empty space,  then & then empty space
+    latex_table_auroc = join_columns(latex_table_auroc,'AUROC')
+    latex_table_aupr = join_columns(latex_table_aupr,'AUPR')
+    latex_table_fpr = join_columns(latex_table_fpr,'FPR')
+
+    latex_table = join_different_columns(latex_table_auroc,latex_table_aupr) # joins the auroc and aupr table together
+    latex_table = join_different_columns(latex_table, latex_table_fpr) # joins the auroc+aupr table with the fpr table
+    latex_table = replace_headings_collated_table(latex_table) # replaces the heading to take into account the collated readings
+
+    latex_table = post_process_latex_table(latex_table)
+    latex_table = initial_table_info(latex_table)
+    latex_table = add_caption(latex_table,caption)
+    latex_table = add_label(latex_table,label) 
+    latex_table = end_table_info(latex_table)
+
+    #latex_table = '\\begin{table}[]\n\\centering\n' + latex_table + '\n\\caption{'+ caption + '}\n\\label{' + label + '}\n\\end{table}'
+    
+    return latex_table
+
+# join columns within a single table
+def join_columns(latex_table,metric):
     desired_key = "&\s+.+\s+&\s+.+\s+" 
     string = re.findall(desired_key,latex_table)
     #import ipdb; ipdb.set_trace()
     updated_string = []
     for index in range(len(string)):
-
         if index ==0:
-            updated_string.append('& Metric \\\\\n')
+            updated_string.append(f'& {metric} \\\\\n')
         else:
             updated_string.append(replace_nth('&','/',string[index],2))
         latex_table = latex_table.replace(f'{string[index]}',f'{updated_string[index]}')
-    return latex_table
     
+    return latex_table
 
-# replace nth entry of sub in a text (txt) and join the different values together using replace (replace) 
+# Join the columns of two different metrics (can be used recursively )
+def join_different_columns(latex_table_1,latex_table_2):
+    desired_key = '&.+\\\\\n'
+    string_1 = re.findall(desired_key,latex_table_1)
+    string_2 = re.findall(desired_key,latex_table_2)
+    updated_string = []
+    for index in range(len(string_1)):
+        joint_string = string_1[index] + string_2[index]
+        updated_string.append(replace_nth('\\\\\n','',joint_string,1)) # replace first occurence of joint string
+        latex_table_1 = latex_table_1.replace(f'{string_1[index]}',f'{updated_string[index]}')
+
+    return latex_table_1
+
+# replace the headings for a table which is made from several tables
+def replace_headings_collated_table(latex_table):
+    #num_columns = len(df.columns) # original columns
+    #updated_headings = '|p{3cm}|' + 'c|'*num_columns
+    desired_key = '&.+\\\\\n'
+    # Used to find the strings with the desired key (which is esentially the number of '&)
+    string = re.findall(desired_key,latex_table)
+    columns = string[0].count('&') # number of separate columns
+    
+    heading_key = '\|.+\|}' # need to use \ as | is a meta character (needs to be escaped) https://www.youtube.com/watch?v=sa-TUpSx1JA
+    original_headings = re.findall(heading_key,latex_table)[0] # gets the first element in the list which should eb the key for the heading
+    
+    updated_headings = '|p{3cm}|' + 'c|'*columns # obtain the updated headings from the number of columns which have been concatenated
+    latex_table = latex_table.replace(original_headings,updated_headings)
+    return latex_table
+     
+
+# replace nth entry of sub in a text (txt) and join the different values together using replace (replace) - based from https://stackoverflow.com/questions/35091557/replace-nth-occurrence-of-substring-in-string
 def replace_nth(sub,repl,txt,nth):
     arr=txt.split(sub)
     part1=sub.join(arr[:nth])
