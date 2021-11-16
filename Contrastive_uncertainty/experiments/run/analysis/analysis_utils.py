@@ -68,7 +68,7 @@ def ood_dataset_string(key, dataset_dict, ID_dataset):
             ood_dataset = key
             return ood_dataset
 
-    print(f'{key} does not have OOD dataset')
+    #print(f'{key} does not have OOD dataset')
     return None 
 
 def generic_saving(desired_key,run_filter):
@@ -247,10 +247,14 @@ def replace_headings_collated_table(latex_table):
     string = re.findall(desired_key,latex_table)
     columns = string[0].count('&') # number of separate columns
     
-    heading_key = '\|.+\|}' # need to use \ as | is a meta character (needs to be escaped) https://www.youtube.com/watch?v=sa-TUpSx1JA
+    heading_key = '\|.+\|' # need to use \ as | is a meta character (needs to be escaped) https://www.youtube.com/watch?v=sa-TUpSx1JA
+    
     original_headings = re.findall(heading_key,latex_table)[0] # gets the first element in the list which should eb the key for the heading
     
     updated_headings = '|p{3cm}|' + 'c|'*columns # obtain the updated headings from the number of columns which have been concatenated
+    # alternative heading key and updated heading which takes into account the }
+    #heading_key = '\|.+\|}' # need to use \ as | is a meta character (needs to be escaped) https://www.youtube.com/watch?v=sa-TUpSx1JA
+    #updated_headings = '|p{3cm}|' + 'c|'*columns +'}' # obtain the updated headings from the number of columns which have been concatenated
     latex_table = latex_table.replace(original_headings,updated_headings)
     return latex_table
      

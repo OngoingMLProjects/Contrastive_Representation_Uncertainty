@@ -220,7 +220,7 @@ def knn_auroc_table_mean():
 
 
 
-# Calculates the mean AUROC value compared to a single value
+# Calculates the AUROC, AUPR as well as the false positive rate
 def knn_auroc_table_collated():
     
     # Make it so that the desired string and the baseline strings are decided by the suffix (ood, FPR, AUPR)
@@ -233,13 +233,6 @@ def knn_auroc_table_collated():
     baseline_string_1_AUPR,baseline_string_2_AUPR = 'Mahalanobis AUPR'.lower(),'Mahalanobis AUPR'.lower()
     baseline_string_1_FPR,baseline_string_2_FPR = 'Mahalanobis FPR'.lower(),'Mahalanobis FPR'.lower()
 
-    #desired_string = 'Normalized One Dim Class Quadratic Typicality KNN - 10 FPR'.lower()
-    #baseline_string_1,baseline_string_2 = 'Mahalanobis FPR'.lower(),'Mahalanobis FPR'.lower()
-    '''
-    baseline_string_1, baseline_string_2 = 'Mahalanobis AUPR'.lower(),'Mahalanobis AUPR'.lower()
-    FPR= False
-    value = 'min' if FPR else 'max' # Used to control whether to bold the max or the min values
-    '''
     # Fixed value of k of interest
     fixed_k = 10
     # Desired ID,OOD and Model  
@@ -299,9 +292,6 @@ def knn_auroc_table_collated():
             # Make function to obtain quadratic typicality for a particular ID and OOD dataset
             # Make function to obtain mahalanobis from a particular ID and OOD dataset
             
-           
-        
-
             # Obtain all the OOD datasets for a particular desired string
             all_OOD_datasets = obtain_ood_datasets(desired_string_AUROC, run_summary,ID_dataset)
             for OOD_dataset in all_OOD_datasets:
