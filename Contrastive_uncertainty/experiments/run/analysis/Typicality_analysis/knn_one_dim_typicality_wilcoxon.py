@@ -17,8 +17,10 @@ import json
 import re
 import copy
 from Contrastive_uncertainty.experiments.run.analysis.analysis_utils import dataset_dict, key_dict, ood_dataset_string
-from Contrastive_uncertainty.experiments.run.analysis.Typicality_analysis.knn_one_dim_typicality_diagrams import knn_vector, full_post_process_latex_table,post_process_latex_table,\
-    replace_headings, bold_max_value, initial_table_info, add_caption, add_label, end_table_info
+from Contrastive_uncertainty.experiments.run.analysis.analysis_utils import full_post_process_latex_table,\
+    replace_headings, bold_max_value, initial_table_info, add_caption, add_label, end_table_info,join_columns,join_different_columns,\
+    replace_headings_collated_table, post_process_latex_table   
+from Contrastive_uncertainty.experiments.run.analysis.Typicality_analysis.knn_one_dim_typicality_diagrams import knn_vector 
 from Contrastive_uncertainty.experiments.run.analysis.Typicality_analysis.knn_one_dim_typicality_tables import obtain_ood_datasets,obtain_knn_value, obtain_baseline_mahalanobis
 
 # Performs one sided-test to see the importance
@@ -1291,7 +1293,9 @@ def knn_auroc_wilcoxon_repeated_runs_v2():
             collated_rank_score_fpr[i] = p_value_fpr # add the p_value to the rank score for this particular dataset
 
         
-        column_names = ['Contrastive Mahalanobis']
+        column_names_AUROC = ['AUROC']
+        column_names_AUPR = ['AUPR']
+        column_names_FPR = ['FPR']
 
         # Post processing latex table
         caption =  f'Wilcoxon Signed Rank test - {ID_dataset} P values'
@@ -1299,23 +1303,49 @@ def knn_auroc_wilcoxon_repeated_runs_v2():
         # https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.set_option.html
         pd.set_option('display.precision',3) 
 
-        auroc_df = pd.DataFrame(collated_rank_score_auroc,columns = column_names, index=row_names)
-        aupr_df = pd.DataFrame(collated_rank_score_aupr,columns = column_names, index=row_names)
-        fpr_df = pd.DataFrame(collated_rank_score_fpr,columns = column_names, index=row_names)
-
+        auroc_df = pd.DataFrame(collated_rank_score_auroc,columns = column_names_AUROC, index=row_names)
+        aupr_df = pd.DataFrame(collated_rank_score_aupr,columns = column_names_AUPR, index=row_names)
+        fpr_df = pd.DataFrame(collated_rank_score_fpr,columns = column_names_FPR, index=row_names)
+        latex_table = collated_wilcoxon_post_process_latex_table(auroc_df,aupr_df,fpr_df,caption,label)
         
         '''
-        latex_table = auroc_df.to_latex()
-
         latex_table = replace_headings(auroc_df,latex_table)
         latex_table = post_process_latex_table(latex_table)
         latex_table = initial_table_info(latex_table)
         latex_table = add_caption(latex_table,caption)
         latex_table = add_label(latex_table,label) 
         latex_table = end_table_info(latex_table)
-
-        print(latex_table)
         '''
+        
+        
+        print(latex_table)
+        
+        
+
+# Joins the different wilcoxon tables together
+def collated_wilcoxon_post_process_latex_table(df_auroc, df_aupr, df_fpr,caption,label):
+    
+    latex_table_auroc = df_auroc.to_latex()
+    latex_table_auroc = replace_headings(df_auroc,latex_table_auroc)
+    
+    latex_table_aupr = df_aupr.to_latex()
+    latex_table_aupr = replace_headings(df_aupr,latex_table_aupr)
+    
+    latex_table_fpr = df_fpr.to_latex()
+    latex_table_fpr = replace_headings(df_fpr,latex_table_fpr)
+    
+    latex_table = join_different_columns(latex_table_auroc,latex_table_aupr) # joins the auroc and aupr table together
+    latex_table = join_different_columns(latex_table, latex_table_fpr) # joins the auroc+aupr table with the fpr table
+
+    latex_table = replace_headings_collated_table(latex_table) # replaces the heading to take into account the collated readings
+    
+    latex_table = post_process_latex_table(latex_table)
+    latex_table = initial_table_info(latex_table)
+    latex_table = add_caption(latex_table,caption)
+    latex_table = add_label(latex_table,label) 
+    latex_table = end_table_info(latex_table)
+
+    return latex_table
 
 
 if __name__== '__main__':

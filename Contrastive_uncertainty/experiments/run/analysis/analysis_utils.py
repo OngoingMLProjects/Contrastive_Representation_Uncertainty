@@ -7,11 +7,13 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import os
 
+import copy
 # Import general params
 import json
 import re
 
 from Contrastive_uncertainty.general.datamodules.datamodule_dict import OOD_dict
+
 # For each ID dataset, it maps the dict to another value
 
 '''
@@ -210,12 +212,15 @@ def collated_baseline_post_process_latex_table(df_auroc, df_aupr, df_fpr,caption
     
     return latex_table
 
+
 # join columns within a single table
 def join_columns(latex_table,metric):
-    desired_key = "&\s+.+\s+&\s+.+\s+" 
+    desired_key = "&\s+.+\s+&\s+.+\s+"
+    #desired_key = "&\s+.+\s+" 
     string = re.findall(desired_key,latex_table)
     #import ipdb; ipdb.set_trace()
     updated_string = []
+    # Recursive approach to prevent replacing values which appear multiple times
     for index in range(len(string)):
         if index ==0:
             updated_string.append(f'& {metric} \\\\\n')
@@ -227,16 +232,30 @@ def join_columns(latex_table,metric):
 
 # Join the columns of two different metrics (can be used recursively )
 def join_different_columns(latex_table_1,latex_table_2):
-    desired_key = '&.+\\\\\n'
+    desired_key = '&.+\\\\\n' 
     string_1 = re.findall(desired_key,latex_table_1)
     string_2 = re.findall(desired_key,latex_table_2)
+    
     updated_string = []
+
+    concatenated_list = []
+    recursive_string = copy.deepcopy(latex_table_1)
+    for index in range(len(string_1)):
+        first_string, recursive_string = recursive_string.split(string_1[index],1)
+        first_string = first_string + string_1[index]
+        joint_string = string_1[index] + string_2[index]
+        updated_string.append(replace_nth('\\\\\n','',joint_string,1))
+        first_string = first_string.replace(string_1[index], updated_string[index])
+        concatenated_list.append(first_string)
+    '''
     for index in range(len(string_1)):
         joint_string = string_1[index] + string_2[index]
         updated_string.append(replace_nth('\\\\\n','',joint_string,1)) # replace first occurence of joint string
         latex_table_1 = latex_table_1.replace(f'{string_1[index]}',f'{updated_string[index]}')
-
-    return latex_table_1
+    '''
+    latex_table = ''.join(concatenated_list)
+    return latex_table
+    #return latex_table_1
 
 # replace the headings for a table which is made from several tables
 def replace_headings_collated_table(latex_table):
