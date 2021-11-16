@@ -220,7 +220,7 @@ def join_columns(latex_table,metric):
     string = re.findall(desired_key,latex_table)
     #import ipdb; ipdb.set_trace()
     updated_string = []
-    # Recursive approach to prevent replacing values which appear multiple times
+    # NEED TO UPDATE CODE WITH THE RECURSIVE APPROACH TO PREVENT OVERLAPPING VALUES
     for index in range(len(string)):
         if index ==0:
             updated_string.append(f'& {metric} \\\\\n')
@@ -228,6 +228,7 @@ def join_columns(latex_table,metric):
             updated_string.append(replace_nth('&','/',string[index],2))
         latex_table = latex_table.replace(f'{string[index]}',f'{updated_string[index]}')
     
+
     return latex_table
 
 # Join the columns of two different metrics (can be used recursively )
@@ -239,6 +240,7 @@ def join_different_columns(latex_table_1,latex_table_2):
     updated_string = []
 
     concatenated_list = []
+    # Recursive approach to prevent replacing values which appear multiple times
     recursive_string = copy.deepcopy(latex_table_1)
     for index in range(len(string_1)):
         first_string, recursive_string = recursive_string.split(string_1[index],1)
