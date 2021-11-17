@@ -2,6 +2,7 @@
 
 from numpy.core.defchararray import count
 from pandas.core import base
+from torch.utils import data
 from Contrastive_uncertainty.experiments.run.analysis.Typicality_analysis.knn_one_dim_typicality_diagrams import knn_auroc_table_v2
 from numpy.core.numeric import full
 from torch.utils.data import dataset
@@ -326,7 +327,7 @@ def knn_auroc_table_collated():
 
 
                 row_names[data_index] = f'ID:{ID_dataset}, OOD:{OOD_dataset}' 
-        #import ipdb; ipdb.set_trace()
+        
         data_array_AUROC = np.round(data_array_AUROC/count_array_AUROC,decimals=3)  
         data_array_AUPR = np.round(data_array_AUPR/count_array_AUPR,decimals=3)  
         data_array_FPR = np.round(data_array_FPR/count_array_FPR,decimals=3)
@@ -335,7 +336,124 @@ def knn_auroc_table_collated():
         auroc_df = pd.DataFrame(data_array_AUROC,columns = column_names, index=row_names)
         aupr_df = pd.DataFrame(data_array_AUPR,columns = column_names, index=row_names)
         fpr_df = pd.DataFrame(data_array_FPR,columns = column_names, index=row_names)
-        #import ipdb; ipdb.set_trace()
+        
+        caption = ID_dataset + ' Dataset'
+        label = f'tab:{ID_dataset}_Dataset'
+        #latex_table = single_baseline_post_process_latex_table(auroc_df, caption, label,value)
+        latex_table = collated_baseline_post_process_latex_table(auroc_df,aupr_df, fpr_df,caption, label)
+        #latex_table = full_post_process_latex_table(auroc_df, caption, label,value)
+        
+        print(latex_table)
+
+
+
+
+# Calculates the AUROC, AUPR as well as the false positive rate
+def knn_table_collated():
+    
+    # Make it so that the desired string and the baseline strings are decided by the suffix (ood, FPR, AUPR)
+
+    desired_string_AUROC = 'Normalized One Dim Class Quadratic Typicality KNN - 10 OOD'.lower() # Only get the key for the AUROC
+    desired_string_AUPR= 'Normalized One Dim Class Quadratic Typicality KNN - 10 AUPR'.lower()
+    desired_string_FPR = 'Normalized One Dim Class Quadratic Typicality KNN - 10 FPR'.lower()
+    desired_model_type = 'SupCon'
+    desired_function = obtain_knn_value # Used to calculate the value
+
+    baseline_string_AUROC = 'Mahalanobis AUROC OOD'.lower()
+    baseline_string_AUPR = 'Mahalanobis AUPR'.lower()
+    baseline_string_FPR = 'Mahalanobis FPR'.lower()
+    baseline_model_type = 'SupCon'
+    baseline_function = obtain_baseline
+    
+    
+    # Fixed value of k of interest
+    fixed_k = 10
+    # Desired ID,OOD and Model  
+    root_dir = 'run_data/'
+
+    api = wandb.Api()
+    # Gets the runs corresponding to a specific filter
+    # https://github.com/wandb/client/blob/v0.10.31/wandb/apis/public.py
+
+
+    
+    
+    all_ID = ['MNIST','FashionMNIST','KMNIST', 'CIFAR10','CIFAR100','Caltech101','Caltech256','TinyImageNet','Cub200','Dogs']
+    for ID_dataset in all_ID: # Go through the different ID dataset                
+        #runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"OOD hierarchy baselines","config.epochs": 300, 'state':'finished',"config.dataset": f"{ID_dataset}","$or": [{"config.model_type":"SupCon" }, {"config.model_type": "CE"}]})
+        runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.epochs": 300, 'state':'finished',"config.dataset": f"{ID_dataset}","$or": [{"config.model_type":"SupCon" }, {"config.model_type": "CE"}]})
+        #runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.epochs": 300, "config.dataset": f"{ID_dataset}","config.model_type":"SupCon"})
+        #runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.epochs": 300, "config.dataset": f"{ID_dataset}","config.model_type":"CE"})
+        # number of OOd datasets for this particular ID dataset
+        num_ood = len(dataset_dict[ID_dataset])
+        # data array
+        data_array_AUROC = np.zeros((num_ood,2)) # 5 different measurements
+        count_array_AUROC = np.zeros((num_ood,2)) # 5 different measurements
+
+        data_array_AUPR = np.zeros((num_ood,2)) # 5 different measurements
+        count_array_AUPR = np.zeros((num_ood,2)) # 5 different measurements
+
+        data_array_FPR = np.zeros((num_ood,2)) # 5 different measurements
+        count_array_FPR = np.zeros((num_ood,2)) # 5 different measurements
+
+
+        row_names = [None] * num_ood # Make an empty list to take into account all the different values 
+        for i, run in enumerate(runs): 
+            run_summary = run.summary._json_dict
+            # .config contains the hyperparameters.
+            #  We remove special values that start with _.
+            run_config = {k: v for k,v in run.config.items()
+                 if not k.startswith('_')} 
+
+            group_name = run_config['group']
+            path_list = run.path
+            # include the group name in the run path
+            path_list.insert(-1, group_name)
+            run_path = '/'.join(path_list)
+
+            ID_dataset = run_config['dataset']
+            model_type = run_config['model_type']
+            Model_name = 'SupCLR' if model_type=='SupCon' else model_type
+            # Make a data array, where the number values are equal to the number of OOD classes present in the datamodule dict or equal to the number of keys
+
+            # name for the different rows of a table
+            #row_names = []
+            # https://stackoverflow.com/questions/10712002/create-an-empty-list-in-python-with-certain-size
+            
+            # go through the different knn keys
+            
+            # Obtain the ID and OOD dataset
+            # Make function to obtain quadratic typicality for a particular ID and OOD dataset
+            # Make function to obtain mahalanobis from a particular ID and OOD dataset
+            
+            # Obtain all the OOD datasets for a particular desired string
+            all_OOD_datasets = obtain_ood_datasets_baseline(desired_string_AUROC,baseline_string_AUROC, run_summary,ID_dataset)
+            for OOD_dataset in all_OOD_datasets:
+                data_index = dataset_dict[ID_dataset][OOD_dataset] # index location
+                # updates the data array and the count array at a certain location with
+                
+                data_array_AUROC, count_array_AUROC =update_metric_and_count(data_array_AUROC,count_array_AUROC,data_index,1,desired_function,desired_string_AUROC,desired_model_type,model_type,run_summary,OOD_dataset)
+                data_array_AUPR, count_array_AUPR =update_metric_and_count(data_array_AUPR,count_array_AUPR,data_index,1,desired_function,desired_string_AUPR,desired_model_type,model_type,run_summary,OOD_dataset)
+                data_array_FPR, count_array_FPR =update_metric_and_count(data_array_FPR,count_array_FPR,data_index,1,desired_function,desired_string_FPR,desired_model_type,model_type,run_summary,OOD_dataset)
+
+                data_array_AUROC, count_array_AUROC =update_metric_and_count(data_array_AUROC,count_array_AUROC,data_index,0,baseline_function,baseline_string_AUROC,baseline_model_type,model_type,run_summary,OOD_dataset)
+                data_array_AUPR, count_array_AUPR =update_metric_and_count(data_array_AUPR,count_array_AUPR,data_index,0,baseline_function,baseline_string_AUPR,baseline_model_type,model_type,run_summary,OOD_dataset)
+                data_array_FPR, count_array_FPR =update_metric_and_count(data_array_FPR,count_array_FPR,data_index,0,baseline_function,baseline_string_FPR,baseline_model_type,model_type,run_summary,OOD_dataset)
+
+
+
+                row_names[data_index] = f'ID:{ID_dataset}, OOD:{OOD_dataset}' 
+        
+        
+        data_array_AUROC = np.round(data_array_AUROC/count_array_AUROC,decimals=3)  
+        data_array_AUPR = np.round(data_array_AUPR/count_array_AUPR,decimals=3)  
+        data_array_FPR = np.round(data_array_FPR/count_array_FPR,decimals=3)
+
+        column_names = ['Mahalanobis', f'Quadratic {fixed_k} NN',]
+        auroc_df = pd.DataFrame(data_array_AUROC,columns = column_names, index=row_names)
+        aupr_df = pd.DataFrame(data_array_AUPR,columns = column_names, index=row_names)
+        fpr_df = pd.DataFrame(data_array_FPR,columns = column_names, index=row_names)
+        
         caption = ID_dataset + ' Dataset'
         label = f'tab:{ID_dataset}_Dataset'
         #latex_table = single_baseline_post_process_latex_table(auroc_df, caption, label,value)
@@ -344,6 +462,51 @@ def knn_auroc_table_collated():
         
         print(latex_table)
         
+
+def update_metric(metric_array,data_index, second_index,metric_function, metric_string, metric_model_type,run_model_type, summary, OOD_dataset):
+    if metric_model_type == run_model_type:
+        metric_value = metric_function(metric_string,summary,OOD_dataset) # calculates the value
+        metric_array[data_index,second_index] += metric_value
+        return metric_array
+    else:
+        return metric_array # metric array with no changes
+# Have both so that the count array only updates when the metric array updata
+def update_metric_and_count(metric_array,count_array,data_index, second_index,metric_function, metric_string, metric_model_type,run_model_type, summary, OOD_dataset):
+    #print('metric model type:',metric_model_type)
+    if metric_model_type == run_model_type:
+        metric_value = metric_function(metric_string,summary,OOD_dataset) # calculates the value
+        metric_array[data_index,second_index] += metric_value
+        count_array[data_index,second_index] +=1
+        return metric_array, count_array
+    else:
+        return metric_array, count_array # metric array with no changes
+
+# Obtain the OOD_datasets which are in common between the desired string and the baseline
+def obtain_ood_datasets_baseline(desired_string,baseline_string,summary,ID_dataset):
+    
+    keys = [key for key, value in summary.items() if desired_string in key.lower()]
+    all_OOD_datasets = []
+    # obtain all the OOD datasets which are not known
+    for key in keys:
+        OOD_dataset = ood_dataset_string(key, dataset_dict, ID_dataset)
+        if OOD_dataset is None or OOD_dataset == ID_dataset:
+            pass
+        else: 
+            all_OOD_datasets.append(OOD_dataset)
+    # go through the baseline string case
+    if len(all_OOD_datasets) ==0:
+        keys = [key for key, value in summary.items() if baseline_string in key.lower()]
+        for key in keys:
+            OOD_dataset = ood_dataset_string(key, dataset_dict, ID_dataset)
+            if OOD_dataset is None or OOD_dataset == ID_dataset:
+                pass
+            else: 
+                all_OOD_datasets.append(OOD_dataset)
+
+    return all_OOD_datasets        
+     
+
+
 # Obtain the OOD datasets for a particular string
 def obtain_ood_datasets(desired_string,summary,ID_dataset):
     
@@ -358,6 +521,7 @@ def obtain_ood_datasets(desired_string,summary,ID_dataset):
             all_OOD_datasets.append(OOD_dataset)
 
     return all_OOD_datasets
+
 # obtain the value from a specific OOD dataset
 def obtain_knn_value(desired_string,summary,OOD_dataset):
     keys = [key for key, value in summary.items() if desired_string in key.lower()]
@@ -365,6 +529,17 @@ def obtain_knn_value(desired_string,summary,OOD_dataset):
     ood_dataset_specific_key = [key for key in keys if OOD_dataset.lower() in str.split(key.lower())]
     knn_auroc = round(summary[ood_dataset_specific_key[0]],3)
     return knn_auroc
+
+# General function to obtain the baseline value
+def obtain_baseline(desired_string, summary,OOD_dataset):
+    desired_string = desired_string.lower() # double check that it has been lowered 
+    keys = [key for key, value in summary.items() if desired_string in key.lower()]
+
+    # get the specific mahalanobis keys for the specific OOD dataset
+    OOD_dataset_specific_key = [key for key in keys if OOD_dataset.lower() in str.split(key.lower())]
+    mahalanobis_AUROC = round(summary[OOD_dataset_specific_key[0]],3)
+    
+    return mahalanobis_AUROC
 
 # obtain the value for the mahalanobis for a particular situation
 def obtain_baseline_mahalanobis(summary,OOD_dataset,string1 = 'Mahalanobis AUROC OOD', string2='Mahalanobis AUROC: instance vector'):
@@ -393,7 +568,9 @@ def obtain_baseline_mahalanobis(summary,OOD_dataset,string1 = 'Mahalanobis AUROC
         return mahalanobis_AUROC
 
 
+
 if __name__== '__main__':
     #knn_auroc_table()
     #knn_auroc_table_mean()
-    knn_auroc_table_collated()
+    #knn_auroc_table_collated()
+    knn_table_collated()
