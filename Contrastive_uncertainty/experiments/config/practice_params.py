@@ -10,7 +10,7 @@ weight_decay = 1e-4,
 
 # Training parameters in common
 emb_dim = 128,
-instance_encoder = 'resnet18',
+instance_encoder = 'resnet50',#'resnet18',
 
 dataset ='MNIST',
 #OOD_dataset =['MNIST'],
@@ -56,7 +56,7 @@ practice_trainer_hparams = dict(
 # Miscellaneous arguments in common
 seed = 26,
 epochs = 300,
-bsz = 4,
+bsz = 16,
 
 # Trainer configurations in common
 fast_run = True,

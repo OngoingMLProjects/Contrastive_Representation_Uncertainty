@@ -52,9 +52,13 @@ runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"OOD hierarc
 #runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","$or": [{"config.model_type":"CE"}, {"config.dataset": "MNIST"}, {"config.dataset": "FashionMNIST"}]})
 
 
+'''
 for i in range(len(runs)):
     # Joins together the path of the runs which are separated into different parts in a list
     run_path = '/'.join(runs[i].path)
     run_paths.append(run_path)
+'''
+
+run_paths = ['nerdk312/evaluation/20nk7wk0']
 
 evaluate(run_paths, trainer_hparams)
