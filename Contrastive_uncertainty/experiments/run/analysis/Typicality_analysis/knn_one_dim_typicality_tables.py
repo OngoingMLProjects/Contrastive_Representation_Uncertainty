@@ -540,9 +540,10 @@ def obtain_knn_value(desired_string,summary,OOD_dataset):
 
 # General function to obtain the baseline value
 def obtain_baseline(desired_string, summary,OOD_dataset):
+    
     desired_string = desired_string.lower() # double check that it has been lowered 
     keys = [key for key, value in summary.items() if desired_string in key.lower()]
-
+    print('keys:',keys)
     # get the specific mahalanobis keys for the specific OOD dataset
     OOD_dataset_specific_key = [key for key in keys if OOD_dataset.lower() in str.split(key.lower())]
     

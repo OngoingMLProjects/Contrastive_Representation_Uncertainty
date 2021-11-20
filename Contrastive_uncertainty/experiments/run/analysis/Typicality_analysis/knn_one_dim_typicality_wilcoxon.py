@@ -1349,7 +1349,12 @@ def knn_auroc_wilcoxon_repeated_runs_v3(desired_approach = 'Quadratic_typicality
     # https://github.com/wandb/client/blob/v0.10.31/wandb/apis/public.py
 
 
-    all_ID = ['MNIST','FashionMNIST','KMNIST', 'CIFAR10','CIFAR100','Caltech101','Caltech256','TinyImageNet','Cub200','Dogs']
+
+
+
+    #all_ID = ['MNIST','FashionMNIST','KMNIST', 'CIFAR10','CIFAR100','Caltech101','Caltech256','TinyImageNet','Cub200','Dogs']
+    all_ID = ['MNIST','FashionMNIST','KMNIST', 'CIFAR10','Caltech101','Caltech256','TinyImageNet','Cub200','Dogs']
+    #all_ID = ['Cub200','Dogs']
     for ID_dataset in all_ID: # Go through the different ID dataset                
         #runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.epochs": 300, "config.dataset": f"{ID_dataset}","config.model_type":"SupCon"})
         runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.epochs": 300, 'state':'finished',"config.dataset": f"{ID_dataset}","$or": [{"config.model_type":"SupCon" }, {"config.model_type": "CE"}]})
@@ -1399,6 +1404,7 @@ def knn_auroc_wilcoxon_repeated_runs_v3(desired_approach = 'Quadratic_typicality
             # Obtain all the OOD datasets for a particular desired string
             all_OOD_datasets = obtain_ood_datasets(desired_string_AUROC, run_summary,ID_dataset)
             for OOD_dataset in all_OOD_datasets:
+                print(f'ID:{ID_dataset}')
                 data_index = dataset_dict[ID_dataset][OOD_dataset] # obtain an index for a particular ID and OOD dataset pair
                 row_names[data_index] = f'ID:{ID_dataset}, OOD:{OOD_dataset}' 
                 
@@ -1407,15 +1413,14 @@ def knn_auroc_wilcoxon_repeated_runs_v3(desired_approach = 'Quadratic_typicality
                 desired_FPR_values = update_metric_list(desired_FPR_values,data_index,desired_function,desired_string_FPR,desired_model_type, model_type,run_summary,OOD_dataset,run_config['seed'])
 
                 baseline_AUROC_values = update_metric_list(baseline_AUROC_values,data_index,baseline_function,baseline_string_AUROC,desired_model_type,model_type,run_summary,OOD_dataset,run_config['seed'])
-                baseline_AUPR_values = update_metric_list(baseline_AUPR_values,data_index,baseline_function,baseline_string_AUPR,desired_model_type, model_type,run_summary,OOD_dataset, run_config['seed'])
-                baseline_FPR_values = update_metric_list(baseline_FPR_values,data_index,baseline_function,baseline_string_FPR,baseline_model_type, model_type,run_summary,OOD_dataset, run_config['seed'])
+                baseline_AUPR_values = update_metric_list(baseline_AUPR_values,data_index,baseline_function,baseline_string_AUPR,desired_model_type, model_type,run_summary,OOD_dataset,run_config['seed'])
+                baseline_FPR_values = update_metric_list(baseline_FPR_values,data_index,baseline_function,baseline_string_FPR,baseline_model_type, model_type,run_summary,OOD_dataset,run_config['seed'])
  
                 
         print(f'ID:{ID_dataset}')
         
         difference_auroc = np.array(baseline_AUROC_values) - np.array(desired_AUROC_values) # shape (num ood, repeats)
         difference_aupr = np.array(baseline_AUPR_values) - np.array(desired_AUPR_values) # shape (num ood, repeats)
-        import ipdb; ipdb.set_trace()
 
         # REVERSED THE DIRECTION FOR FPR DUE TO LOWER BEING BETTER FOR FPR, SO I DO NOT NEED TO REVERSE THE DIRECTION OF THE TEST STATISTIC
         difference_fpr = np.array(desired_FPR_values) - np.array(baseline_FPR_values) # shape (num ood, repeats)
@@ -1477,10 +1482,11 @@ def collated_wilcoxon_post_process_latex_table(df_auroc, df_aupr, df_fpr,caption
 
     return latex_table
 
-
+# small hack to make it work for the seeds of interest
 def update_metric_list(metric_list,data_index,metric_function, metric_string, metric_model_type,run_model_type, summary, OOD_dataset,seed):
     #print('metric model type:',metric_model_type)
-    if metric_model_type == run_model_type and seed<200:
+    seeds = [25,50,75,100,125,150,175]
+    if metric_model_type == run_model_type and seed in seeds:
         metric_value = metric_function(metric_string,summary,OOD_dataset) # calculates the value
         metric_list[data_index].append(metric_value)
         return metric_list
