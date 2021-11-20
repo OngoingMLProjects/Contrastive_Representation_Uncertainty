@@ -10,9 +10,21 @@ from pytorch_lightning.loggers import WandbLogger
 
 from Contrastive_uncertainty.general.run.general_run_setup import train_run_name, eval_run_name,callback_dictionary, specific_callbacks, Datamodule_selection
 
+'''
+callback_names = {'MD':'Mahalanobis Distance',
+'NN Quadratic':'Nearest 10 Neighbours Class Quadratic 1D Typicality',
+'NN Linear':'Nearest 10 Neighbours Class 1D Typicality',
+'MSP':'Maximum Softmax Probability'}
+
+
+desired_key_dict = {callback_names['MD']:['Mahalanobis AUROC OOD','Mahalanobis AUPR OOD','Mahalanobis FPR OOD'],
+callback_names['NN Quadratic']:['Normalized One Dim Class Quadratic Typicality KNN - 10 OOD -','Normalized One Dim Class Quadratic Typicality KNN - 10 AUPR OOD -','Normalized One Dim Class Quadratic Typicality KNN - 10 FPR OOD -'],
+callback_names['NN Linear']: ['Normalized One Dim Class Typicality KNN - 10 OOD -','Normalized One Dim Class Typicality KNN - 10 AUPR OOD -','Normalized One Dim Class Typicality KNN - 10 FPR OOD -'],
+callback_names['MSP']: ['Maximum Softmax Probability AUROC OOD','Maximum Softmax Probability AUPR OOD','Maximum Softmax Probability FPR OOD']}
+'''
+
 # Train takes in params, a particular training module as well a model_function to instantiate the model
 def train(base_params,trainer_params, model_module,model_function,datamodule_dict):
-    
     params = {}
     # place base params and trainer params in the dictionary
     params.update(base_params)
@@ -24,7 +36,24 @@ def train(base_params,trainer_params, model_module,model_function,datamodule_dic
     
     # Gets the path which could be used for evaluation
     run_path = wandb.run.path
+    
+    '''
+    # Choose quick callbacks to repeat
+    repeat_callbacks=['NN Quadratic']
+    if len(repeat_callbacks)>0:
+        for repeat_callback in repeat_callbacks:
+            assert repeat_callback in callback_names, 'not in callback names'
+        repeat_callbacks = [f'Repeat {key}'for key in repeat_callbacks]     
+    
+    repeat_bool = {f'Repeat {key}':False for key in callback_names}
+    # Sets the particulat key to true
+    for key in repeat_bool:
+        if key in repeat_callbacks:
+            repeat_bool[key] = True
 
+    wandb.log(repeat_bool)
+    '''
+    
 
     folder = 'Images'
     if not os.path.exists(folder):
