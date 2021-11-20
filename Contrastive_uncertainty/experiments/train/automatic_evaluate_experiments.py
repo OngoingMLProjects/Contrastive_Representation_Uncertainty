@@ -2,11 +2,22 @@
 import wandb
 import copy
 from Contrastive_uncertainty.experiments.train.experimental_dict import model_dict
+
+#redo_callback = ['Maximum Softmax Probability']
+
+
 desired_key_dict = {'Mahalanobis Distance':['Mahalanobis AUROC OOD','Mahalanobis AUPR OOD','Mahalanobis FPR OOD'],
 'Nearest 10 Neighbours Class Quadratic 1D Typicality':['Normalized One Dim Class Quadratic Typicality KNN - 10 OOD','Normalized One Dim Class Quadratic Typicality KNN - 10 AUPR OOD','Normalized One Dim Class Quadratic Typicality KNN - 10 FPR OOD'],
 'Nearest 10 Neighbours Class 1D Typicality': ['Normalized One Dim Class Typicality KNN - 10 OOD','Normalized One Dim Class Typicality KNN - 10 AUPR OOD','Normalized One Dim Class Typicality KNN - 10 FPR OOD'],
 'Maximum Softmax Probability': ['Maximum Softmax Probability AUROC OOD','Maximum Softmax Probability AUPR OOD','Maximum Softmax Probability FPR OOD'],
 'ODIN':['ODIN AUROC OOD']}
+
+'''
+# Need to redo the callback
+for callback in desired_key_dict:
+    if callback in redo_callback:
+        desired_key_dict[callback] = ['Redo callback']
+'''
 
 def evaluate(run_paths,update_dict):    
     

@@ -21,7 +21,7 @@ from Contrastive_uncertainty.experiments.run.analysis.analysis_utils import full
     replace_headings, bold_max_value, initial_table_info, add_caption, add_label, end_table_info,join_columns,join_different_columns,\
     replace_headings_collated_table, post_process_latex_table   
 from Contrastive_uncertainty.experiments.run.analysis.Typicality_analysis.knn_one_dim_typicality_diagrams import knn_vector 
-from Contrastive_uncertainty.experiments.run.analysis.Typicality_analysis.knn_one_dim_typicality_tables import obtain_ood_datasets,obtain_knn_value, obtain_baseline_mahalanobis
+from Contrastive_uncertainty.experiments.run.analysis.Typicality_analysis.knn_one_dim_typicality_tables import obtain_ood_datasets,obtain_knn_value, obtain_baseline_mahalanobis, obtain_baseline
 
 # Performs one sided-test to see the importance
 def knn_auroc_wilcoxon_v2():
@@ -1320,7 +1320,137 @@ def knn_auroc_wilcoxon_repeated_runs_v2():
         
         print(latex_table)
         
+
+def knn_auroc_wilcoxon_repeated_runs_v3(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approach = 'Mahalanobis', baseline_model_type = 'CE'):
+    if desired_approach == 'Quadratic_typicality':
+        desired_string_AUROC = 'Normalized One Dim Class Quadratic Typicality KNN - 10 OOD'.lower() # Only get the key for the AUROC
+        desired_string_AUPR= 'Normalized One Dim Class Quadratic Typicality KNN - 10 AUPR'.lower()
+        desired_string_FPR = 'Normalized One Dim Class Quadratic Typicality KNN - 10 FPR'.lower()
+        desired_function = obtain_knn_value # Used to calculate the value
+
+    if baseline_approach =='Mahalanobis':
+        baseline_string_AUROC = 'Mahalanobis AUROC OOD'.lower()
+        baseline_string_AUPR = 'Mahalanobis AUPR'.lower()
+        baseline_string_FPR = 'Mahalanobis FPR'.lower()
+    elif baseline_approach =='Softmax':        
+        baseline_string_AUROC = 'Maximum Softmax Probability AUROC OOD'.lower()
+        baseline_string_AUPR = 'Maximum Softmax Probability AUPR OOD'.lower()
+        baseline_string_FPR = 'Maximum Softmax Probability FPR OOD'.lower()
+    else:
+        assert baseline_approach == 'Mahalanobis' or baseline_approach =='Softmax', 'No other baselines implemented'
+    
+    baseline_function = obtain_baseline 
+    num_baselines = 1
+    # Desired ID,OOD and Model  
+    root_dir = 'run_data/'
+
+    api = wandb.Api()
+    # Gets the runs corresponding to a specific filter
+    # https://github.com/wandb/client/blob/v0.10.31/wandb/apis/public.py
+
+
+    all_ID = ['MNIST','FashionMNIST','KMNIST', 'CIFAR10','CIFAR100','Caltech101','Caltech256','TinyImageNet','Cub200','Dogs']
+    for ID_dataset in all_ID: # Go through the different ID dataset                
+        #runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.epochs": 300, "config.dataset": f"{ID_dataset}","config.model_type":"SupCon"})
+        runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.epochs": 300, 'state':'finished',"config.dataset": f"{ID_dataset}","$or": [{"config.model_type":"SupCon" }, {"config.model_type": "CE"}]})
+        # number of OOd datasets for this particular ID dataset
+        num_ood = len(dataset_dict[ID_dataset])
+        # data array for each ID dataset 
+        baseline_AUROC_values,baseline_AUPR_values, baseline_FPR_values = [[] for i in range(num_ood)], [[] for i in range(num_ood)], [[] for i in range(num_ood)] # Make an empty list to take into account the values for the baseline
+        desired_AUROC_values, desired_AUPR_values, desired_FPR_values = [[] for i in range(num_ood)], [[] for i in range(num_ood)], [[] for i in range(num_ood)]
+
+        # Get scores for each of the OOD datasets for this ID dataset
+        collated_rank_score_auroc = np.empty((num_ood,num_baselines)) # + 1 to take into account an additional wilcoxon score which takes into account the entire dataset
+        collated_rank_score_auroc[:] = np.nan
         
+        collated_rank_score_aupr = np.empty((num_ood,num_baselines)) # + 1 to take into account an additional wilcoxon score which takes into account the entire dataset
+        collated_rank_score_aupr[:] = np.nan
+
+        collated_rank_score_fpr = np.empty((num_ood,num_baselines)) # + 1 to take into account an additional wilcoxon score which takes into account the entire dataset
+        collated_rank_score_fpr[:] = np.nan
+        
+
+        for i, run in enumerate(runs): # go through the runs for a particular ID dataset
+            
+            # .summary contains the output keys/values for metrics like accuracy.
+            #  We call ._json_dict to omit large files 
+
+            run_summary = run.summary._json_dict
+            # .config contains the hyperparameters.
+            #  We remove special values that start with _.
+            run_config = {k: v for k,v in run.config.items()
+                 if not k.startswith('_')} 
+            
+            group_name = run_config['group']
+            path_list = run.path
+            # include the group name in the run path
+            path_list.insert(-1, group_name)
+            run_path = '/'.join(path_list)
+
+            model_type = run_config['model_type']
+            Model_name = 'SupCLR' if model_type=='SupCon' else model_type
+            # Make a data array, where the number values are equal to the number of OOD classes present in the datamodule dict or equal to the number of keys
+
+            # name for the different rows of a table
+            # https://stackoverflow.com/questions/10712002/create-an-empty-list-in-python-with-certain-size
+            row_names = [None] * num_ood # Make an empty list to take into account all the different values 
+            # go through the different knn keys
+
+            # Obtain all the OOD datasets for a particular desired string
+            all_OOD_datasets = obtain_ood_datasets(desired_string_AUROC, run_summary,ID_dataset)
+            for OOD_dataset in all_OOD_datasets:
+                data_index = dataset_dict[ID_dataset][OOD_dataset] # obtain an index for a particular ID and OOD dataset pair
+                row_names[data_index] = f'ID:{ID_dataset}, OOD:{OOD_dataset}' 
+                
+                desired_AUROC_values = update_metric_list(desired_AUROC_values,data_index,desired_function,desired_string_AUROC,desired_model_type,model_type,run_summary,OOD_dataset,run_config['seed'])
+                desired_AUPR_values = update_metric_list(desired_AUPR_values,data_index,desired_function,desired_string_AUPR,desired_model_type, model_type,run_summary,OOD_dataset,run_config['seed'])
+                desired_FPR_values = update_metric_list(desired_FPR_values,data_index,desired_function,desired_string_FPR,desired_model_type, model_type,run_summary,OOD_dataset,run_config['seed'])
+
+                baseline_AUROC_values = update_metric_list(baseline_AUROC_values,data_index,baseline_function,baseline_string_AUROC,desired_model_type,model_type,run_summary,OOD_dataset,run_config['seed'])
+                baseline_AUPR_values = update_metric_list(baseline_AUPR_values,data_index,baseline_function,baseline_string_AUPR,desired_model_type, model_type,run_summary,OOD_dataset, run_config['seed'])
+                baseline_FPR_values = update_metric_list(baseline_FPR_values,data_index,baseline_function,baseline_string_FPR,baseline_model_type, model_type,run_summary,OOD_dataset, run_config['seed'])
+ 
+                
+        print(f'ID:{ID_dataset}')
+        
+        difference_auroc = np.array(baseline_AUROC_values) - np.array(desired_AUROC_values) # shape (num ood, repeats)
+        difference_aupr = np.array(baseline_AUPR_values) - np.array(desired_AUPR_values) # shape (num ood, repeats)
+        import ipdb; ipdb.set_trace()
+
+        # REVERSED THE DIRECTION FOR FPR DUE TO LOWER BEING BETTER FOR FPR, SO I DO NOT NEED TO REVERSE THE DIRECTION OF THE TEST STATISTIC
+        difference_fpr = np.array(desired_FPR_values) - np.array(baseline_FPR_values) # shape (num ood, repeats)
+
+        # Calculate the p values for a particular OOD dataset for this ID dataset
+        for i in range(len(difference_auroc)): # go through all the different ID OOD dataset pairs
+            #stat, p_value  = wilcoxon(difference[i],alternative='less') # calculate the p value for a particular ID OOD dataset pair
+            stat, p_value_auroc  = wilcoxon(difference_auroc[i],alternative='less') # calculate the p value for a particular ID OOD dataset pair
+            stat, p_value_aupr  = wilcoxon(difference_aupr[i],alternative='less') # calculate the p value for a particular ID OOD dataset pair
+            stat, p_value_fpr  = wilcoxon(difference_fpr[i],alternative='less') # calculate the p value for a particular ID OOD dataset pair
+            
+            collated_rank_score_auroc[i] = p_value_auroc # add the p_value to the rank score for this particular dataset
+            collated_rank_score_aupr[i] = p_value_aupr # add the p_value to the rank score for this particular dataset
+            collated_rank_score_fpr[i] = p_value_fpr # add the p_value to the rank score for this particular dataset
+
+        
+        column_names_AUROC = ['AUROC']
+        column_names_AUPR = ['AUPR']
+        column_names_FPR = ['FPR']
+
+        # Post processing latex table
+        caption =  f'Wilcoxon Signed Rank test - {ID_dataset} P values'
+        label = f'tab:Wilcoxon_test_{ID_dataset}'
+        # https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.set_option.html
+        pd.set_option('display.precision',3) 
+
+        auroc_df = pd.DataFrame(collated_rank_score_auroc,columns = column_names_AUROC, index=row_names)
+        aupr_df = pd.DataFrame(collated_rank_score_aupr,columns = column_names_AUPR, index=row_names)
+        fpr_df = pd.DataFrame(collated_rank_score_fpr,columns = column_names_FPR, index=row_names)
+        latex_table = collated_wilcoxon_post_process_latex_table(auroc_df,aupr_df,fpr_df,caption,label)
+        
+        
+        print(latex_table)
+        
+     
 
 # Joins the different wilcoxon tables together
 def collated_wilcoxon_post_process_latex_table(df_auroc, df_aupr, df_fpr,caption,label):
@@ -1348,6 +1478,16 @@ def collated_wilcoxon_post_process_latex_table(df_auroc, df_aupr, df_fpr,caption
     return latex_table
 
 
+def update_metric_list(metric_list,data_index,metric_function, metric_string, metric_model_type,run_model_type, summary, OOD_dataset,seed):
+    #print('metric model type:',metric_model_type)
+    if metric_model_type == run_model_type and seed<200:
+        metric_value = metric_function(metric_string,summary,OOD_dataset) # calculates the value
+        metric_list[data_index].append(metric_value)
+        return metric_list
+    else:
+        return metric_list# metric array with no changes
+
+
 if __name__== '__main__':
     
     #knn_auroc_wilcoxon_v2()
@@ -1356,4 +1496,5 @@ if __name__== '__main__':
     #knn_auroc_wilcoxon_v5()
     #knn_auroc_wilcoxon_v6()
     #knn_auroc_wilcoxon_repeated_runs_v1()
-    knn_auroc_wilcoxon_repeated_runs_v2()
+    #knn_auroc_wilcoxon_repeated_runs_v2()
+    knn_auroc_wilcoxon_repeated_runs_v3()

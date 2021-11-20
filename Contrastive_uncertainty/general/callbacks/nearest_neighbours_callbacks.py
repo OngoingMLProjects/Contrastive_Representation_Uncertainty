@@ -1,7 +1,7 @@
 from numpy.core.numeric import indices
 from numpy.lib.function_base import average
 import torch
-from torch._C import per_tensor_affine
+#from torch._C import per_tensor_affine
 import torch.optim as optim
 import torch.nn as nn
 import torch.nn.functional as F
@@ -832,7 +832,7 @@ class DifferentKNNQuadraticClass1DTypicality(DifferentKNNClass1DTypicality):
             for class_num in range(len(means)):
                 perturbations[class_num][perturbations[class_num]==0] = 1e-10
 
-            ddata = [np.matmul(eigvectors[class_num].T,(fdata_batch - means[class_num]).T)**2/(eigvalues[class_num] + perturbations[class_num])*1e-10) for class_num in range(len(means))] # Calculate the 1D scores for all the different classes 
+            ddata = [np.matmul(eigvectors[class_num].T,(fdata_batch - means[class_num]).T)**2/(eigvalues[class_num] + perturbations[class_num]) for class_num in range(len(means))] # Calculate the 1D scores for all the different classes 
             #ddata = [np.matmul(eigvectors[class_num].T,(fdata_batch - means[class_num]).T)**2/(eigvalues[class_num] + (np.sign(eigvalues[class_num])*1e-10)) for class_num in range(len(means))] # Calculate the 1D scores for all the different classes 
         
             # obtain the normalised the scores for the different classes

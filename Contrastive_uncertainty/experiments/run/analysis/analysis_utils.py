@@ -199,9 +199,9 @@ def collated_baseline_post_process_latex_table(df_auroc, df_aupr, df_fpr,caption
     latex_table_fpr = join_columns(latex_table_fpr,'FPR')
 
     latex_table = join_different_columns(latex_table_auroc,latex_table_aupr) # joins the auroc and aupr table together
+    #import ipdb; ipdb.set_trace()
     latex_table = join_different_columns(latex_table, latex_table_fpr) # joins the auroc+aupr table with the fpr table
     latex_table = replace_headings_collated_table(latex_table) # replaces the heading to take into account the collated readings
-
     latex_table = post_process_latex_table(latex_table)
     latex_table = initial_table_info(latex_table)
     latex_table = add_caption(latex_table,caption)
@@ -218,7 +218,6 @@ def join_columns(latex_table,metric):
     desired_key = "&\s+.+\s+&\s+.+\s+"
     #desired_key = "&\s+.+\s+" 
     string = re.findall(desired_key,latex_table)
-    #import ipdb; ipdb.set_trace()
     updated_string = []
     # NEED TO UPDATE CODE WITH THE RECURSIVE APPROACH TO PREVENT OVERLAPPING VALUES
     for index in range(len(string)):
@@ -249,6 +248,8 @@ def join_different_columns(latex_table_1,latex_table_2):
         updated_string.append(replace_nth('\\\\\n','',joint_string,1))
         first_string = first_string.replace(string_1[index], updated_string[index])
         concatenated_list.append(first_string)
+    # at the end of the list(add on the remaining of the recursive string)
+    concatenated_list.append(recursive_string)
     '''
     for index in range(len(string_1)):
         joint_string = string_1[index] + string_2[index]
@@ -257,7 +258,6 @@ def join_different_columns(latex_table_1,latex_table_2):
     '''
     latex_table = ''.join(concatenated_list)
     return latex_table
-    #return latex_table_1
 
 # replace the headings for a table which is made from several tables
 def replace_headings_collated_table(latex_table):
@@ -330,7 +330,7 @@ def bold_min_value(df,latex_table):
 
 # Adds the part related to the beginning of the latex table
 def initial_table_info(latex_table):
-    latex_table = '\\begin{table}[]\n\\centering\n' + latex_table
+    latex_table = '\\begin{table}[h!]\n\\centering\n' + latex_table
     return latex_table
 
 # adds the caption

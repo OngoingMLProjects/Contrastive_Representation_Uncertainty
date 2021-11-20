@@ -107,9 +107,8 @@ class Max_Softmax_Probability(pl.Callback):
     def get_scores(self,prob_test, prob_ood):
         # Nawid - get all the features which belong to each of the different classes
         
-        
-        din = np.max(prob_test,axis=1)
-        dood = np.max(prob_ood,axis=1)
+        din = -np.max(prob_test,axis=1)
+        dood = -np.max(prob_ood,axis=1)
 
         indices_din = np.argmax(prob_test,axis=1)
         indices_dood = np.argmax(prob_ood,axis=1)

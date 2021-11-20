@@ -349,22 +349,30 @@ def knn_auroc_table_collated():
 
 
 # Calculates the AUROC, AUPR as well as the false positive rate
-def knn_table_collated():
+def knn_table_collated(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approach = 'Mahalanobis', baseline_model_type = 'CE'):
     
     # Make it so that the desired string and the baseline strings are decided by the suffix (ood, FPR, AUPR)
+    if desired_approach == 'Quadratic_typicality':
+        desired_string_AUROC = 'Normalized One Dim Class Quadratic Typicality KNN - 10 OOD'.lower() # Only get the key for the AUROC
+        desired_string_AUPR= 'Normalized One Dim Class Quadratic Typicality KNN - 10 AUPR'.lower()
+        desired_string_FPR = 'Normalized One Dim Class Quadratic Typicality KNN - 10 FPR'.lower()
+        desired_function = obtain_knn_value # Used to calculate the value
+    #desired_model_type = 'SupCon'
 
-    desired_string_AUROC = 'Normalized One Dim Class Quadratic Typicality KNN - 10 OOD'.lower() # Only get the key for the AUROC
-    desired_string_AUPR= 'Normalized One Dim Class Quadratic Typicality KNN - 10 AUPR'.lower()
-    desired_string_FPR = 'Normalized One Dim Class Quadratic Typicality KNN - 10 FPR'.lower()
-    desired_model_type = 'SupCon'
-    desired_function = obtain_knn_value # Used to calculate the value
+    if baseline_approach =='Mahalanobis':
+        baseline_string_AUROC = 'Mahalanobis AUROC OOD'.lower()
+        baseline_string_AUPR = 'Mahalanobis AUPR'.lower()
+        baseline_string_FPR = 'Mahalanobis FPR'.lower()
+    elif baseline_approach =='Softmax':        
+        baseline_string_AUROC = 'Maximum Softmax Probability AUROC OOD'.lower()
+        baseline_string_AUPR = 'Maximum Softmax Probability AUPR OOD'.lower()
+        baseline_string_FPR = 'Maximum Softmax Probability FPR OOD'.lower()
+    else:
+        assert baseline_approach == 'Mahalanobis' or baseline_approach =='Softmax', 'No other baselines implemented'
+        
 
-    baseline_string_AUROC = 'Mahalanobis AUROC OOD'.lower()
-    baseline_string_AUPR = 'Mahalanobis AUPR'.lower()
-    baseline_string_FPR = 'Mahalanobis FPR'.lower()
-    baseline_model_type = 'SupCon'
     baseline_function = obtain_baseline
-    
+    #baseline_model_type = 'SupCon 
     
     # Fixed value of k of interest
     fixed_k = 10
@@ -454,11 +462,11 @@ def knn_table_collated():
         aupr_df = pd.DataFrame(data_array_AUPR,columns = column_names, index=row_names)
         fpr_df = pd.DataFrame(data_array_FPR,columns = column_names, index=row_names)
         
-        caption = ID_dataset + ' Dataset'
-        label = f'tab:{ID_dataset}_Dataset'
+        caption = ID_dataset + ' Dataset'+ f' with {baseline_approach} {baseline_model_type} Baseline' 
+        label = f'tab:{ID_dataset}_Dataset_{baseline_approach}_{baseline_model_type}'
         #latex_table = single_baseline_post_process_latex_table(auroc_df, caption, label,value)
         latex_table = collated_baseline_post_process_latex_table(auroc_df,aupr_df, fpr_df,caption, label)
-        #latex_table = full_post_process_latex_table(auroc_df, caption, label,value)
+        #latex_table = full_post_process_latex_table(auroc_df, caption, label,value='max')
         
         print(latex_table)
         
@@ -527,8 +535,8 @@ def obtain_knn_value(desired_string,summary,OOD_dataset):
     keys = [key for key, value in summary.items() if desired_string in key.lower()]
     # Need to split the key so that I can remove the datasets where the name is part of another name eg MNIST and KMNIST, or CIFAR10 and CIFAR100
     ood_dataset_specific_key = [key for key in keys if OOD_dataset.lower() in str.split(key.lower())]
-    knn_auroc = round(summary[ood_dataset_specific_key[0]],3)
-    return knn_auroc
+    knn_output = round(summary[ood_dataset_specific_key[0]],3)
+    return knn_output
 
 # General function to obtain the baseline value
 def obtain_baseline(desired_string, summary,OOD_dataset):
@@ -537,9 +545,10 @@ def obtain_baseline(desired_string, summary,OOD_dataset):
 
     # get the specific mahalanobis keys for the specific OOD dataset
     OOD_dataset_specific_key = [key for key in keys if OOD_dataset.lower() in str.split(key.lower())]
-    mahalanobis_AUROC = round(summary[OOD_dataset_specific_key[0]],3)
     
-    return mahalanobis_AUROC
+    baseline_output = round(summary[OOD_dataset_specific_key[0]],3)
+    
+    return baseline_output
 
 # obtain the value for the mahalanobis for a particular situation
 def obtain_baseline_mahalanobis(summary,OOD_dataset,string1 = 'Mahalanobis AUROC OOD', string2='Mahalanobis AUROC: instance vector'):
@@ -573,4 +582,4 @@ if __name__== '__main__':
     #knn_auroc_table()
     #knn_auroc_table_mean()
     #knn_auroc_table_collated()
-    knn_table_collated()
+    knn_table_collated(baseline_approach='Mahalanobis',baseline_model_type='SupCon')
