@@ -5,6 +5,7 @@ from Contrastive_uncertainty.experiments.train.experimental_dict import model_di
 from Contrastive_uncertainty.general.run.model_names import model_names_dict
 from Contrastive_uncertainty.experiments.train.automatic_evaluate_experiments import callback_names,desired_key_dict
 
+'''
 # Choose quick callbacks to repeat
 repeat_callbacks=[callback_names['NN Quadratic']]
 repeat_bool = {key:False for key in desired_key_dict}
@@ -13,12 +14,27 @@ repeat_bool = {key:False for key in desired_key_dict}
 for key in repeat_bool:
     if key in repeat_callbacks:
         repeat_bool[key] = True
+'''
 
+# Choose quick callbacks to repeat
+repeat_callbacks=['NN Quadratic']
+if len(repeat_callbacks)>0:
+    for repeat_callback in repeat_callbacks:
+        assert repeat_callback in callback_names, 'not in callback names'
+    repeat_callbacks = [f'Repeat {key}'for key in repeat_callbacks]     
 
+repeat_bool = {f'Repeat {key}':False for key in callback_names}
+# Sets the particulat key to true
+for key in repeat_bool:
+    if key in repeat_callbacks:
+        repeat_bool[key] = True
 
+#import ipdb; ipdb.set_trace()
 run_paths = []
 api = wandb.Api()
-runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.model_type": "SupCon","config.epochs":300, 'state':'finished'})
+
+runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"to_delete"})
+#runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.model_type": "SupCon","config.epochs":300, 'state':'finished'})
 
 # Make the run paths for the different runs
 for i in range(len(runs)):
@@ -27,27 +43,13 @@ for i in range(len(runs)):
     run_paths.append(run_path)
 
 # Go through all the runs
-duplicate_run_paths = []
 for run_path in run_paths:
     previous_run = api.run(path=run_path)
     previous_config = previous_run.config
 
-    run_filter={"config.epochs":previous_config['epochs'],"config.group":previous_config['group'],"config.model_type":previous_config['model_type'] ,"config.dataset": previous_config['dataset'],"config.seed":previous_config['seed']}
-    project_path = 'nerdk312/' +previous_config['project'] # Need to make sure I get the correct path for projects
-    filtered_runs = api.runs(path=project_path, filters=run_filter) # get the filtered runs
-    if len(filtered_runs)> 1:
-        print('Duplicates present:',len(filtered_runs)) 
-        duplicate_path = '/'.join(filtered_runs[-1].path)
-        duplicate_run_paths.append(duplicate_path)
-    else:
-        print('No Duplicates present',len(filtered_runs))
-
-    # Remove runs in duplicate path
-    #     
-    if run_path in duplicate_run_paths: 
-        config = previous_config
-        config['group'] = 'Additional unused runs'
-        config['notes'] = 'Duplicate runs'
-        run = wandb.init(id=previous_run.id,resume='allow',project=config['project'],group=config['group'], notes=config['notes'])
-        wandb.config.update(config, allow_val_change=True) # Updates the config (particularly used to increase the number of epochs present)
-        run.finish()
+    config = previous_config
+    
+    run = wandb.init(id=previous_run.id,resume='allow',project=config['project'],group=config['group'], notes=config['notes'])
+    wandb.log(repeat_bool)
+    wandb.config.update(config, allow_val_change=True) # Updates the config (particularly used to increase the number of epochs present)
+    run.finish()

@@ -9,6 +9,11 @@ callback_names = {'MD':'Mahalanobis Distance',
 'MSP':'Maximum Softmax Probability'}
 
 
+# format of Mahalanobis distance: Repeat MD
+repeat_names = {value: f'Repeat {key}' for key,value in callback_names.items()}
+
+
+
 desired_key_dict = {callback_names['MD']:['Mahalanobis AUROC OOD','Mahalanobis AUPR OOD','Mahalanobis FPR OOD'],
 callback_names['NN Quadratic']:['Normalized One Dim Class Quadratic Typicality KNN - 10 OOD -','Normalized One Dim Class Quadratic Typicality KNN - 10 AUPR OOD -','Normalized One Dim Class Quadratic Typicality KNN - 10 FPR OOD -'],
 callback_names['NN Linear']: ['Normalized One Dim Class Typicality KNN - 10 OOD -','Normalized One Dim Class Typicality KNN - 10 AUPR OOD -','Normalized One Dim Class Typicality KNN - 10 FPR OOD -'],
@@ -48,7 +53,7 @@ def evaluate(run_paths,update_dict):
         # if state crash:
         # filtered_callbacks = copy.deepcopy(update_dict['callbacks'])
         
-        
+        '''
         evaluate_method = model_dict[model_type]['evaluate']
         model_module = model_dict[model_type]['model_module'] 
         model_instance_method = model_dict[model_type]['model_instance']
@@ -59,7 +64,7 @@ def evaluate(run_paths,update_dict):
         # Checks if there are any callbacks to perform, if there is,then evaluate, otherwise look at next run
         if len(filtered_callbacks) > 0:
             evaluate_method(run_path, filtered_update_dict, model_module, model_instance_method, model_data_dict,model_ood_dict)
-        
+        '''
 
 def callback_filter(summary_info,evaluation_dict):
     callbacks = evaluation_dict['callbacks']
@@ -72,18 +77,16 @@ def callback_filter(summary_info,evaluation_dict):
             updated_desired_key_dict[key].extend([value + f' {ood_dataset}' for ood_dataset in OOD_datasets]) # add list related to the OOD dataset
     
     
-
-
     filtered_callbacks = []
     # Make a dict connecting the callbacks and the inputs from the callbacks
     for callback in callbacks:
+        repeat_callback = summary_info[repeat_names[callback]] # Boolean to check whether the callback should be repeated - need to change this to make it so that all the callbacks can be repeated or not repeated
         desired_strings = updated_desired_key_dict[callback] # get the summary strings related to the callback
         # iterate throguh the strings
         for desired_string in desired_strings:
             desired_keys = [key for key, value in summary_info.items() if desired_string.lower() in key.lower()] # check if the key has the desired string
-            #print('desired key length:',len(desired_keys)) 
-            if len(desired_keys) == 0: # if any of the strings in a callback is zero, append the callback to filtered callback and go to the next callback
-                import ipdb; ipdb.set_trace()
+            if len(desired_keys) == 0 or repeat_callback: # if any of the strings in a callback is zero, append the callback to filtered callback and go to the next callback
+                
                 filtered_callbacks.append(callback)
                 break
                 
@@ -101,6 +104,8 @@ def callback_filter(summary_info,evaluation_dict):
     '''
 
     return filtered_callbacks
+
+
 
 # Used to choose a specific OOD dataset based on the ID dataset
 def OOD_dataset_filter(config):

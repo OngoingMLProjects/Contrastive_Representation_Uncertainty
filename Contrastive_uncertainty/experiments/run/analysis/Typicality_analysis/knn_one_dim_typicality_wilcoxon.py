@@ -1349,11 +1349,8 @@ def knn_auroc_wilcoxon_repeated_runs_v3(desired_approach = 'Quadratic_typicality
     # https://github.com/wandb/client/blob/v0.10.31/wandb/apis/public.py
 
 
-
-
-
     #all_ID = ['MNIST','FashionMNIST','KMNIST', 'CIFAR10','CIFAR100','Caltech101','Caltech256','TinyImageNet','Cub200','Dogs']
-    all_ID = ['MNIST','FashionMNIST','KMNIST', 'CIFAR10','Caltech101','Caltech256','TinyImageNet','Cub200','Dogs']
+    all_ID = ['MNIST','FashionMNIST','KMNIST', 'CIFAR10','Caltech101','Caltech256','Cub200','Dogs']
     #all_ID = ['Cub200','Dogs']
     for ID_dataset in all_ID: # Go through the different ID dataset                
         #runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.epochs": 300, "config.dataset": f"{ID_dataset}","config.model_type":"SupCon"})
