@@ -12,7 +12,7 @@ from pytorch_lightning.loggers import WandbLogger
 
 from Contrastive_uncertainty.general.run.general_run_setup import train_run_name, eval_run_name,callback_dictionary, specific_callbacks, Datamodule_selection
 from Contrastive_uncertainty.general.utils.hybrid_utils import previous_model_directory
-
+from Contrastive_uncertainty.experiments.train.repeat_callbacks_dict import callback_names, desired_key_dict, repeat_names
 def evaluation(run_path, update_dict, model_module, model_function,datamodule_dict,OOD_dict):
     api = wandb.Api()
     previous_run = api.run(path=run_path)
@@ -29,6 +29,7 @@ def evaluation(run_path, update_dict, model_module, model_function,datamodule_di
     pl.seed_everything(config['seed'])
 
     # Obtain checkpoint for the model        
+    
     model_dir = 'Models'
     model_dir = previous_model_directory(model_dir, run_path) # Used to preload the model
     
@@ -42,7 +43,6 @@ def evaluation(run_path, update_dict, model_module, model_function,datamodule_di
 
     # Update the trainer and the callbacks for a specific test
     
-
     for update_k, update_v in update_dict.items():
         if update_k == 'epochs':
             config[update_k] = config[update_k] + update_v    
@@ -51,10 +51,11 @@ def evaluation(run_path, update_dict, model_module, model_function,datamodule_di
 
         
     datamodule = Datamodule_selection(datamodule_dict, config['dataset'],config)
-    
+
     # CHANGE SECTION
     # Load from checkpoint using pytorch lightning loads everything directly to continue training from the class function
     # model = model_module.load_from_checkpoint(model_dir)
+    
     model = model_function(model_module, config, datamodule)
 
     callback_dict = callback_dictionary(datamodule, config, datamodule_dict)
@@ -72,5 +73,9 @@ def evaluation(run_path, update_dict, model_module, model_function,datamodule_di
     
     trainer.test(model,datamodule=datamodule,
             ckpt_path=None)  # uses last-saved model , use test set to call the reliability diagram only at the end of the training process
-     
+    
+    # Gets all the callbacks used and sets them to false
+    repeat_bool = {repeat_names[callback]:False for callback in config['callbacks']}
+    wandb.log(repeat_bool)
+
     run.finish()

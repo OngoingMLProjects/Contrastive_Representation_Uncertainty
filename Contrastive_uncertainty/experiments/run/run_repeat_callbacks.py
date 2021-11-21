@@ -3,7 +3,7 @@ from numpy.core.fromnumeric import repeat
 import wandb
 from Contrastive_uncertainty.experiments.train.experimental_dict import model_dict
 from Contrastive_uncertainty.general.run.model_names import model_names_dict
-from Contrastive_uncertainty.experiments.train.automatic_evaluate_experiments import callback_names,desired_key_dict
+from Contrastive_uncertainty.experiments.train.repeat_callbacks_dict import callback_names,desired_key_dict
 
 '''
 # Choose quick callbacks to repeat

@@ -2,22 +2,8 @@
 import wandb
 import copy
 from Contrastive_uncertainty.experiments.train.experimental_dict import model_dict
+from Contrastive_uncertainty.experiments.train.repeat_callbacks_dict import callback_names, repeat_names, desired_key_dict
 
-callback_names = {'MD':'Mahalanobis Distance',
-'NN Quadratic':'Nearest 10 Neighbours Class Quadratic 1D Typicality',
-'NN Linear':'Nearest 10 Neighbours Class 1D Typicality',
-'MSP':'Maximum Softmax Probability'}
-
-
-# format of Mahalanobis distance: Repeat MD
-repeat_names = {value: f'Repeat {key}' for key,value in callback_names.items()}
-
-
-
-desired_key_dict = {callback_names['MD']:['Mahalanobis AUROC OOD','Mahalanobis AUPR OOD','Mahalanobis FPR OOD'],
-callback_names['NN Quadratic']:['Normalized One Dim Class Quadratic Typicality KNN - 10 OOD -','Normalized One Dim Class Quadratic Typicality KNN - 10 AUPR OOD -','Normalized One Dim Class Quadratic Typicality KNN - 10 FPR OOD -'],
-callback_names['NN Linear']: ['Normalized One Dim Class Typicality KNN - 10 OOD -','Normalized One Dim Class Typicality KNN - 10 AUPR OOD -','Normalized One Dim Class Typicality KNN - 10 FPR OOD -'],
-callback_names['MSP']: ['Maximum Softmax Probability AUROC OOD','Maximum Softmax Probability AUPR OOD','Maximum Softmax Probability FPR OOD']}
 
 
 def evaluate(run_paths,update_dict):    
@@ -53,7 +39,7 @@ def evaluate(run_paths,update_dict):
         # if state crash:
         # filtered_callbacks = copy.deepcopy(update_dict['callbacks'])
         
-        '''
+        
         evaluate_method = model_dict[model_type]['evaluate']
         model_module = model_dict[model_type]['model_module'] 
         model_instance_method = model_dict[model_type]['model_instance']
@@ -64,7 +50,7 @@ def evaluate(run_paths,update_dict):
         # Checks if there are any callbacks to perform, if there is,then evaluate, otherwise look at next run
         if len(filtered_callbacks) > 0:
             evaluate_method(run_path, filtered_update_dict, model_module, model_instance_method, model_data_dict,model_ood_dict)
-        '''
+        
 
 def callback_filter(summary_info,evaluation_dict):
     callbacks = evaluation_dict['callbacks']

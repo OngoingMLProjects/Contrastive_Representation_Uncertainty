@@ -11,8 +11,8 @@ from Contrastive_uncertainty.experiments.config.trainer_params import trainer_hp
 
 run_paths = []
 api = wandb.Api()
-#runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.model_type": "CE","config.epochs":300,"$or": [{'state':'finished'}, {'state':'crashed'},{'state':'failed'}]})
-runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"to_delete"})# Gets the runs corresponding to a specific filter
+runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.model_type": "CE","config.epochs":300,"$or": [{'state':'finished'}, {'state':'crashed'},{'state':'failed'}]})
+#runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"to_delete"})# Gets the runs corresponding to a specific filter
 
 #https://github.com/wandb/client/blob/v0.10.31/wandb/apis/public.py
 #https://github.com/wandb/client/blob/v0.12.1/wandb/apis/public.py#L752-L851
