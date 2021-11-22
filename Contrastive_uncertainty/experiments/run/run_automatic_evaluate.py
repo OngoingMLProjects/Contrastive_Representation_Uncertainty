@@ -12,6 +12,12 @@ from Contrastive_uncertainty.experiments.config.trainer_params import trainer_hp
 run_paths = []
 api = wandb.Api()
 runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.model_type": "CE","config.epochs":300,"$or": [{'state':'finished'}, {'state':'crashed'},{'state':'failed'}]})
+runs_2 = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.model_type": "SupCon","config.epochs":300,"$or": [{'state':'finished'}, {'state':'crashed'},{'state':'failed'}]})
+collated_runs = [runs, runs_2]
+
+#runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.epochs":300,"config.model_type":"CE","config.model_type":"SupCon","$or": [{"config.dataset":"CIFAR100" }, {"config.dataset":"Cub200"},{"config.dataset":"TinyImageNet"}]})
+#runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.epochs":300,"$or": [{"config.model_type":"CE" }, {"config.model_type":"SupCon"}]})
+
 #runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"to_delete"})# Gets the runs corresponding to a specific filter
 
 #https://github.com/wandb/client/blob/v0.10.31/wandb/apis/public.py
@@ -57,10 +63,16 @@ runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines R
 
 #runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","$or": [{"config.model_type":"CE"}, {"config.dataset": "MNIST"}, {"config.dataset": "FashionMNIST"}]})
 
-
+'''
 for i in range(len(runs)):
     # Joins together the path of the runs which are separated into different parts in a list
     run_path = '/'.join(runs[i].path)
     run_paths.append(run_path)
+
+'''
+for run_set in collated_runs:
+    for i in range(len(run_set)):
+        run_path = '/'.join(run_set[i].path)
+        run_paths.append(run_path)
 
 evaluate(run_paths, trainer_hparams)

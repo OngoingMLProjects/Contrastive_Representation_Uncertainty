@@ -17,7 +17,8 @@ for key in repeat_bool:
 '''
 
 # Choose quick callbacks to repeat
-repeat_callbacks=['NN Quadratic']
+#repeat_callbacks=['NN Quadratic']
+repeat_callbacks=['MSP']
 if len(repeat_callbacks)>0:
     for repeat_callback in repeat_callbacks:
         assert repeat_callback in callback_names, 'not in callback names'
@@ -33,9 +34,9 @@ for key in repeat_bool:
 run_paths = []
 api = wandb.Api()
 
-runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"to_delete"})
+#runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"to_delete"})
 #runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.model_type": "SupCon","config.epochs":300, 'state':'finished'})
-
+runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.model_type": "CE","config.epochs":300, 'state':'finished'})
 # Make the run paths for the different runs
 for i in range(len(runs)):
     # Joins together the path of the runs which are separated into different parts in a list

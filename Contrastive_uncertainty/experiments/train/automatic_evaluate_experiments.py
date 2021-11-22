@@ -4,8 +4,6 @@ import copy
 from Contrastive_uncertainty.experiments.train.experimental_dict import model_dict
 from Contrastive_uncertainty.experiments.train.repeat_callbacks_dict import callback_names, repeat_names, desired_key_dict
 
-
-
 def evaluate(run_paths,update_dict):    
     
     # Dict for the model name, parameters and specific training loop
@@ -14,7 +12,7 @@ def evaluate(run_paths,update_dict):
     for run_path in run_paths:
         api = wandb.Api()    
         # Obtain previous information such as the model type to be able to choose appropriate methods
-        
+        print('run path',run_path)
         previous_run = api.run(path=run_path)
         previous_config = previous_run.config
         model_type = previous_config['model_type']
@@ -38,6 +36,7 @@ def evaluate(run_paths,update_dict):
         filtered_update_dict['callbacks'] = filtered_callbacks
         # if state crash:
         # filtered_callbacks = copy.deepcopy(update_dict['callbacks'])
+        
         
         
         evaluate_method = model_dict[model_type]['evaluate']
@@ -66,7 +65,9 @@ def callback_filter(summary_info,evaluation_dict):
     filtered_callbacks = []
     # Make a dict connecting the callbacks and the inputs from the callbacks
     for callback in callbacks:
+        
         repeat_callback = summary_info[repeat_names[callback]] # Boolean to check whether the callback should be repeated - need to change this to make it so that all the callbacks can be repeated or not repeated
+
         desired_strings = updated_desired_key_dict[callback] # get the summary strings related to the callback
         # iterate throguh the strings
         for desired_string in desired_strings:

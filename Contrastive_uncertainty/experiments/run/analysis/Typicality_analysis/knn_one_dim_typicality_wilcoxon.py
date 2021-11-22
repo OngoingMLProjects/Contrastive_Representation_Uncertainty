@@ -1327,7 +1327,7 @@ def knn_auroc_wilcoxon_repeated_runs_v3(desired_approach = 'Quadratic_typicality
         desired_string_AUPR= 'Normalized One Dim Class Quadratic Typicality KNN - 10 AUPR'.lower()
         desired_string_FPR = 'Normalized One Dim Class Quadratic Typicality KNN - 10 FPR'.lower()
         desired_function = obtain_knn_value # Used to calculate the value
-
+    
     if baseline_approach =='Mahalanobis':
         baseline_string_AUROC = 'Mahalanobis AUROC OOD'.lower()
         baseline_string_AUPR = 'Mahalanobis AUPR'.lower()
@@ -1349,12 +1349,14 @@ def knn_auroc_wilcoxon_repeated_runs_v3(desired_approach = 'Quadratic_typicality
     # https://github.com/wandb/client/blob/v0.10.31/wandb/apis/public.py
 
 
-    #all_ID = ['MNIST','FashionMNIST','KMNIST', 'CIFAR10','CIFAR100','Caltech101','Caltech256','TinyImageNet','Cub200','Dogs']
-    all_ID = ['MNIST','FashionMNIST','KMNIST', 'CIFAR10','Caltech101','Caltech256','Cub200','Dogs']
+    all_ID = ['MNIST','FashionMNIST','KMNIST', 'CIFAR10','CIFAR100','Caltech101','Caltech256','TinyImageNet','Cub200','Dogs']
+    #all_ID = ['TinyImageNet']
+    #all_ID = ['MNIST','FashionMNIST','KMNIST', 'CIFAR10','Caltech101', 'Caltech256','Cub200','Dogs']
     #all_ID = ['Cub200','Dogs']
     for ID_dataset in all_ID: # Go through the different ID dataset                
         #runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.epochs": 300, "config.dataset": f"{ID_dataset}","config.model_type":"SupCon"})
-        runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.epochs": 300, 'state':'finished',"config.dataset": f"{ID_dataset}","$or": [{"config.model_type":"SupCon" }, {"config.model_type": "CE"}]})
+        #runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.epochs": 300, 'state':'finished',"config.dataset": f"{ID_dataset}","$or": [{"config.model_type":"SupCon" }, {"config.model_type": "CE"}]})
+        runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.epochs": 300,"config.dataset": f"{ID_dataset}","$or": [{"config.model_type":"SupCon" }, {"config.model_type": "CE"}]})
         # number of OOd datasets for this particular ID dataset
         num_ood = len(dataset_dict[ID_dataset])
         # data array for each ID dataset 
@@ -1388,7 +1390,7 @@ def knn_auroc_wilcoxon_repeated_runs_v3(desired_approach = 'Quadratic_typicality
             # include the group name in the run path
             path_list.insert(-1, group_name)
             run_path = '/'.join(path_list)
-
+            #print('run path:',run_path)
             model_type = run_config['model_type']
             Model_name = 'SupCLR' if model_type=='SupCon' else model_type
             # Make a data array, where the number values are equal to the number of OOD classes present in the datamodule dict or equal to the number of keys
@@ -1401,7 +1403,6 @@ def knn_auroc_wilcoxon_repeated_runs_v3(desired_approach = 'Quadratic_typicality
             # Obtain all the OOD datasets for a particular desired string
             all_OOD_datasets = obtain_ood_datasets(desired_string_AUROC, run_summary,ID_dataset)
             for OOD_dataset in all_OOD_datasets:
-                print(f'ID:{ID_dataset}')
                 data_index = dataset_dict[ID_dataset][OOD_dataset] # obtain an index for a particular ID and OOD dataset pair
                 row_names[data_index] = f'ID:{ID_dataset}, OOD:{OOD_dataset}' 
                 
@@ -1409,12 +1410,12 @@ def knn_auroc_wilcoxon_repeated_runs_v3(desired_approach = 'Quadratic_typicality
                 desired_AUPR_values = update_metric_list(desired_AUPR_values,data_index,desired_function,desired_string_AUPR,desired_model_type, model_type,run_summary,OOD_dataset,run_config['seed'])
                 desired_FPR_values = update_metric_list(desired_FPR_values,data_index,desired_function,desired_string_FPR,desired_model_type, model_type,run_summary,OOD_dataset,run_config['seed'])
 
-                baseline_AUROC_values = update_metric_list(baseline_AUROC_values,data_index,baseline_function,baseline_string_AUROC,desired_model_type,model_type,run_summary,OOD_dataset,run_config['seed'])
-                baseline_AUPR_values = update_metric_list(baseline_AUPR_values,data_index,baseline_function,baseline_string_AUPR,desired_model_type, model_type,run_summary,OOD_dataset,run_config['seed'])
+                baseline_AUROC_values = update_metric_list(baseline_AUROC_values,data_index,baseline_function,baseline_string_AUROC,baseline_model_type,model_type,run_summary,OOD_dataset,run_config['seed'])
+                baseline_AUPR_values = update_metric_list(baseline_AUPR_values,data_index,baseline_function,baseline_string_AUPR,baseline_model_type, model_type,run_summary,OOD_dataset,run_config['seed'])
                 baseline_FPR_values = update_metric_list(baseline_FPR_values,data_index,baseline_function,baseline_string_FPR,baseline_model_type, model_type,run_summary,OOD_dataset,run_config['seed'])
  
                 
-        print(f'ID:{ID_dataset}')
+        #print(f'ID:{ID_dataset}')
         
         difference_auroc = np.array(baseline_AUROC_values) - np.array(desired_AUROC_values) # shape (num ood, repeats)
         difference_aupr = np.array(baseline_AUPR_values) - np.array(desired_AUPR_values) # shape (num ood, repeats)
@@ -1500,4 +1501,5 @@ if __name__== '__main__':
     #knn_auroc_wilcoxon_v6()
     #knn_auroc_wilcoxon_repeated_runs_v1()
     #knn_auroc_wilcoxon_repeated_runs_v2()
-    knn_auroc_wilcoxon_repeated_runs_v3()
+    #knn_auroc_wilcoxon_repeated_runs_v3()
+    knn_auroc_wilcoxon_repeated_runs_v3(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approach = 'Softmax', baseline_model_type = 'CE')

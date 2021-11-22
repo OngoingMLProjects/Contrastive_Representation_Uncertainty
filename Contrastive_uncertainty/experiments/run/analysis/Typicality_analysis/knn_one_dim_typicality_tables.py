@@ -540,7 +540,7 @@ def obtain_knn_value(desired_string,summary,OOD_dataset):
 
 # General function to obtain the baseline value
 def obtain_baseline(desired_string, summary,OOD_dataset):
-    
+    #print('OOD dataset',OOD_dataset)
     desired_string = desired_string.lower() # double check that it has been lowered 
     keys = [key for key, value in summary.items() if desired_string in key.lower()]
     # get the specific mahalanobis keys for the specific OOD dataset
@@ -582,4 +582,8 @@ if __name__== '__main__':
     #knn_auroc_table()
     #knn_auroc_table_mean()
     #knn_auroc_table_collated()
-    knn_table_collated(baseline_approach='Mahalanobis',baseline_model_type='SupCon')
+    #knn_table_collated(baseline_approach='Mahalanobis',baseline_model_type='SupCon')
+    #knn_table_collated(baseline_approach='Mahalanobis',baseline_model_type='CE')
+    #knn_table_collated(desired_approach = 'Quadratic_typicality', desired_model_type = 'CE', baseline_approach = 'Mahalanobis', baseline_model_type = 'CE')
+    #knn_table_collated(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approach = 'Mahalanobis', baseline_model_type = 'CE')
+    knn_table_collated(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approach = 'Softmax', baseline_model_type = 'CE')

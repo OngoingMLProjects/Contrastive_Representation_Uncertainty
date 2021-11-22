@@ -53,7 +53,10 @@ class Max_Softmax_Probability(pl.Callback):
     '''
     
     def on_test_epoch_end(self, trainer, pl_module):
-        self.forward_callback(trainer=trainer, pl_module=pl_module) 
+        if pl_module.name == 'CE':
+            self.forward_callback(trainer=trainer, pl_module=pl_module) 
+        else:
+            pass
 
     # Performs all the computation in the callback
     def forward_callback(self,trainer,pl_module):
