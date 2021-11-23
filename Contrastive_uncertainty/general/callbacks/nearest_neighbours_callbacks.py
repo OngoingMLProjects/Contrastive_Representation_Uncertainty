@@ -732,7 +732,6 @@ class KNNClassTypicality(NearestNeighboursQuadraticClass1DTypicality):
             # calculate the average scores for the situation within a class and see how the average deviates from the mean it is a list of n classes where each value is a scalar
             #ddata_practice = [np.abs(np.mean(ddata[class_num])-dtrain_mean[class_num]) for class_num in range(num_classes)] # deviation from the mean for the different classes
             
-            #import ipdb; ipdb.set_trace()
             # calculate the difference between the mean and the other value and then normalize the data
             ddata = [(np.mean(ddata[class_num])-dtrain_means[class_num])/dtrain_stds[class_num] for class_num in range(num_classes)]
             ddata = [np.abs(ddata[class_num]) for class_num in range(num_classes)]

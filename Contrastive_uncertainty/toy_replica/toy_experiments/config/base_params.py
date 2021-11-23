@@ -78,7 +78,6 @@ model_saving = 1, # Used to control how often the model is saved
 
 
 callbacks = ['Nearest 10 Neighbours Class Typicality'],
-
 )
 
 

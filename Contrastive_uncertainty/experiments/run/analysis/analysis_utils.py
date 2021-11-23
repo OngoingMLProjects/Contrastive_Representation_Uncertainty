@@ -148,7 +148,7 @@ def full_post_process_latex_table(df,caption,label,value = 'max'):
     
     return latex_table
 
-# Utils for the latex table
+# Utils for the latex table - compares between a single baseline and a single metric eg AUROC
 def single_baseline_post_process_latex_table(df,caption,label,value = 'max'):
     
     latex_table = df.to_latex()
@@ -177,7 +177,7 @@ def single_baseline_post_process_latex_table(df,caption,label,value = 'max'):
 
 
 
-# Utils for the latex table
+# Utils for the latex table - Compares between a single baseline and several metrics AUROC, AUPR and FPR
 def collated_baseline_post_process_latex_table(df_auroc, df_aupr, df_fpr,caption,label):
     
     latex_table_auroc = df_auroc.to_latex()
@@ -213,6 +213,7 @@ def collated_baseline_post_process_latex_table(df_auroc, df_aupr, df_fpr,caption
     return latex_table
 
 
+
 # join columns within a single table
 def join_columns(latex_table,metric):
     desired_key = "&\s+.+\s+&\s+.+\s+"
@@ -228,6 +229,71 @@ def join_columns(latex_table,metric):
         latex_table = latex_table.replace(f'{string[index]}',f'{updated_string[index]}')
     
 
+    return latex_table
+
+
+# Utils for the latex table - Compares between a single baseline and several metrics AUROC, AUPR and FPR
+def collated_multiple_baseline_post_process_latex_table(df_auroc, df_aupr, df_fpr,caption,label):
+    
+    latex_table_auroc = df_auroc.to_latex()
+    latex_table_auroc = replace_headings(df_auroc,latex_table_auroc)
+    latex_table_auroc = bold_max_value(df_auroc,latex_table_auroc)
+
+    latex_table_aupr = df_aupr.to_latex()
+    latex_table_aupr = replace_headings(df_aupr,latex_table_aupr)
+    latex_table_aupr = bold_max_value(df_aupr,latex_table_aupr)
+
+    latex_table_fpr = df_fpr.to_latex()
+    latex_table_fpr = replace_headings(df_fpr,latex_table_fpr)
+    latex_table_fpr = bold_min_value(df_fpr,latex_table_fpr)
+
+    # used to get the pattern of &, then empy space, then any character, empty space,  then & then empty space
+    latex_table_auroc = join_multiple_columns(latex_table_auroc,'AUROC')
+    latex_table_aupr = join_multiple_columns(latex_table_aupr,'AUPR')
+    latex_table_fpr = join_multiple_columns(latex_table_fpr,'FPR')
+
+    latex_table = join_different_columns(latex_table_auroc,latex_table_aupr) # joins the auroc and aupr table together
+    latex_table = join_different_columns(latex_table, latex_table_fpr) # joins the auroc+aupr table with the fpr table
+    latex_table = replace_headings_collated_table(latex_table) # replaces the heading to take into account the collated readings
+    latex_table = post_process_latex_table(latex_table)
+    latex_table = initial_table_info(latex_table)
+    latex_table = add_caption(latex_table,caption)
+    latex_table = add_label(latex_table,label) 
+    latex_table = end_table_info(latex_table)
+
+    #latex_table = '\\begin{table}[]\n\\centering\n' + latex_table + '\n\\caption{'+ caption + '}\n\\label{' + label + '}\n\\end{table}'
+    
+    return latex_table
+
+
+# join multiple columns within a single latex table, so makes the format x/y/z for the different baselines
+def join_multiple_columns(latex_table,metric):
+    
+    # Used to find the number of columns present
+    desired_column_key = '&.+\\\\\n'
+    # Used to find the strings with the desired key (which is esentially the number of '&)
+    string = re.findall(desired_column_key,latex_table)
+    num_columns = string[0].count('&') # number of separate columns
+
+    #### Change code to take into account the number of columns present
+    desired_key = "&\s+.+\s+"*(num_columns)
+    string = re.findall(desired_key,latex_table)
+
+    #desired_key = "&\s+.+\s+&\s+.+\s+"# *(num_columns)
+    #desired_key = "&\s+.+\s+" 
+    #string = re.findall(desired_key,latex_table)
+    updated_string = []
+    # NEED TO UPDATE CODE WITH THE RECURSIVE APPROACH TO PREVENT OVERLAPPING VALUES
+    for index in range(len(string)):
+        if index ==0:
+            updated_string.append(f'& {metric} \\\\\n')
+        else:
+            new_string = copy.deepcopy(string[index]) # make a copy of the string
+            for i in range(num_columns-1):
+                new_string = replace_nth('&','/',new_string,2) # replace the second & multiple times
+            updated_string.append(new_string)
+        latex_table = latex_table.replace(f'{string[index]}',f'{updated_string[index]}')
+    
     return latex_table
 
 # Join the columns of two different metrics (can be used recursively )

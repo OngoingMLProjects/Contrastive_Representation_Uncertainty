@@ -19,7 +19,7 @@ from scipy.stats import wilcoxon
 import json
 import re
 
-from Contrastive_uncertainty.experiments.run.analysis.analysis_utils import collated_baseline_post_process_latex_table, dataset_dict, key_dict, ood_dataset_string, post_process_latex_table,full_post_process_latex_table, single_baseline_post_process_latex_table
+from Contrastive_uncertainty.experiments.run.analysis.analysis_utils import collated_baseline_post_process_latex_table, dataset_dict, key_dict, ood_dataset_string, post_process_latex_table,full_post_process_latex_table, single_baseline_post_process_latex_table, collated_multiple_baseline_post_process_latex_table
 
 def knn_vector(json_data):
     data = np.array(json_data['data'])
@@ -383,9 +383,6 @@ def knn_table_collated(desired_approach = 'Quadratic_typicality', desired_model_
     # Gets the runs corresponding to a specific filter
     # https://github.com/wandb/client/blob/v0.10.31/wandb/apis/public.py
 
-
-    
-    
     all_ID = ['MNIST','FashionMNIST','KMNIST', 'CIFAR10','CIFAR100','Caltech101','Caltech256','TinyImageNet','Cub200','Dogs']
     for ID_dataset in all_ID: # Go through the different ID dataset                
         #runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"OOD hierarchy baselines","config.epochs": 300, 'state':'finished',"config.dataset": f"{ID_dataset}","$or": [{"config.model_type":"SupCon" }, {"config.model_type": "CE"}]})
@@ -470,6 +467,137 @@ def knn_table_collated(desired_approach = 'Quadratic_typicality', desired_model_
         #latex_table = full_post_process_latex_table(auroc_df, caption, label,value='max')
         
         print(latex_table)
+
+
+
+# Calculates the AUROC, AUPR as well as the false positive rate - Pass in list to calculate all baselines
+def knn_table_collated_v2(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['Softmax','Mahalanobis'], baseline_model_types = ['CE','CE']):
+
+
+    
+
+    baselines_dict = {'Mahalanobis':{'AUROC':'Mahalanobis AUROC OOD'.lower(),'AUPR':'Mahalanobis AUPR'.lower(),'FPR':'Mahalanobis FPR'.lower()},
+                
+                'Softmax':{'AUROC':'Maximum Softmax Probability AUROC OOD'.lower(),'AUPR':'Maximum Softmax Probability AUPR OOD'.lower(),'FPR':'Maximum Softmax Probability FPR OOD'.lower()},
+                }
+
+    assert len(baseline_approaches) == len(baseline_model_types), 'number of baseline approaches do not match number of baseline models'
+    num_baselines = len(baseline_approaches)
+    # Make it so that the desired string and the baseline strings are decided by the suffix (ood, FPR, AUPR)
+    if desired_approach == 'Quadratic_typicality':
+        desired_string_AUROC = 'Normalized One Dim Class Quadratic Typicality KNN - 10 OOD'.lower() # Only get the key for the AUROC
+        desired_string_AUPR= 'Normalized One Dim Class Quadratic Typicality KNN - 10 AUPR'.lower()
+        desired_string_FPR = 'Normalized One Dim Class Quadratic Typicality KNN - 10 FPR'.lower()
+        desired_function = obtain_knn_value # Used to calculate the value
+
+    ####################
+    # make a loop to add the baseline strings and the baseline AUPR etc
+    baseline_strings_AUROC = []
+    baseline_strings_AUPR = []
+    baseline_strings_FPR = []
+    for approach in baseline_approaches:
+        assert approach == 'Mahalanobis' or approach =='Softmax', 'No other baselines implemented'
+        baseline_strings_AUROC.append(baselines_dict[approach]['AUROC'])
+        baseline_strings_AUPR.append(baselines_dict[approach]['AUPR'])
+        baseline_strings_FPR.append(baselines_dict[approach]['FPR'])
+
+    baseline_function = obtain_baseline
+    
+    # Fixed value of k of interest
+    fixed_k = 10
+    # Desired ID,OOD and Model  
+    root_dir = 'run_data/'
+
+    api = wandb.Api()
+    # Gets the runs corresponding to a specific filter
+    # https://github.com/wandb/client/blob/v0.10.31/wandb/apis/public.py
+
+    all_ID = ['MNIST','FashionMNIST','KMNIST', 'CIFAR10','CIFAR100','Caltech101','Caltech256','TinyImageNet','Cub200','Dogs']
+    for ID_dataset in all_ID: # Go through the different ID dataset                
+        #runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"OOD hierarchy baselines","config.epochs": 300, 'state':'finished',"config.dataset": f"{ID_dataset}","$or": [{"config.model_type":"SupCon" }, {"config.model_type": "CE"}]})
+        runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.epochs": 300, 'state':'finished',"config.dataset": f"{ID_dataset}","$or": [{"config.model_type":"SupCon" }, {"config.model_type": "CE"}]})
+        #runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.epochs": 300, "config.dataset": f"{ID_dataset}","config.model_type":"SupCon"})
+        #runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.epochs": 300, "config.dataset": f"{ID_dataset}","config.model_type":"CE"})
+        # number of OOd datasets for this particular ID dataset
+        num_ood = len(dataset_dict[ID_dataset])
+        # data array
+        data_array_AUROC = np.zeros((num_ood,num_baselines+1)) 
+        count_array_AUROC = np.zeros((num_ood,num_baselines+1))  
+
+        data_array_AUPR = np.zeros((num_ood,num_baselines+1)) 
+        count_array_AUPR = np.zeros((num_ood,num_baselines+1)) 
+
+        data_array_FPR = np.zeros((num_ood,num_baselines+1)) 
+        count_array_FPR = np.zeros((num_ood,num_baselines+1)) 
+
+        row_names = [None] * num_ood # Make an empty list to take into account all the different values 
+        for i, run in enumerate(runs): 
+            run_summary = run.summary._json_dict
+            # .config contains the hyperparameters.
+            #  We remove special values that start with _.
+            run_config = {k: v for k,v in run.config.items()
+                 if not k.startswith('_')} 
+
+            group_name = run_config['group']
+            path_list = run.path
+            # include the group name in the run path
+            path_list.insert(-1, group_name)
+            run_path = '/'.join(path_list)
+
+            ID_dataset = run_config['dataset']
+            model_type = run_config['model_type']
+            Model_name = 'SupCLR' if model_type=='SupCon' else model_type
+            # Make a data array, where the number values are equal to the number of OOD classes present in the datamodule dict or equal to the number of keys
+
+            # name for the different rows of a table
+            #row_names = []
+            # https://stackoverflow.com/questions/10712002/create-an-empty-list-in-python-with-certain-size
+            
+            # go through the different knn keys
+            
+            # Obtain the ID and OOD dataset
+            # Make function to obtain quadratic typicality for a particular ID and OOD dataset
+            # Make function to obtain mahalanobis from a particular ID and OOD dataset
+            
+            # Obtain all the OOD datasets for a particular desired string
+            all_OOD_datasets = obtain_ood_datasets_baseline(desired_string_AUROC,baseline_strings_AUROC[0], run_summary,ID_dataset)
+            for OOD_dataset in all_OOD_datasets:
+                data_index = dataset_dict[ID_dataset][OOD_dataset] # index location
+                # updates the data array and the count array at a certain location with
+                
+                data_array_AUROC, count_array_AUROC =update_metric_and_count(data_array_AUROC,count_array_AUROC,data_index,-1,desired_function,desired_string_AUROC,desired_model_type,model_type,run_summary,OOD_dataset)
+                data_array_AUPR, count_array_AUPR =update_metric_and_count(data_array_AUPR,count_array_AUPR,data_index,-1,desired_function,desired_string_AUPR,desired_model_type,model_type,run_summary,OOD_dataset)
+                data_array_FPR, count_array_FPR =update_metric_and_count(data_array_FPR,count_array_FPR,data_index,-1,desired_function,desired_string_FPR,desired_model_type,model_type,run_summary,OOD_dataset)
+
+                for i in range(len(baseline_approaches)):
+
+                    data_array_AUROC, count_array_AUROC =update_metric_and_count(data_array_AUROC,count_array_AUROC,data_index,i,baseline_function,baseline_strings_AUROC[i],baseline_model_types[i],model_type,run_summary,OOD_dataset)
+                    data_array_AUPR, count_array_AUPR =update_metric_and_count(data_array_AUPR,count_array_AUPR,data_index,i,baseline_function,baseline_strings_AUPR[i],baseline_model_types[i],model_type,run_summary,OOD_dataset)
+                    data_array_FPR, count_array_FPR =update_metric_and_count(data_array_FPR,count_array_FPR,data_index,i,baseline_function,baseline_strings_FPR[i],baseline_model_types[i],model_type,run_summary,OOD_dataset)
+
+                row_names[data_index] = f'ID:{ID_dataset}, OOD:{OOD_dataset}' 
+
+        
+        data_array_AUROC = np.round(data_array_AUROC/count_array_AUROC,decimals=3)  
+        data_array_AUPR = np.round(data_array_AUPR/count_array_AUPR,decimals=3)  
+        data_array_FPR = np.round(data_array_FPR/count_array_FPR,decimals=3)
+        column_names = baseline_approaches + [f'Quadratic {fixed_k} NN']        
+        auroc_df = pd.DataFrame(data_array_AUROC,columns = column_names, index=row_names)
+        aupr_df = pd.DataFrame(data_array_AUPR,columns = column_names, index=row_names)
+        fpr_df = pd.DataFrame(data_array_FPR,columns = column_names, index=row_names)
+        
+
+        #desired_approach.split("_")
+        
+        caption = ID_dataset + ' Dataset'+ f' with {desired_approach.replace("_"," ")} {desired_model_type}'  # replace Underscore with spaces for the caption
+        label = f'tab:{ID_dataset}_Dataset_{desired_approach}_{desired_model_type}'
+        #caption = ID_dataset + ' Dataset'+ f' with {desired_approach.replace("_"," ")} {desired_model_type} vs {baseline_approach.replace("_"," ")} {baseline_model_type} Baseline'  # replace Underscore with spaces for the caption
+        #label = f'tab:{ID_dataset}_Dataset_{desired_approach}_{desired_model_type}_{baseline_approach}_{baseline_model_type}'
+        #latex_table = single_baseline_post_process_latex_table(auroc_df, caption, label,value)
+        latex_table =  collated_multiple_baseline_post_process_latex_table(auroc_df,aupr_df, fpr_df,caption, label)
+        #latex_table = full_post_process_latex_table(auroc_df, caption, label,value='max')
+        
+        print(latex_table)
         
 
 def update_metric(metric_array,data_index, second_index,metric_function, metric_string, metric_model_type,run_model_type, summary, OOD_dataset):
@@ -513,7 +641,7 @@ def obtain_ood_datasets_baseline(desired_string,baseline_string,summary,ID_datas
                 all_OOD_datasets.append(OOD_dataset)
 
     return all_OOD_datasets        
-     
+
 
 
 # Obtain the OOD datasets for a particular string
@@ -587,4 +715,5 @@ if __name__== '__main__':
     #knn_table_collated(baseline_approach='Mahalanobis',baseline_model_type='CE')
     #knn_table_collated(desired_approach = 'Quadratic_typicality', desired_model_type = 'CE', baseline_approach = 'Mahalanobis', baseline_model_type = 'CE')
     #knn_table_collated(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approach = 'Mahalanobis', baseline_model_type = 'CE')
-    knn_table_collated(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approach = 'Softmax', baseline_model_type = 'CE')
+    #knn_table_collated(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approach = 'Softmax', baseline_model_type = 'CE')
+    knn_table_collated_v2()
