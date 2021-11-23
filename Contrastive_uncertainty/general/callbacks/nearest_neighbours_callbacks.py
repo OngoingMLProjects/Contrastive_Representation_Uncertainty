@@ -621,6 +621,153 @@ class NearestNeighboursQuadraticClass1DTypicality(NearestNeighboursClass1DTypica
         return super().get_eval_results(ftrain, ftest, food, labelstrain)
 
 
+
+# NEED TO CHECK THAT THE SHAPE OF THE OUTPUTS ARE CORRECT FOR THE DIFFERENT SITUATIONS
+# Ablation which does not use the 1 dimensional decomposition of the data
+class KNNClassTypicality(NearestNeighboursQuadraticClass1DTypicality):
+    def __init__(self, Datamodule,OOD_Datamodule,
+        quick_callback:bool = True,K:int = 10):
+
+        super().__init__(Datamodule,OOD_Datamodule, quick_callback,K)
+        # Used to save the summary value
+
+        self.K = K
+        self.summary_key = f'Normalized All Dim Class Typicality KNN - {self.K} OOD - {self.OOD_Datamodule.name}'
+        self.summary_aupr = f'Normalized All Dim Class Typicality KNN - {self.K} AUPR OOD - {self.OOD_Datamodule.name}'
+        self.summary_fpr = f'Normalized All Dim Class Typicality KNN - {self.K} FPR OOD - {self.OOD_Datamodule.name}'
+
+    def on_test_epoch_end(self, trainer, pl_module):
+        return super().on_test_epoch_end(trainer, pl_module)
+
+    def forward_callback(self, trainer, pl_module):
+        self.OOD_Datamodule.setup() # SETUP AGAIN TO RESET AFTER PROVIDING THE TRANSFORM FOR THE DATA
+
+        train_loader = self.Datamodule.deterministic_train_dataloader()
+        test_loader = self.Datamodule.test_dataloader()
+        ood_loader = self.OOD_Datamodule.test_dataloader()
+
+        features_train, labels_train = self.get_features(pl_module, train_loader)
+        features_test, labels_test = self.get_features(pl_module, test_loader)
+        features_ood, labels_ood = self.get_features(pl_module, ood_loader)
+
+        self.get_eval_results(
+            np.copy(features_train),
+            np.copy(features_test),
+            np.copy(features_ood),
+            np.copy(labels_train))
+        
+    def get_features(self, pl_module, dataloader):
+        return super().get_features(pl_module, dataloader)
+    
+    def normalise(self, ftrain, ftest, food):
+        return super().normalise(ftrain, ftest, food)
+    
+    def get_nearest_neighbours(self, ftest, food):
+        return super().get_nearest_neighbours(ftest, food)
+
+
+    # get the features of the data which also has the KNN in either the test set or the OOD dataset
+    def get_knn_features(self, ftest, food, knn_indices):
+        return super().get_knn_features(ftest, food, knn_indices)
+
+    # Get the mean, covariance and the average distance for a class
+    def get_train(self, ftrain,ypred):
+        # Nawid - get all the features which belong to each of the different classes
+        xc = [ftrain[ypred == i] for i in np.unique(ypred)] # Nawid - training data which have been predicted to belong to a particular class
+        # Calculate the means of each of the different classes
+        means = [np.mean(x,axis=0,keepdims=True) for x in xc] # Calculates mean from (B,embdim) to (1,embdim)
+        # Calculate the covariance matrices for each of the different classes
+        covs = [np.cov(x.T, bias=True) for x in xc]
+
+        dtrain_means = []
+        dtrain_stds = []
+        for class_num in range(len(np.unique(ypred))):
+            # Go through each of the different classes and calculate the average likelihood which is the entropy of the class
+            xc_class = xc[class_num]
+            # calculates the mahalanobis distance for all the data points 
+            dtrain = np.sum(
+                (xc_class - means[class_num]) # Nawid - distance between the data point and the mean
+                * (
+                    np.linalg.pinv(covs[class_num]).dot(
+                        (xc_class - means[class_num]).T
+                    ) # Nawid - calculating the covariance matrix of the data belonging to a particular class and dot product by the distance of the data point from the mean (distance calculation)
+                ).T,
+                axis=-1,  # # shape (batch, ) IT IS IMPORTANT TO PUT THE COMMA there otherwise the shape is (batch, dimension)
+                )
+            
+            # Calculates the average mahalanobis distance
+            class_average_distance = np.mean(dtrain)
+            class_std = np.std(dtrain)
+            # Places the average mahalanobis distance for a particular class
+            dtrain_means.append(class_average_distance)
+            dtrain_stds.append(class_std)
+            # Would there be benefit in scaling (Not sure but this is just an ablation so should not be too important)
+
+        return means, covs, dtrain_means, dtrain_stds
+
+    def get_thresholds(self,fdata, means, covs, dtrain_means,dtrain_stds):    
+        num_classes = len(means)
+        thresholds = []
+        num_batches = len(fdata)//self.K
+        # Currently goes through a single data point at a time which is not very efficient
+        for i in range(num_batches):
+            fdata_batch = fdata[(i*self.K):((i+1)*self.K)]
+            # Calculate the scores for a particular batch of data for all the different classes
+            # calculates the mahalanobis distance of each data point in each of the different classes
+            ddata = [
+            np.sum(
+                (fdata_batch - means[class_num]) # Nawid - distance between the data point and the mean
+                * (
+                    np.linalg.pinv(covs[class_num]).dot(
+                        (fdata_batch - means[class_num]).T
+                    ) # Nawid - calculating the covariance matrix of the data belonging to a particular class and dot product by the distance of the data point from the mean (distance calculation)
+                ).T,
+                axis=-1,
+            )
+            for class_num in range(num_classes) # Nawid - done for all the different classes
+            ]
+            
+            # list with size (k_neighbours) - calculates the mahalanobis distance of each of the different neighbours
+            # ddata is a list of n classes where each element has a shape of (batch,)  
+            # calculate the average scores for the situation within a class and see how the average deviates from the mean it is a list of n classes where each value is a scalar
+            #ddata_practice = [np.abs(np.mean(ddata[class_num])-dtrain_mean[class_num]) for class_num in range(num_classes)] # deviation from the mean for the different classes
+            
+            #import ipdb; ipdb.set_trace()
+            # calculate the difference between the mean and the other value and then normalize the data
+            ddata = [(np.mean(ddata[class_num])-dtrain_means[class_num])/dtrain_stds[class_num] for class_num in range(num_classes)]
+            ddata = [np.abs(ddata[class_num]) for class_num in range(num_classes)]
+            # NEED TO CONSIDER EXAMINING DIFFERENCE BETWEEN THE MEAN SQUARED OR THE SQUARED MEAN BETWEEN THE DATA POINTS, Main typicality approach finds (value- mean)**2 and then sums the different dimensions, therefore I should do (value -mean)**2
+            #ddata = [np.abs(np.mean(ddata[class_num])-dtrain_means[class_num]) for class_num in range(num_classes)] # deviation from the mean for the different classes
+    
+            ddata = np.min(ddata ,axis=0) # Finds min of all the class values
+            thresholds.append(ddata)
+        
+        return thresholds
+
+    
+    def get_scores(self,ftrain, ftest, food,labelstrain):
+        # Get information related to the train info
+        means, covs, dtrain_means,dtrain_stds = self.get_train(ftrain,labelstrain)
+        # Inference
+        # Calculate the scores for the in-distribution data and the OOD data
+        knn_indices = self.get_nearest_neighbours(ftest,food)
+        knn_ID_features, knn_OOD_features = self.get_knn_features(ftest, food, knn_indices)
+        
+        din = self.get_thresholds(knn_ID_features, means, covs, dtrain_means, dtrain_stds)
+        dood = self.get_thresholds(knn_OOD_features, means, covs, dtrain_means, dtrain_stds)    
+        
+        return din, dood
+    
+    def get_eval_results(self, ftrain, ftest, food,labelstrain):
+        ftrain_norm, ftest_norm, food_norm = self.normalise(ftrain, ftest, food)
+        din, dood = self.get_scores(ftrain_norm,ftest_norm, food_norm,labelstrain)
+        
+        auroc, aupr, fpr = get_measures(dood,din)
+        
+        wandb.run.summary[self.summary_key] = auroc
+        wandb.run.summary[self.summary_aupr] = aupr
+        wandb.run.summary[self.summary_fpr] = fpr
+
 # Oracle situation where the nearest neighbours are always obtained from the same dataset
 class OracleNearestNeighboursClass1DTypicality(NearestNeighboursClass1DTypicality):
     def __init__(self, Datamodule, OOD_Datamodule, quick_callback: bool, K: int):
@@ -950,7 +1097,7 @@ class DifferentKNNMarginal1DTypicality(NearestNeighbours1DTypicality):
 
 
 # Ablation studies
-# Performs 1D typicality using the different K values and saves them in a table
+# Performs typicality using the different K values and saves them in a table
 class DifferentKNNClassTypicality(DifferentKNNMarginal1DTypicality):
     def __init__(self, Datamodule,OOD_Datamodule,
         quick_callback:bool = True,K:int = 10):

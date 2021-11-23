@@ -1350,9 +1350,6 @@ def knn_auroc_wilcoxon_repeated_runs_v3(desired_approach = 'Quadratic_typicality
 
 
     all_ID = ['MNIST','FashionMNIST','KMNIST', 'CIFAR10','CIFAR100','Caltech101','Caltech256','TinyImageNet','Cub200','Dogs']
-    #all_ID = ['TinyImageNet']
-    #all_ID = ['MNIST','FashionMNIST','KMNIST', 'CIFAR10','Caltech101', 'Caltech256','Cub200','Dogs']
-    #all_ID = ['Cub200','Dogs']
     for ID_dataset in all_ID: # Go through the different ID dataset                
         #runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.epochs": 300, "config.dataset": f"{ID_dataset}","config.model_type":"SupCon"})
         #runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.epochs": 300, 'state':'finished',"config.dataset": f"{ID_dataset}","$or": [{"config.model_type":"SupCon" }, {"config.model_type": "CE"}]})
@@ -1389,8 +1386,6 @@ def knn_auroc_wilcoxon_repeated_runs_v3(desired_approach = 'Quadratic_typicality
             path_list = run.path
             # include the group name in the run path
             path_list.insert(-1, group_name)
-            run_path = '/'.join(path_list)
-            #print('run path:',run_path)
             model_type = run_config['model_type']
             Model_name = 'SupCLR' if model_type=='SupCon' else model_type
             # Make a data array, where the number values are equal to the number of OOD classes present in the datamodule dict or equal to the number of keys
@@ -1414,7 +1409,6 @@ def knn_auroc_wilcoxon_repeated_runs_v3(desired_approach = 'Quadratic_typicality
                 baseline_AUPR_values = update_metric_list(baseline_AUPR_values,data_index,baseline_function,baseline_string_AUPR,baseline_model_type, model_type,run_summary,OOD_dataset,run_config['seed'])
                 baseline_FPR_values = update_metric_list(baseline_FPR_values,data_index,baseline_function,baseline_string_FPR,baseline_model_type, model_type,run_summary,OOD_dataset,run_config['seed'])
  
-                
         #print(f'ID:{ID_dataset}')
         
         difference_auroc = np.array(baseline_AUROC_values) - np.array(desired_AUROC_values) # shape (num ood, repeats)
@@ -1422,7 +1416,6 @@ def knn_auroc_wilcoxon_repeated_runs_v3(desired_approach = 'Quadratic_typicality
 
         # REVERSED THE DIRECTION FOR FPR DUE TO LOWER BEING BETTER FOR FPR, SO I DO NOT NEED TO REVERSE THE DIRECTION OF THE TEST STATISTIC
         difference_fpr = np.array(desired_FPR_values) - np.array(baseline_FPR_values) # shape (num ood, repeats)
-
         # Calculate the p values for a particular OOD dataset for this ID dataset
         for i in range(len(difference_auroc)): # go through all the different ID OOD dataset pairs
             #stat, p_value  = wilcoxon(difference[i],alternative='less') # calculate the p value for a particular ID OOD dataset pair
@@ -1440,21 +1433,25 @@ def knn_auroc_wilcoxon_repeated_runs_v3(desired_approach = 'Quadratic_typicality
         column_names_FPR = ['FPR']
 
         # Post processing latex table
-        caption =  f'Wilcoxon Signed Rank test - {ID_dataset} P values'
-        label = f'tab:Wilcoxon_test_{ID_dataset}'
+
+        caption =  f'{desired_approach.replace("_"," ")} {desired_model_type} vs {baseline_approach.replace("_"," ")} {baseline_model_type} Wilcoxon Signed Rank test - {ID_dataset} P values'
+        label = f'tab:Wilcoxon_test_{ID_dataset}_Dataset_{desired_approach}_{desired_model_type}_{baseline_approach}_{baseline_model_type}'
+        
+        #caption =  f'Wilcoxon Signed Rank test - {ID_dataset} P values'
+        #label = f'tab:Wilcoxon_test_{ID_dataset}'
         # https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.set_option.html
         pd.set_option('display.precision',3) 
 
         auroc_df = pd.DataFrame(collated_rank_score_auroc,columns = column_names_AUROC, index=row_names)
         aupr_df = pd.DataFrame(collated_rank_score_aupr,columns = column_names_AUPR, index=row_names)
         fpr_df = pd.DataFrame(collated_rank_score_fpr,columns = column_names_FPR, index=row_names)
+        # print('AUROC df',auroc_df)
+        # print('AUPR df',aupr_df)
+        # print('FPR df',fpr_df)
         latex_table = collated_wilcoxon_post_process_latex_table(auroc_df,aupr_df,fpr_df,caption,label)
         
+        #print(latex_table)
         
-        print(latex_table)
-        
-     
-
 # Joins the different wilcoxon tables together
 def collated_wilcoxon_post_process_latex_table(df_auroc, df_aupr, df_fpr,caption,label):
     

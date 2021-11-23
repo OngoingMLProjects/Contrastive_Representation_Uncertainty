@@ -152,7 +152,7 @@ class Mahalanobis_OOD(pl.Callback):
             )
             for x in xc # Nawid - done for all the different classes
         ]
-        
+        #import ipdb; ipdb.set_trace()
         dood = [
             np.sum(
                 (food - np.mean(x, axis=0, keepdims=True))

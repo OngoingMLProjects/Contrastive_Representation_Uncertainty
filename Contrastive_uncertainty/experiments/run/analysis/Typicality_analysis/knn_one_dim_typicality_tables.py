@@ -461,9 +461,10 @@ def knn_table_collated(desired_approach = 'Quadratic_typicality', desired_model_
         auroc_df = pd.DataFrame(data_array_AUROC,columns = column_names, index=row_names)
         aupr_df = pd.DataFrame(data_array_AUPR,columns = column_names, index=row_names)
         fpr_df = pd.DataFrame(data_array_FPR,columns = column_names, index=row_names)
-        
-        caption = ID_dataset + ' Dataset'+ f' with {baseline_approach} {baseline_model_type} Baseline' 
-        label = f'tab:{ID_dataset}_Dataset_{baseline_approach}_{baseline_model_type}'
+        #desired_approach.split("_")
+
+        caption = ID_dataset + ' Dataset'+ f' with {desired_approach.replace("_"," ")} {desired_model_type} vs {baseline_approach.replace("_"," ")} {baseline_model_type} Baseline'  # replace Underscore with spaces for the caption
+        label = f'tab:{ID_dataset}_Dataset_{desired_approach}_{desired_model_type}_{baseline_approach}_{baseline_model_type}'
         #latex_table = single_baseline_post_process_latex_table(auroc_df, caption, label,value)
         latex_table = collated_baseline_post_process_latex_table(auroc_df,aupr_df, fpr_df,caption, label)
         #latex_table = full_post_process_latex_table(auroc_df, caption, label,value='max')
