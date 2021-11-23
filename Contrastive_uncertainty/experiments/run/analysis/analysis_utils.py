@@ -264,6 +264,29 @@ def collated_multiple_baseline_post_process_latex_table(df_auroc, df_aupr, df_fp
     #latex_table = '\\begin{table}[]\n\\centering\n' + latex_table + '\n\\caption{'+ caption + '}\n\\label{' + label + '}\n\\end{table}'
     
     return latex_table
+# Used to combine tables from different datasets together
+def combine_multiple_tables(latex_tables,caption,label): # Several latex tables
+    combined_table=''
+    for i,latex_table in enumerate(latex_tables):
+        if i ==0:
+            latex_table =latex_table.split("\n\\end{tabular}")[0]  # Get the first section before end tabular
+            combined_table = combined_table+latex_table # build the string
+        else:
+            latex_table = latex_table.split("\n{Datasets} & AUROC & AUPR & FPR \\\\ \\hline\n")[1] # split the beginning and get second half 
+            latex_table = latex_table.split("\n\\end{tabular}")[0] #  split at the end and get the first part
+            combined_table = combined_table + latex_table
+    
+    combined_table = add_end_tabular(combined_table)
+    combined_table = add_caption(combined_table,caption)
+    combined_table = add_label(combined_table,label) 
+    combined_table = end_table_info(combined_table)
+    # add caption and label
+    return combined_table
+
+    #arr = latex_table.split("\n{Datasets} & AUROC & AUPR & FPR \\\\ \\hline\n") 
+
+
+    
 
 
 # join multiple columns within a single latex table, so makes the format x/y/z for the different baselines
@@ -402,6 +425,10 @@ def initial_table_info(latex_table):
 # adds the caption
 def add_caption(latex_table,caption):
     latex_table = latex_table + '\n\\caption{'+ caption + '}'
+    return latex_table
+
+def add_end_tabular(latex_table):
+    latex_table = latex_table + "\n\\end{tabular}"
     return latex_table
 
 # adds the labels

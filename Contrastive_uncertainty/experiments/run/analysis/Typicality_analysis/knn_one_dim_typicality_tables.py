@@ -19,7 +19,7 @@ from scipy.stats import wilcoxon
 import json
 import re
 
-from Contrastive_uncertainty.experiments.run.analysis.analysis_utils import collated_baseline_post_process_latex_table, dataset_dict, key_dict, ood_dataset_string, post_process_latex_table,full_post_process_latex_table, single_baseline_post_process_latex_table, collated_multiple_baseline_post_process_latex_table
+from Contrastive_uncertainty.experiments.run.analysis.analysis_utils import collated_baseline_post_process_latex_table, combine_multiple_tables, dataset_dict, key_dict, ood_dataset_string, post_process_latex_table,full_post_process_latex_table, single_baseline_post_process_latex_table, collated_multiple_baseline_post_process_latex_table,combine_multiple_tables
 
 def knn_vector(json_data):
     data = np.array(json_data['data'])
@@ -512,7 +512,9 @@ def knn_table_collated_v2(desired_approach = 'Quadratic_typicality', desired_mod
     # Gets the runs corresponding to a specific filter
     # https://github.com/wandb/client/blob/v0.10.31/wandb/apis/public.py
 
-    all_ID = ['MNIST','FashionMNIST','KMNIST', 'CIFAR10','CIFAR100','Caltech101','Caltech256','TinyImageNet','Cub200','Dogs']
+    #all_ID = ['MNIST','FashionMNIST','KMNIST', 'CIFAR10','CIFAR100','Caltech101','Caltech256','TinyImageNet','Cub200','Dogs']
+    all_latex_tables = []
+    all_ID = ['MNIST','FashionMNIST','KMNIST']
     for ID_dataset in all_ID: # Go through the different ID dataset                
         #runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"OOD hierarchy baselines","config.epochs": 300, 'state':'finished',"config.dataset": f"{ID_dataset}","$or": [{"config.model_type":"SupCon" }, {"config.model_type": "CE"}]})
         runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.epochs": 300, 'state':'finished',"config.dataset": f"{ID_dataset}","$or": [{"config.model_type":"SupCon" }, {"config.model_type": "CE"}]})
@@ -597,7 +599,14 @@ def knn_table_collated_v2(desired_approach = 'Quadratic_typicality', desired_mod
         latex_table =  collated_multiple_baseline_post_process_latex_table(auroc_df,aupr_df, fpr_df,caption, label)
         #latex_table = full_post_process_latex_table(auroc_df, caption, label,value='max')
         
-        print(latex_table)
+        #print(latex_table)
+        all_latex_tables.append(latex_table)
+    
+    combined_caption = 'combined table'
+    combined_label ='combined labek'
+    combined_table = combine_multiple_tables(all_latex_tables,combined_caption, combined_label)
+    
+    print(combined_table)
         
 
 def update_metric(metric_array,data_index, second_index,metric_function, metric_string, metric_model_type,run_model_type, summary, OOD_dataset):
