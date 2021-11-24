@@ -247,6 +247,7 @@ def knn_auroc_table_collated():
     key_dict = {'dataset':{'MNIST':0, 'FashionMNIST':1,'KMNIST':2, 'CIFAR10':3, 'CIFAR100':4,'Caltech101':5,'Caltech256':6,'TinyImageNet':7,'Cub200':8,'Dogs':9},
                 'model_type':{'CE':0,'SupCon':1}}
     
+    
     all_ID = ['MNIST','FashionMNIST','KMNIST', 'CIFAR10','CIFAR100','Caltech101','Caltech256','TinyImageNet','Cub200','Dogs']
     for ID_dataset in all_ID: # Go through the different ID dataset                
         #runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"OOD hierarchy baselines","config.epochs": 300, 'state':'finished',"config.dataset": f"{ID_dataset}","$or": [{"config.model_type":"SupCon" }, {"config.model_type": "CE"}]})
@@ -471,10 +472,7 @@ def knn_table_collated(desired_approach = 'Quadratic_typicality', desired_model_
 
 
 # Calculates the AUROC, AUPR as well as the false positive rate - Pass in list to calculate all baselines
-def knn_table_collated_v2(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['Softmax','Mahalanobis'], baseline_model_types = ['CE','CE']):
-
-
-    
+def knn_table_collated_v2(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['Softmax','Mahalanobis'], baseline_model_types = ['CE','CE'],dataset_type ='grayscale'):
 
     baselines_dict = {'Mahalanobis':{'AUROC':'Mahalanobis AUROC OOD'.lower(),'AUPR':'Mahalanobis AUPR'.lower(),'FPR':'Mahalanobis FPR'.lower()},
                 
@@ -511,10 +509,10 @@ def knn_table_collated_v2(desired_approach = 'Quadratic_typicality', desired_mod
     api = wandb.Api()
     # Gets the runs corresponding to a specific filter
     # https://github.com/wandb/client/blob/v0.10.31/wandb/apis/public.py
-
-    #all_ID = ['MNIST','FashionMNIST','KMNIST', 'CIFAR10','CIFAR100','Caltech101','Caltech256','TinyImageNet','Cub200','Dogs']
     all_latex_tables = []
-    all_ID = ['MNIST','FashionMNIST','KMNIST']
+    all_ID = ['MNIST','FashionMNIST','KMNIST'] if dataset_type =='grayscale' else ['CIFAR10','CIFAR100','Caltech256','TinyImageNet'] 
+    #all_ID = ['MNIST','FashionMNIST','KMNIST', 'CIFAR10','CIFAR100','Caltech101','Caltech256','TinyImageNet','Cub200','Dogs']
+    #all_ID = ['MNIST','FashionMNIST','KMNIST']
     for ID_dataset in all_ID: # Go through the different ID dataset                
         #runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"OOD hierarchy baselines","config.epochs": 300, 'state':'finished',"config.dataset": f"{ID_dataset}","$or": [{"config.model_type":"SupCon" }, {"config.model_type": "CE"}]})
         runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.epochs": 300, 'state':'finished',"config.dataset": f"{ID_dataset}","$or": [{"config.model_type":"SupCon" }, {"config.model_type": "CE"}]})
@@ -588,9 +586,7 @@ def knn_table_collated_v2(desired_approach = 'Quadratic_typicality', desired_mod
         aupr_df = pd.DataFrame(data_array_AUPR,columns = column_names, index=row_names)
         fpr_df = pd.DataFrame(data_array_FPR,columns = column_names, index=row_names)
         
-
         #desired_approach.split("_")
-        
         caption = ID_dataset + ' Dataset'+ f' with {desired_approach.replace("_"," ")} {desired_model_type}'  # replace Underscore with spaces for the caption
         label = f'tab:{ID_dataset}_Dataset_{desired_approach}_{desired_model_type}'
         #caption = ID_dataset + ' Dataset'+ f' with {desired_approach.replace("_"," ")} {desired_model_type} vs {baseline_approach.replace("_"," ")} {baseline_model_type} Baseline'  # replace Underscore with spaces for the caption
@@ -602,8 +598,8 @@ def knn_table_collated_v2(desired_approach = 'Quadratic_typicality', desired_mod
         #print(latex_table)
         all_latex_tables.append(latex_table)
     
-    combined_caption = 'combined table'
-    combined_label ='combined labek'
+    combined_caption = f'AUROC, AUPR and FPR for {dataset_type} datasets using {desired_approach.replace("_"," ")} {desired_model_type}'
+    combined_label =f'tab:{dataset_type}_datasets_comparison_{desired_approach}_{desired_model_type}'
     combined_table = combine_multiple_tables(all_latex_tables,combined_caption, combined_label)
     
     print(combined_table)
@@ -725,4 +721,4 @@ if __name__== '__main__':
     #knn_table_collated(desired_approach = 'Quadratic_typicality', desired_model_type = 'CE', baseline_approach = 'Mahalanobis', baseline_model_type = 'CE')
     #knn_table_collated(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approach = 'Mahalanobis', baseline_model_type = 'CE')
     #knn_table_collated(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approach = 'Softmax', baseline_model_type = 'CE')
-    knn_table_collated_v2()
+    knn_table_collated_v2(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['Mahalanobis','Mahalanobis'], baseline_model_types = ['CE','SupCon'],dataset_type ='RGB')

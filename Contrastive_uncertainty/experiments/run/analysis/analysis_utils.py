@@ -15,18 +15,8 @@ import re
 from Contrastive_uncertainty.general.datamodules.datamodule_dict import OOD_dict
 
 # For each ID dataset, it maps the dict to another value
-
+# FULL dataset dict
 '''
-dataset_dict = {'MNIST': {'FashionMNIST':0, 'KMNIST':1,'EMNIST':2},
-            'FashionMNIST': {'MNIST':0, 'KMNIST':1,'EMNIST':2},
-            'KMNIST': {'MNIST':0, 'FashionMNIST':1,'EMNIST':2},
-            'CIFAR10': {'STL10':0,'Caltech101':1, 'CelebA':2,'WIDERFace':3,'SVHN':4, 'CIFAR100':5, 'VOC':6, 'Places365':7, 'MNIST':8, 'FashionMNIST':9, 'KMNIST':10, 'EMNIST':11},
-            'CIFAR100': {'STL10':0, 'Caltech101':1, 'CelebA':2,'WIDERFace':3, 'SVHN':4, 'CIFAR10':5,'VOC':6, 'Places365':7,'MNIST':8, 'FashionMNIST':9, 'KMNIST':10, 'EMNIST':11},
-            'Caltech101': {'STL10':0, 'CelebA':1,'WIDERFace':2, 'SVHN':3, 'CIFAR10':4,'CIFAR100':5, 'VOC':6, 'Places365':7,'MNIST':8, 'FashionMNIST':9, 'KMNIST':10, 'EMNIST':11},
-            'Caltech256': {'STL10':0, 'CelebA':1,'WIDERFace':2,'SVHN':3, 'Caltech101':4, 'CIFAR10':5,'CIFAR100':6,'VOC':7, 'Places365':8,'MNIST':9, 'FashionMNIST':10, 'KMNIST':11, 'EMNIST':12},
-}
-'''
-
 dataset_dict = {'MNIST':['FashionMNIST','KMNIST','EMNIST'],
             'FashionMNIST':['MNIST','KMNIST','EMNIST'],
             'KMNIST':['MNIST','FashionMNIST','EMNIST'],
@@ -38,6 +28,23 @@ dataset_dict = {'MNIST':['FashionMNIST','KMNIST','EMNIST'],
             'Caltech101':['STL10', 'CelebA','WIDERFace','SVHN', 'CIFAR10','CIFAR100', 'VOC', 'Places365', 'MNIST', 'FashionMNIST', 'KMNIST', 'EMNIST'],
             'Caltech256':['STL10', 'CelebA','WIDERFace','SVHN','Caltech101', 'CIFAR10','CIFAR100', 'VOC', 'Places365', 'MNIST', 'FashionMNIST', 'KMNIST', 'EMNIST'],
             'TinyImageNet':['STL10', 'CelebA','WIDERFace','SVHN','Caltech101', 'Caltech256','CIFAR10','CIFAR100', 'VOC', 'Places365', 'MNIST', 'FashionMNIST', 'KMNIST', 'EMNIST'],
+            'Cub200':['STL10', 'CelebA','WIDERFace','SVHN','Caltech101', 'Caltech256','CIFAR10','CIFAR100', 'VOC', 'Places365','TinyImageNet','Dogs', 'MNIST', 'FashionMNIST', 'KMNIST', 'EMNIST'],
+            'Dogs':['STL10', 'CelebA','WIDERFace','SVHN','Caltech101', 'Caltech256','CIFAR10','CIFAR100', 'VOC', 'Places365','TinyImageNet','Cub200', 'MNIST', 'FashionMNIST', 'KMNIST', 'EMNIST'],
+}
+'''
+# Condensed dataset dict
+dataset_dict = {'MNIST':['FashionMNIST','KMNIST'],
+            'FashionMNIST':['MNIST','KMNIST'],
+            'KMNIST':['MNIST','FashionMNIST'],
+            
+            'CIFAR10':['STL10','SVHN', 'CIFAR100','Caltech256','TinyImageNet'],
+            'CIFAR100':['STL10','SVHN', 'CIFAR10','Caltech256','TinyImageNet'],
+            'TinyImageNet':['STL10', 'SVHN', 'CIFAR10','CIFAR100','Caltech256'],
+            'Caltech256':['STL10','SVHN','CIFAR10','CIFAR100','TinyImageNet'],
+
+
+            'Caltech101':['STL10', 'CelebA','WIDERFace','SVHN', 'CIFAR10','CIFAR100', 'VOC', 'Places365', 'MNIST', 'FashionMNIST', 'KMNIST', 'EMNIST'],
+            #'Caltech256':['STL10', 'CelebA','WIDERFace','SVHN','Caltech101', 'CIFAR10','CIFAR100', 'VOC', 'Places365', 'MNIST', 'FashionMNIST', 'KMNIST', 'EMNIST'],
             'Cub200':['STL10', 'CelebA','WIDERFace','SVHN','Caltech101', 'Caltech256','CIFAR10','CIFAR100', 'VOC', 'Places365','TinyImageNet','Dogs', 'MNIST', 'FashionMNIST', 'KMNIST', 'EMNIST'],
             'Dogs':['STL10', 'CelebA','WIDERFace','SVHN','Caltech101', 'Caltech256','CIFAR10','CIFAR100', 'VOC', 'Places365','TinyImageNet','Cub200', 'MNIST', 'FashionMNIST', 'KMNIST', 'EMNIST'],
 }
@@ -266,6 +273,14 @@ def collated_multiple_baseline_post_process_latex_table(df_auroc, df_aupr, df_fp
     return latex_table
 # Used to combine tables from different datasets together
 def combine_multiple_tables(latex_tables,caption,label): # Several latex tables
+    # Split the first table at tabular
+    # Split the second table at both heading, then split the second component at tabular
+    # Split the last table at heading and tabular
+    # Add tabular at the end of the table
+    # Add caption
+    # Add label
+    # Add table info
+
     combined_table=''
     for i,latex_table in enumerate(latex_tables):
         if i ==0:
@@ -280,14 +295,7 @@ def combine_multiple_tables(latex_tables,caption,label): # Several latex tables
     combined_table = add_caption(combined_table,caption)
     combined_table = add_label(combined_table,label) 
     combined_table = end_table_info(combined_table)
-    # add caption and label
     return combined_table
-
-    #arr = latex_table.split("\n{Datasets} & AUROC & AUPR & FPR \\\\ \\hline\n") 
-
-
-    
-
 
 # join multiple columns within a single latex table, so makes the format x/y/z for the different baselines
 def join_multiple_columns(latex_table,metric):
