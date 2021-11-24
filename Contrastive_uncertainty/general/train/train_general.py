@@ -9,7 +9,7 @@ from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from pytorch_lightning.loggers import WandbLogger
 
 from Contrastive_uncertainty.general.run.general_run_setup import train_run_name, eval_run_name,callback_dictionary, specific_callbacks, Datamodule_selection
-
+from Contrastive_uncertainty.experiments.train.repeat_callbacks_dict import callback_names
 '''
 callback_names = {'MD':'Mahalanobis Distance',
 'NN Quadratic':'Nearest 10 Neighbours Class Quadratic 1D Typicality',
@@ -37,22 +37,9 @@ def train(base_params,trainer_params, model_module,model_function,datamodule_dic
     # Gets the path which could be used for evaluation
     run_path = wandb.run.path
     
-    '''
-    # Choose quick callbacks to repeat
-    repeat_callbacks=['NN Quadratic']
-    if len(repeat_callbacks)>0:
-        for repeat_callback in repeat_callbacks:
-            assert repeat_callback in callback_names, 'not in callback names'
-        repeat_callbacks = [f'Repeat {key}'for key in repeat_callbacks]     
-    
+    # Set the repeat bool to False initially during training
     repeat_bool = {f'Repeat {key}':False for key in callback_names}
-    # Sets the particulat key to true
-    for key in repeat_bool:
-        if key in repeat_callbacks:
-            repeat_bool[key] = True
-
-    wandb.log(repeat_bool)
-    '''
+    wandb.log(repeat_bool) 
     
 
     folder = 'Images'

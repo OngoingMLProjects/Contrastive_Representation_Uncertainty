@@ -75,4 +75,5 @@ for run_set in collated_runs:
         run_path = '/'.join(run_set[i].path)
         run_paths.append(run_path)
 
+#run_paths = ['nerdk312/evaluation/yl6vj4pi']
 evaluate(run_paths, trainer_hparams)
