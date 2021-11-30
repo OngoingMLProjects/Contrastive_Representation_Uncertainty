@@ -30,11 +30,11 @@ def evaluate(run_paths,update_dict):
         elif previous_run.state =='running':
             filtered_callbacks = [] # Manually set to zero to skip this run if it is already running
 
-
         # if state finished
         filtered_update_dict['callbacks'] = filtered_callbacks
         # if state crash:
         # filtered_callbacks = copy.deepcopy(update_dict['callbacks'])
+        
         
         evaluate_method = model_dict[model_type]['evaluate']
         model_module = model_dict[model_type]['model_module'] 
@@ -84,7 +84,6 @@ def callback_filter(summary_info,evaluation_dict):
                 filtered_callbacks.append(callback)
                 break
     '''
-
     return filtered_callbacks
 
 

@@ -648,7 +648,6 @@ def obtain_ood_datasets_baseline(desired_string,baseline_string,summary,ID_datas
     return all_OOD_datasets        
 
 
-
 # Obtain the OOD datasets for a particular string
 def obtain_ood_datasets(desired_string,summary,ID_dataset):
     
@@ -721,4 +720,6 @@ if __name__== '__main__':
     #knn_table_collated(desired_approach = 'Quadratic_typicality', desired_model_type = 'CE', baseline_approach = 'Mahalanobis', baseline_model_type = 'CE')
     #knn_table_collated(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approach = 'Mahalanobis', baseline_model_type = 'CE')
     #knn_table_collated(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approach = 'Softmax', baseline_model_type = 'CE')
-    knn_table_collated_v2(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['Mahalanobis','Mahalanobis'], baseline_model_types = ['CE','SupCon'],dataset_type ='RGB')
+    #knn_table_collated(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approach = 'Mahalanobis', baseline_model_type = 'SupCon')
+    #knn_table_collated_v2(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['Softmax','Mahalanobis'], baseline_model_types = ['CE','CE'],dataset_type ='RGB')
+    knn_table_collated_v2(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['Mahalanobis'], baseline_model_types = ['SupCon'],dataset_type ='RGB')

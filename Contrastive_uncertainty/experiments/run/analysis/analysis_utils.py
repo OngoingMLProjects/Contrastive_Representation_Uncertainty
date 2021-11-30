@@ -11,6 +11,7 @@ import copy
 # Import general params
 import json
 import re
+from decimal import *
 
 from Contrastive_uncertainty.general.datamodules.datamodule_dict import OOD_dict
 
@@ -22,32 +23,43 @@ dataset_dict = {'MNIST':['FashionMNIST','KMNIST','EMNIST'],
             'KMNIST':['MNIST','FashionMNIST','EMNIST'],
             'EMNIST':['MNIST','FashionMNIST','KMNIST'],
             
-            'CIFAR10':['STL10','Caltech101', 'CelebA','WIDERFace','SVHN', 'CIFAR100', 'VOC', 'Places365', 'MNIST', 'FashionMNIST', 'KMNIST', 'EMNIST'],
-            'CIFAR100':['STL10','Caltech101', 'CelebA','WIDERFace','SVHN', 'CIFAR10', 'VOC', 'Places365', 'MNIST', 'FashionMNIST', 'KMNIST', 'EMNIST'],
+            'CIFAR10':['STL10', 'CelebA','WIDERFace','SVHN','Caltech101', 'Caltech256','CIFAR100', 'VOC', 'Places365','TinyImageNet','Cub200','Dogs', 'MNIST', 'FashionMNIST', 'KMNIST', 'EMNIST'],
+            'CIFAR100':['STL10', 'CelebA','WIDERFace','SVHN','Caltech101', 'Caltech256','CIFAR10', 'VOC', 'Places365','TinyImageNet','Cub200','Dogs', 'MNIST', 'FashionMNIST', 'KMNIST', 'EMNIST'],
 
-            'Caltech101':['STL10', 'CelebA','WIDERFace','SVHN', 'CIFAR10','CIFAR100', 'VOC', 'Places365', 'MNIST', 'FashionMNIST', 'KMNIST', 'EMNIST'],
-            'Caltech256':['STL10', 'CelebA','WIDERFace','SVHN','Caltech101', 'CIFAR10','CIFAR100', 'VOC', 'Places365', 'MNIST', 'FashionMNIST', 'KMNIST', 'EMNIST'],
-            'TinyImageNet':['STL10', 'CelebA','WIDERFace','SVHN','Caltech101', 'Caltech256','CIFAR10','CIFAR100', 'VOC', 'Places365', 'MNIST', 'FashionMNIST', 'KMNIST', 'EMNIST'],
+            'Caltech101':['STL10', 'CelebA','WIDERFace','SVHN', 'Caltech256','CIFAR10','CIFAR100', 'VOC', 'Places365','TinyImageNet','Cub200','Dogs', 'MNIST', 'FashionMNIST', 'KMNIST', 'EMNIST'],
+            'Caltech256':['STL10', 'CelebA','WIDERFace','SVHN','Caltech101','CIFAR10','CIFAR100', 'VOC', 'Places365','TinyImageNet','Cub200','Dogs', 'MNIST', 'FashionMNIST', 'KMNIST', 'EMNIST'],
+            'TinyImageNet':['STL10', 'CelebA','WIDERFace','SVHN','Caltech101', 'Caltech256','CIFAR10','CIFAR100', 'VOC', 'Places365','Cub200','Dogs', 'MNIST', 'FashionMNIST', 'KMNIST', 'EMNIST'],
             'Cub200':['STL10', 'CelebA','WIDERFace','SVHN','Caltech101', 'Caltech256','CIFAR10','CIFAR100', 'VOC', 'Places365','TinyImageNet','Dogs', 'MNIST', 'FashionMNIST', 'KMNIST', 'EMNIST'],
             'Dogs':['STL10', 'CelebA','WIDERFace','SVHN','Caltech101', 'Caltech256','CIFAR10','CIFAR100', 'VOC', 'Places365','TinyImageNet','Cub200', 'MNIST', 'FashionMNIST', 'KMNIST', 'EMNIST'],
 }
+
 '''
 # Condensed dataset dict
 dataset_dict = {'MNIST':['FashionMNIST','KMNIST'],
             'FashionMNIST':['MNIST','KMNIST'],
             'KMNIST':['MNIST','FashionMNIST'],
+
+
             
+            'CIFAR10':['SVHN', 'CIFAR100','Caltech256','TinyImageNet','MNIST','FashionMNIST','KMNIST'],
+            'CIFAR100':['SVHN', 'CIFAR10','Caltech256','TinyImageNet','MNIST','FashionMNIST','KMNIST'],
+            'TinyImageNet':['SVHN', 'CIFAR10','CIFAR100','Caltech256','MNIST','FashionMNIST','KMNIST'],
+            'Caltech256':['SVHN','CIFAR10','CIFAR100','TinyImageNet','MNIST','FashionMNIST','KMNIST'],
+            
+            
+            '''
             'CIFAR10':['STL10','SVHN', 'CIFAR100','Caltech256','TinyImageNet'],
             'CIFAR100':['STL10','SVHN', 'CIFAR10','Caltech256','TinyImageNet'],
             'TinyImageNet':['STL10', 'SVHN', 'CIFAR10','CIFAR100','Caltech256'],
             'Caltech256':['STL10','SVHN','CIFAR10','CIFAR100','TinyImageNet'],
-
+            '''
 
             'Caltech101':['STL10', 'CelebA','WIDERFace','SVHN', 'CIFAR10','CIFAR100', 'VOC', 'Places365', 'MNIST', 'FashionMNIST', 'KMNIST', 'EMNIST'],
             #'Caltech256':['STL10', 'CelebA','WIDERFace','SVHN','Caltech101', 'CIFAR10','CIFAR100', 'VOC', 'Places365', 'MNIST', 'FashionMNIST', 'KMNIST', 'EMNIST'],
             'Cub200':['STL10', 'CelebA','WIDERFace','SVHN','Caltech101', 'Caltech256','CIFAR10','CIFAR100', 'VOC', 'Places365','TinyImageNet','Dogs', 'MNIST', 'FashionMNIST', 'KMNIST', 'EMNIST'],
             'Dogs':['STL10', 'CelebA','WIDERFace','SVHN','Caltech101', 'Caltech256','CIFAR10','CIFAR100', 'VOC', 'Places365','TinyImageNet','Cub200', 'MNIST', 'FashionMNIST', 'KMNIST', 'EMNIST'],
 }
+
 
 # Converts dataset dict to have same shape as before
 # https://careerkarma.com/blog/python-convert-list-to-dictionary/#:~:text=To%20convert%20a%20list%20to%20a%20dictionary%20using%20the%20same,the%20values%20of%20a%20list.
@@ -404,9 +416,17 @@ def bold_max_value(df,latex_table):
     for index in range(len(string)):
         numbers = re.findall("\d+\.\d+", string[index]) # fnd all the numbers in the substring (gets rid of the &)
         #max_number = max(numbers,key=lambda x:float(x))
+        #max_number = float(max(numbers,key=lambda x:format(float(x),'.3f'))) #  Need to get the output as a float
+        #import ipdb; ipdb.set_trace()
+        
         max_number = float(max(numbers,key=lambda x:float(x))) #  Need to get the output as a float
+        # Need to change into 3 decimal places
+        max_number = format(max_number,'.3f')
+        bold_max = r'\textbf{' + max_number + '}'
+        #import ipdb; ipdb.set_trace()
         #string[index] = string[index].replace(f'{max_number}',f'\textbf{ {max_number} }') # Need to put spaces around otherwise it just shows max number
-        updated_string.append(string[index].replace(f'{max_number}',fr'\textbf{ {max_number} }')) # Need to put spaces around otherwise it just shows max number), also need to be place to make it so that \t does not act as space
+        updated_string.append(string[index].replace(f'{max_number}',bold_max)) # Need to put spaces around otherwise it just shows max number), also need to be place to make it so that \t does not act as space
+        #updated_string.append(string[index].replace(f'{max_number}',fr'\textbf{ {max_number} }')) # Need to put spaces around otherwise it just shows max number), also need to be place to make it so that \t does not act as space
         latex_table = latex_table.replace(f'{string[index]}',f'{updated_string[index]}') 
     return latex_table
 
@@ -419,9 +439,14 @@ def bold_min_value(df,latex_table):
     for index in range(len(string)):
         numbers = re.findall("\d+\.\d+", string[index]) # fnd all the numbers in the substring (gets rid of the &)
         #max_number = max(numbers,key=lambda x:float(x))
-        min_number = float(min(numbers,key=lambda x:float(x))) #  Need to get the output as a float
+
+        min_number = float(min(numbers,key=lambda x:format(float(x),'.3f'))) #  Need to get the output as a float
+        min_number = format(min_number,'.3f')
+        bold_min = r'\textbf{' + min_number + '}'
+        #min_number = float(min(numbers,key=lambda x:float(x))) #  Need to get the output as a float
         #string[index] = string[index].replace(f'{max_number}',f'\textbf{ {max_number} }') # Need to put spaces around otherwise it just shows max number
-        updated_string.append(string[index].replace(f'{min_number}',fr'\textbf{ {min_number} }')) # Need to put spaces around otherwise it just shows max number), also need to be place to make it so that \t does not act as space
+        updated_string.append(string[index].replace(f'{min_number}',bold_min)) # Need to put spaces around otherwise it just shows max number), also need to be place to make it so that \t does not act as space
+        #updated_string.append(string[index].replace(f'{min_number}',fr'\textbf{ {min_number} }')) # Need to put spaces around otherwise it just shows max number), also need to be place to make it so that \t does not act as space
         latex_table = latex_table.replace(f'{string[index]}',f'{updated_string[index]}') 
     return latex_table
 
