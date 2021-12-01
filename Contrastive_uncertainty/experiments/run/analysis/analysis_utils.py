@@ -1,5 +1,5 @@
 from types import LambdaType
-from numpy.core.defchararray import join
+from numpy.core.defchararray import join, split
 import wandb
 import pandas as pd
 import numpy as np
@@ -36,14 +36,11 @@ dataset_dict = {'MNIST':['FashionMNIST','KMNIST','EMNIST'],
 dataset_dict = {'MNIST':['FashionMNIST','KMNIST'],
             'FashionMNIST':['MNIST','KMNIST'],
             'KMNIST':['MNIST','FashionMNIST'],
-
-
             
             'CIFAR10':['SVHN', 'CIFAR100','Caltech256','TinyImageNet','MNIST','FashionMNIST','KMNIST'],
             'CIFAR100':['SVHN', 'CIFAR10','Caltech256','TinyImageNet','MNIST','FashionMNIST','KMNIST'],
             'TinyImageNet':['SVHN', 'CIFAR10','CIFAR100','Caltech256','MNIST','FashionMNIST','KMNIST'],
             'Caltech256':['SVHN','CIFAR10','CIFAR100','TinyImageNet','MNIST','FashionMNIST','KMNIST'],
-            
             
             '''
             'CIFAR10':['STL10','SVHN', 'CIFAR100','Caltech256','TinyImageNet'],
@@ -401,10 +398,63 @@ def separate_columns(latex_table):
         updated_string.append(new_string)
         
         latex_table = latex_table.replace(f'{string[index]}',f'{updated_string[index]}')
-    
     return latex_table
 
+# used to separate the top columns
+def separate_top_columns(latex_table):
+    original_string = '{Datasets}'
+    new_string = 'ID & OOD'
+    latex_table = latex_table.replace(original_string,new_string) 
+    return latex_table
+
+# row for the baseline names
+def add_baseline_names_row(latex_table):
+    '''
+    # calculate the number of columns
+    desired_column_key = '&.+\\\\\'
+    # Used to find the strings with the desired key (which is esentially the number of '&)
+    string = re.findall(desired_column_key,latex_table)
+    num_columns = string[0].count('&') # number of separate columns
+    '''
     
+    split_string = "ID & OOD & AUROC & AUPR & FPR \\\\ \\hline\n"
+    latex_table_splits = latex_table.split(split_string)
+    additional_string = r'&   & \multicolumn{3}{c}{MSP/ Mahalanobis/ 1D Typicality} \\' + '\n\cmidrule(lr){3-5}'
+    latex_table = latex_table_splits[0] + split_string + additional_string + latex_table_splits[1]        
+    return latex_table
+    
+    # perform regex to get the first column of interest
+    # append the regex column with the column of interest to get the data
+# Remove each of the different hlines
+def remove_hline_processing(latex_table):
+    split_string = '\hline'
+    latex_table_splits = latex_table.split(split_string)
+    recursive_string = '' # initialise empty string
+    for index in range(len(latex_table_splits)):
+        if index == 0:
+            recursive_string = recursive_string +latex_table_splits[index] + '\n'+r'\toprule'
+        elif index == 1:
+            recursive_string = recursive_string +latex_table_splits[index] + '\n'+ r'\midrule'
+        elif index == len(latex_table_splits)-1:
+            recursive_string = recursive_string + '\n'+  r'\bottomrule' +latex_table_splits[index] 
+        else:
+            recursive_string = recursive_string + latex_table_splits[index]
+
+    return recursive_string
+
+def update_headings_additional(latex_table):
+    #num_columns = len(df.columns) # original columns
+    #updated_headings = '|p{3cm}|' + 'c|'*num_columns
+    desired_key = r'&.+\\'
+    # Used to find the strings with the desired key (which is esentially the number of '&)
+    string = re.findall(desired_key,latex_table)
+    columns = string[0].count('&') # number of separate columns
+
+    heading_key = '\|.+\|' 
+    original_headings = re.findall(heading_key, latex_table)[0]
+    updated_headings = 'c'*(columns+1)
+    latex_table = latex_table.replace(original_headings, updated_headings)
+    return latex_table
 
 # replace the headings for a table which is made from several tables
 def replace_headings_collated_table(latex_table):
@@ -435,6 +485,9 @@ def replace_nth(sub,repl,txt,nth):
     
     return part1+repl+part2
 
+#https://stackoverflow.com/questions/5254445/how-to-add-a-string-in-a-certain-position
+def insert_str(string, str_to_insert, index):
+    return string[:index] + str_to_insert + string[index:]
 
 # replace the headings  - makes it to datasets as well as changing the number of columns
 def replace_headings(df,latex_table):
