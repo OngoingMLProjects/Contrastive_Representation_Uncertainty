@@ -25,12 +25,14 @@ dataset_dict = {'MNIST':['FashionMNIST','KMNIST','EMNIST'],
             
             'CIFAR10':['STL10', 'CelebA','WIDERFace','SVHN','Caltech101', 'Caltech256','CIFAR100', 'VOC', 'Places365','TinyImageNet','Cub200','Dogs', 'MNIST', 'FashionMNIST', 'KMNIST', 'EMNIST'],
             'CIFAR100':['STL10', 'CelebA','WIDERFace','SVHN','Caltech101', 'Caltech256','CIFAR10', 'VOC', 'Places365','TinyImageNet','Cub200','Dogs', 'MNIST', 'FashionMNIST', 'KMNIST', 'EMNIST'],
+
             'Caltech101':['STL10', 'CelebA','WIDERFace','SVHN', 'Caltech256','CIFAR10','CIFAR100', 'VOC', 'Places365','TinyImageNet','Cub200','Dogs', 'MNIST', 'FashionMNIST', 'KMNIST', 'EMNIST'],
             'Caltech256':['STL10', 'CelebA','WIDERFace','SVHN','Caltech101','CIFAR10','CIFAR100', 'VOC', 'Places365','TinyImageNet','Cub200','Dogs', 'MNIST', 'FashionMNIST', 'KMNIST', 'EMNIST'],
             'TinyImageNet':['STL10', 'CelebA','WIDERFace','SVHN','Caltech101', 'Caltech256','CIFAR10','CIFAR100', 'VOC', 'Places365','Cub200','Dogs', 'MNIST', 'FashionMNIST', 'KMNIST', 'EMNIST'],
             'Cub200':['STL10', 'CelebA','WIDERFace','SVHN','Caltech101', 'Caltech256','CIFAR10','CIFAR100', 'VOC', 'Places365','TinyImageNet','Dogs', 'MNIST', 'FashionMNIST', 'KMNIST', 'EMNIST'],
             'Dogs':['STL10', 'CelebA','WIDERFace','SVHN','Caltech101', 'Caltech256','CIFAR10','CIFAR100', 'VOC', 'Places365','TinyImageNet','Cub200', 'MNIST', 'FashionMNIST', 'KMNIST', 'EMNIST'],
 }
+
 '''
 # Condensed dataset dict
 dataset_dict = {'MNIST':['FashionMNIST','KMNIST'],
@@ -216,7 +218,6 @@ def collated_baseline_post_process_latex_table(df_auroc, df_aupr, df_fpr,caption
     latex_table_fpr = join_columns(latex_table_fpr,'FPR')
 
     latex_table = join_different_columns(latex_table_auroc,latex_table_aupr) # joins the auroc and aupr table together
-    #import ipdb; ipdb.set_trace()
     latex_table = join_different_columns(latex_table, latex_table_fpr) # joins the auroc+aupr table with the fpr table
     latex_table = replace_headings_collated_table(latex_table) # replaces the heading to take into account the collated readings
     latex_table = post_process_latex_table(latex_table)
@@ -254,23 +255,29 @@ def collated_multiple_baseline_post_process_latex_table(df_auroc, df_aupr, df_fp
     
     latex_table_auroc = df_auroc.to_latex()
     latex_table_auroc = replace_headings(df_auroc,latex_table_auroc)
-    latex_table_auroc = bold_max_value(df_auroc,latex_table_auroc)
+    #latex_table_auroc = bold_max_value(df_auroc,latex_table_auroc)
 
     latex_table_aupr = df_aupr.to_latex()
     latex_table_aupr = replace_headings(df_aupr,latex_table_aupr)
-    latex_table_aupr = bold_max_value(df_aupr,latex_table_aupr)
+    #latex_table_aupr = bold_max_value(df_aupr,latex_table_aupr)
 
     latex_table_fpr = df_fpr.to_latex()
     latex_table_fpr = replace_headings(df_fpr,latex_table_fpr)
-    latex_table_fpr = bold_min_value(df_fpr,latex_table_fpr)
+    #latex_table_fpr = bold_min_value(df_fpr,latex_table_fpr)
 
     # used to get the pattern of &, then empy space, then any character, empty space,  then & then empty space
     latex_table_auroc = join_multiple_columns(latex_table_auroc,'AUROC')
     latex_table_aupr = join_multiple_columns(latex_table_aupr,'AUPR')
     latex_table_fpr = join_multiple_columns(latex_table_fpr,'FPR')
 
+    latex_table_auroc = bold_max_value(df_auroc,latex_table_auroc,'/')
+    latex_table_aupr = bold_max_value(df_aupr,latex_table_aupr,'/')
+    latex_table_fpr = bold_min_value(df_fpr,latex_table_fpr,'/')
+    
+
     latex_table = join_different_columns(latex_table_auroc,latex_table_aupr) # joins the auroc and aupr table together
     latex_table = join_different_columns(latex_table, latex_table_fpr) # joins the auroc+aupr table with the fpr table
+    import ipdb; ipdb.set_trace()
     latex_table = replace_headings_collated_table(latex_table) # replaces the heading to take into account the collated readings
     latex_table = post_process_latex_table(latex_table)
     latex_table = initial_table_info(latex_table)
@@ -311,15 +318,20 @@ def combine_multiple_tables(latex_tables,caption,label): # Several latex tables
 def join_multiple_columns(latex_table,metric):
     
     # Used to find the number of columns present
-    desired_column_key = '&.+\\\\\n'
+    #desired_column_key = '&.+\\\\\n'
+
+    desired_column_key = '&\s+\d.+\\\\\n' # Used to take into account the situation where a column may not start with a numerical value
+    
     # Used to find the strings with the desired key (which is esentially the number of '&)
     string = re.findall(desired_column_key,latex_table)
     num_columns = string[0].count('&') # number of separate columns
-
+    
     #### Change code to take into account the number of columns present
-    desired_key = "&\s+.+\s+"*(num_columns)
+    #desired_key = "&\s+.+\s+"*(num_columns)
+    desired_key = "&\s+\d.+\s+"*(num_columns) # Used to take into account the situation where a column may not start with a value
+    #desired_key = "&\s+.+\s+"*(num_columns)# +'[\\\n]' # Used to take into account the situation where a column may not start with a value
     string = re.findall(desired_key,latex_table)
-
+    
     #desired_key = "&\s+.+\s+&\s+.+\s+"# *(num_columns)
     #desired_key = "&\s+.+\s+" 
     #string = re.findall(desired_key,latex_table)
@@ -366,46 +378,6 @@ def join_different_columns(latex_table_1,latex_table_2):
     latex_table = ''.join(concatenated_list)
     return latex_table
 
-# Make two separate columns from the ID dataset
-def separate_columns(latex_table):
-    
-    desired_key = '\w+\:\w+\,\s+\w+\:\w+'
-    string = re.findall(desired_key, latex_table)
-
-    desired_ID_key = '\w+\:\w+\,'
-    ID_string = re.findall(desired_ID_key,latex_table) # Obtains all the ID datasets
-
-
-    updated_string = []
-    current_ID = None
-    previous_ID = None
-
-    # NEED TO UPDATE CODE WITH THE RECURSIVE APPROACH TO PREVENT OVERLAPPING VALUES
-    for index in range(len(string)):
-        # Replace ID:, replace the command and replace OOD:
-        new_string = string[index].replace('ID:','')
-        new_string = new_string.replace(',',' &')
-        new_string = new_string.replace('OOD:','')
-        
-        # Replace the ID data with a empty string if it is the same in different rows
-        current_ID = ID_string[index]
-        current_ID = current_ID.replace('ID:','')
-        current_ID = current_ID.replace(',','')
-        
-        updated_ID = '' if current_ID == previous_ID else current_ID
-        previous_ID = current_ID
-        # Need to remove first entry only to prevent names from being removed
-        new_string = replace_nth(f'{current_ID}',f'{updated_ID}',new_string,1) # what to replace, what to replace with, string and nth entry
-        #new_string = new_string.replace(current_ID,updated_ID)
-        
-        updated_string.append(new_string)
-        
-        latex_table = latex_table.replace(f'{string[index]}',f'{updated_string[index]}')
-    
-    return latex_table
-
-    
-
 # replace the headings for a table which is made from several tables
 def replace_headings_collated_table(latex_table):
     #num_columns = len(df.columns) # original columns
@@ -416,7 +388,6 @@ def replace_headings_collated_table(latex_table):
     columns = string[0].count('&') # number of separate columns
     
     heading_key = '\|.+\|' # need to use \ as | is a meta character (needs to be escaped) https://www.youtube.com/watch?v=sa-TUpSx1JA
-    
     original_headings = re.findall(heading_key,latex_table)[0] # gets the first element in the list which should eb the key for the heading
     
     updated_headings = '|p{3cm}|' + 'c|'*columns # obtain the updated headings from the number of columns which have been concatenated
@@ -446,22 +417,27 @@ def replace_headings(df,latex_table):
     return latex_table
 
 # Make the max value in a column bold
-def bold_max_value(df,latex_table):
-    num_columns = len(df.columns)
-    desired_key = "&\s+\d+\.\d+\s+" *(num_columns)
+def bold_max_value(df,latex_table,separator):
+
+    # Find the number of columns which contain data based on https://stackoverflow.com/questions/25039626/how-do-i-find-numeric-columns-in-pandas
+    numerics = ['int16', 'int32', 'int64', 'float16', 'float32', 'float64']
+    newdf = df.select_dtypes(include=numerics)
+    num_columns = len(newdf.columns)
+    #desired_key = "&" + "\s+\d+\.\d+/\s+" *(num_columns)
+    #desired_key = "\s+\d+\.\d+\s+/" *(num_columns)
+    desired_key = f"\s+\d+\.\d+\s+{separator}" * (num_columns-1) + '\s+\d+\.\d+\s'
+    #desired_key = "&\s+\d+\.\d+\s+" *(num_columns)
     string = re.findall(desired_key,latex_table)
     updated_string = []
     for index in range(len(string)):
         numbers = re.findall("\d+\.\d+", string[index]) # fnd all the numbers in the substring (gets rid of the &)
         #max_number = max(numbers,key=lambda x:float(x))
         #max_number = float(max(numbers,key=lambda x:format(float(x),'.3f'))) #  Need to get the output as a float
-        #import ipdb; ipdb.set_trace()
         
         max_number = float(max(numbers,key=lambda x:float(x))) #  Need to get the output as a float
         # Need to change into 3 decimal places
         max_number = format(max_number,'.3f')
         bold_max = r'\textbf{' + max_number + '}'
-        #import ipdb; ipdb.set_trace()
         #string[index] = string[index].replace(f'{max_number}',f'\textbf{ {max_number} }') # Need to put spaces around otherwise it just shows max number
         updated_string.append(string[index].replace(f'{max_number}',bold_max)) # Need to put spaces around otherwise it just shows max number), also need to be place to make it so that \t does not act as space
         #updated_string.append(string[index].replace(f'{max_number}',fr'\textbf{ {max_number} }')) # Need to put spaces around otherwise it just shows max number), also need to be place to make it so that \t does not act as space
@@ -469,9 +445,14 @@ def bold_max_value(df,latex_table):
     return latex_table
 
 # Make the max value in a column bold
-def bold_min_value(df,latex_table):
-    num_columns = len(df.columns)
-    desired_key = "&\s+\d+\.\d+\s+" *(num_columns)
+def bold_min_value(df,latex_table,separator):
+    # Find the number of columns which contain data based on https://stackoverflow.com/questions/25039626/how-do-i-find-numeric-columns-in-pandas
+    numerics = ['int16', 'int32', 'int64', 'float16', 'float32', 'float64']
+    newdf = df.select_dtypes(include=numerics)
+    num_columns = len(newdf.columns)
+    #num_columns = len(df.columns)
+    #desired_key = f"{separator}\s+\d+\.\d+\s+" *(num_columns)
+    desired_key = f"\s+\d+\.\d+\s+{separator}" * (num_columns-1) + '\s+\d+\.\d+\s'
     string = re.findall(desired_key,latex_table)
     updated_string = []
     for index in range(len(string)):
