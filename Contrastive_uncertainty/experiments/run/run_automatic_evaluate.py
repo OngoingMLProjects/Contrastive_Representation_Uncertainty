@@ -12,7 +12,7 @@ from Contrastive_uncertainty.experiments.config.trainer_params import trainer_hp
 run_paths = []
 api = wandb.Api()
 #runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.model_type": "CE","config.epochs":300,"$or": [{'state':'finished'}, {'state':'crashed'},{'state':'failed'}]})
-runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.model_type": "SupCon","config.epochs":300,"$or": [{'state':'finished'}, {'state':'crashed'},{'state':'failed'}]})
+runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.model_type": "SupCon","config.seed":125,"config.epochs":300,"$or": [{'state':'finished'}, {'state':'crashed'},{'state':'failed'}]})
 collated_runs = [runs]
 
 #runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.epochs":300,"config.model_type":"CE","config.model_type":"SupCon","$or": [{"config.dataset":"CIFAR100" }, {"config.dataset":"Cub200"},{"config.dataset":"TinyImageNet"}]})

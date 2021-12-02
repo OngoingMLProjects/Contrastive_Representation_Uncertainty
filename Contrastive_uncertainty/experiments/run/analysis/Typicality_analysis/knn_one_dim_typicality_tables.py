@@ -19,7 +19,7 @@ from scipy.stats import wilcoxon
 import json
 import re
 
-from Contrastive_uncertainty.experiments.run.analysis.analysis_utils import add_baseline_names_row, collated_baseline_post_process_latex_table, combine_multiple_tables, dataset_dict, key_dict, ood_dataset_string, post_process_latex_table,full_post_process_latex_table, remove_hline_processing, separate_top_columns, single_baseline_post_process_latex_table, collated_multiple_baseline_post_process_latex_table,combine_multiple_tables, separate_columns, separate_top_columns, update_headings_additional
+from Contrastive_uncertainty.experiments.run.analysis.analysis_utils import add_baseline_names_row, collated_baseline_post_process_latex_table, combine_multiple_tables, dataset_dict, key_dict, ood_dataset_string, post_process_latex_table,full_post_process_latex_table, remove_hline_processing, separate_top_columns, single_baseline_post_process_latex_table, collated_multiple_baseline_post_process_latex_table,combine_multiple_tables, separate_columns, separate_top_columns, update_double_col_table, update_headings_additional
 
 def knn_vector(json_data):
     data = np.array(json_data['data'])
@@ -598,14 +598,23 @@ def knn_table_collated_v2(desired_approach = 'Quadratic_typicality', desired_mod
         #print(latex_table)
         all_latex_tables.append(latex_table)
     
-    combined_caption = f'AUROC, AUPR and FPR for {dataset_type} datasets using {desired_approach.replace("_"," ")} {desired_model_type}'
-    combined_label =f'tab:{dataset_type}_datasets_comparison_{desired_approach}_{desired_model_type}'
+
+    baseline_names = ''
+    for index in range(len(baseline_approaches)):
+        if index ==0:
+            baseline_names = baseline_names + baseline_approaches[index] + '_' + baseline_model_types[index]
+        else:
+            baseline_names = baseline_names + '_and_'+ baseline_approaches[index] + '_' + baseline_model_types[index]
+
+    combined_caption = f'AUROC, AUPR and FPR for different ID-OOD dataset pairs using {baseline_names.replace("_"," ")} baselines and {desired_approach.replace("_"," ")} {desired_model_type}'
+    combined_label =f'tab:datasets_comparison_{desired_approach}_{desired_model_type}_{baseline_names}'
     combined_table = combine_multiple_tables(all_latex_tables,combined_caption, combined_label)
     combined_table = separate_columns(combined_table)
     combined_table = separate_top_columns(combined_table)
-    combined_table = add_baseline_names_row(combined_table)
+    combined_table = add_baseline_names_row(combined_table,baseline_approaches)
     combined_table = remove_hline_processing(combined_table)
     combined_table = update_headings_additional(combined_table)
+    combined_table = update_double_col_table(combined_table)
 
 
     
@@ -738,6 +747,5 @@ if __name__== '__main__':
     #knn_table_collated(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approach = 'Softmax', baseline_model_type = 'CE')
     #knn_table_collated(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approach = 'Mahalanobis', baseline_model_type = 'SupCon')
     #knn_table_collated_v2(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['Softmax','Mahalanobis'], baseline_model_types = ['CE','CE'],dataset_type ='RGB')
-    #knn_table_collated_v2(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['Mahalanobis'], baseline_model_types = ['SupCon'],dataset_type ='RGB')
-    knn_table_collated_v2(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['Mahalanobis'], baseline_model_types = ['SupCon'],dataset_type ='grayscale')
-    #knn_table_collated_v3(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['Mahalanobis'], baseline_model_types = ['SupCon'],dataset_type ='RGB')
+    #knn_table_collated_v2(desired_approach = 'Quadratic_typicality', desired_model_type = 'CE', baseline_approaches = ['Mahalanobis'], baseline_model_types = ['CE'],dataset_type ='RGB')
+    knn_table_collated_v2(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['Mahalanobis'], baseline_model_types = ['SupCon'],dataset_type ='RGB')

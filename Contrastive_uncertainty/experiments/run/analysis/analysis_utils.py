@@ -408,7 +408,7 @@ def separate_top_columns(latex_table):
     return latex_table
 
 # row for the baseline names
-def add_baseline_names_row(latex_table):
+def add_baseline_names_row(latex_table,baselines):
     '''
     # calculate the number of columns
     desired_column_key = '&.+\\\\\'
@@ -416,10 +416,14 @@ def add_baseline_names_row(latex_table):
     string = re.findall(desired_column_key,latex_table)
     num_columns = string[0].count('&') # number of separate columns
     '''
-    
+    baseline_names = ''
+    for i in range(len(baselines)):
+        baseline_names = baseline_names + baselines[i] + '/'
+
     split_string = "ID & OOD & AUROC & AUPR & FPR \\\\ \\hline\n"
     latex_table_splits = latex_table.split(split_string)
-    additional_string = r'&   & \multicolumn{3}{c}{MSP/ Mahalanobis/ 1D Typicality} \\' + '\n\cmidrule(lr){3-5}'
+    additional_string = r'&   & \multicolumn{3}{c}' + '{' + f'{baseline_names}1D Typicality'+ r'} \\' + '\n\cmidrule(lr){3-5}'
+    #additional_string = r'&   & \multicolumn{3}{c}{MSP/ Mahalanobis/ 1D Typicality} \\' + '\n\cmidrule(lr){3-5}'
     latex_table = latex_table_splits[0] + split_string + additional_string + latex_table_splits[1]        
     return latex_table
     
@@ -454,6 +458,11 @@ def update_headings_additional(latex_table):
     original_headings = re.findall(heading_key, latex_table)[0]
     updated_headings = 'c'*(columns+1)
     latex_table = latex_table.replace(original_headings, updated_headings)
+    return latex_table
+
+
+def update_double_col_table(latex_table):
+    latex_table = latex_table.replace('table','table*')
     return latex_table
 
 # replace the headings for a table which is made from several tables
