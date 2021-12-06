@@ -275,9 +275,60 @@ def collated_multiple_baseline_post_process_latex_table(df_auroc, df_aupr, df_fp
     latex_table = add_label(latex_table,label) 
     latex_table = end_table_info(latex_table)
 
-    #latex_table = '\\begin{table}[]\n\\centering\n' + latex_table + '\n\\caption{'+ caption + '}\n\\label{' + label + '}\n\\end{table}'
     
     return latex_table
+
+
+
+
+
+# Utils for the latex table, same as before but also takes into accountthe p values- Compares between a single baseline and several metrics AUROC, AUPR and FPR
+def collated_multiple_baseline_post_process_latex_table_insignificance(df_auroc, df_aupr, df_fpr,df_auroc_insignificance, df_aupr_insignificance, df_fpr_insignificance ,caption,label):
+    
+    latex_table_auroc = df_auroc.to_latex()
+    latex_table_auroc = replace_headings(df_auroc,latex_table_auroc)
+    latex_table_auroc = bold_max_value(df_auroc,latex_table_auroc)
+
+    latex_table_aupr = df_aupr.to_latex()
+    latex_table_aupr = replace_headings(df_aupr,latex_table_aupr)
+    latex_table_aupr = bold_max_value(df_aupr,latex_table_aupr)
+
+    latex_table_fpr = df_fpr.to_latex()
+    latex_table_fpr = replace_headings(df_fpr,latex_table_fpr)
+    latex_table_fpr = bold_min_value(df_fpr,latex_table_fpr)
+
+    latex_table_auroc_insignificance, latex_table_aupr_insignificance, latex_table_fpr_insignificance = df_auroc_insignificance.to_latex(), df_aupr_insignificance.to_latex(), df_fpr_insignificance.to_latex()
+
+    latex_table_auroc = bold_significant_values(latex_table_auroc, latex_table_auroc_insignificance)
+
+
+
+
+    # used to get the pattern of &, then empy space, then any character, empty space,  then & then empty space
+    latex_table_auroc = join_multiple_columns(latex_table_auroc,'AUROC')
+    latex_table_aupr = join_multiple_columns(latex_table_aupr,'AUPR')
+    latex_table_fpr = join_multiple_columns(latex_table_fpr,'FPR')
+
+    latex_table = join_different_columns(latex_table_auroc,latex_table_aupr) # joins the auroc and aupr table together
+    latex_table = join_different_columns(latex_table, latex_table_fpr) # joins the auroc+aupr table with the fpr table
+    latex_table = replace_headings_collated_table(latex_table) # replaces the heading to take into account the collated readings
+    latex_table = post_process_latex_table(latex_table)
+    latex_table = initial_table_info(latex_table)
+    latex_table = add_caption(latex_table,caption)
+    latex_table = add_label(latex_table,label) 
+    latex_table = end_table_info(latex_table)
+
+    
+    return latex_table
+# pass in the measurements as well as whether the values are insignificant
+def bold_significant_values(latex_table_values, latex_table_insignificance):
+    insignificance_strings = re.findall('&.+\\\\\n',latex_table_insignificance)
+    value_strings = re.findall('&.+\\\\\n',latex_table_values)
+    val = re.findall('^.+&+\\\\\n',latex_table_values)
+    val = re.findall('\b.+\b\\\\\n',latex_table_values)
+    
+
+
 # Used to combine tables from different datasets together
 def combine_multiple_tables(latex_tables,caption,label): # Several latex tables
     # Split the first table at tabular

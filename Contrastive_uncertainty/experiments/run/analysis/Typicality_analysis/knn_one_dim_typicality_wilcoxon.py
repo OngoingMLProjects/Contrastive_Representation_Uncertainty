@@ -22,7 +22,8 @@ from Contrastive_uncertainty.experiments.run.analysis.analysis_utils import full
     replace_headings, bold_max_value, initial_table_info, add_caption, add_label, end_table_info,join_columns,join_different_columns,\
     replace_headings_collated_table, post_process_latex_table, combine_multiple_tables   
 from Contrastive_uncertainty.experiments.run.analysis.Typicality_analysis.knn_one_dim_typicality_diagrams import knn_vector 
-from Contrastive_uncertainty.experiments.run.analysis.Typicality_analysis.knn_one_dim_typicality_tables import obtain_ood_datasets,obtain_knn_value, obtain_baseline_mahalanobis, obtain_baseline
+from Contrastive_uncertainty.experiments.run.analysis.Typicality_analysis.knn_one_dim_typicality_tables import obtain_ood_datasets,obtain_knn_value, obtain_baseline_mahalanobis, obtain_baseline,\
+    update_metric_array, update_metric_list
 
 # Performs one sided-test to see the importance
 def knn_auroc_wilcoxon_v2():
@@ -1656,32 +1657,7 @@ def multiple_baseline_collated_wilcoxon_post_process_latex_table(df_auroc, df_au
 
     return latex_table
 
-# small hack to make it work for the seeds of interest
-def update_metric_list(metric_list,data_index,metric_function, metric_string, metric_model_type,run_model_type, summary, OOD_dataset,seed):
-    #print('metric model type:',metric_model_type)
-    seeds = [25,50,75,100,125,150,175]
-    if metric_model_type == run_model_type and seed in seeds:
-        metric_value = metric_function(metric_string,summary,OOD_dataset) # calculates the value
-        metric_list[data_index].append(metric_value)
-        return metric_list
-    else:
-        return metric_list # metric array with no changes
 
-
-# Used to calculate the metric when using a numpy array instead of a list
-def update_metric_array(metric_array,baseline_index,data_index,metric_function, metric_string, metric_model_type,run_model_type, summary, OOD_dataset,run_seed):
-    #print('metric model type:',metric_model_type)
-    seeds = [25,50,75,100,125,150,175,200]
-
-    if metric_model_type == run_model_type and run_seed in seeds:
-
-        metric_value = metric_function(metric_string,summary,OOD_dataset) # calculates the value
-        repeat_index = seeds.index(run_seed)
-        
-        metric_array[baseline_index,data_index,repeat_index] = metric_value
-        return metric_array
-    else:
-        return metric_array# metric array with no changes
 
 
 if __name__== '__main__':

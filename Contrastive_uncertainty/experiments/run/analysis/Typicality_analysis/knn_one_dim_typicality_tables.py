@@ -18,8 +18,10 @@ from scipy.stats import wilcoxon
 # Import general params
 import json
 import re
+import copy
 
-from Contrastive_uncertainty.experiments.run.analysis.analysis_utils import add_baseline_names_row, collated_baseline_post_process_latex_table, combine_multiple_tables, dataset_dict, key_dict, ood_dataset_string, post_process_latex_table,full_post_process_latex_table, remove_hline_processing, separate_top_columns, single_baseline_post_process_latex_table, collated_multiple_baseline_post_process_latex_table,combine_multiple_tables, separate_columns, separate_top_columns, update_double_col_table, update_headings_additional
+from Contrastive_uncertainty.experiments.run.analysis.analysis_utils import add_baseline_names_row, collated_baseline_post_process_latex_table, combine_multiple_tables, dataset_dict, key_dict, ood_dataset_string, post_process_latex_table,full_post_process_latex_table, remove_hline_processing, separate_top_columns, single_baseline_post_process_latex_table, collated_multiple_baseline_post_process_latex_table,combine_multiple_tables, separate_columns, separate_top_columns, update_double_col_table, update_headings_additional,\
+    collated_multiple_baseline_post_process_latex_table_insignificance
 
 def knn_vector(json_data):
     data = np.array(json_data['data'])
@@ -347,8 +349,6 @@ def knn_auroc_table_collated():
         print(latex_table)
 
 
-
-
 # Calculates the AUROC, AUPR as well as the false positive rate
 def knn_table_collated(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approach = 'Mahalanobis', baseline_model_type = 'CE'):
     
@@ -446,11 +446,8 @@ def knn_table_collated(desired_approach = 'Quadratic_typicality', desired_model_
                 data_array_AUPR, count_array_AUPR =update_metric_and_count(data_array_AUPR,count_array_AUPR,data_index,0,baseline_function,baseline_string_AUPR,baseline_model_type,model_type,run_summary,OOD_dataset)
                 data_array_FPR, count_array_FPR =update_metric_and_count(data_array_FPR,count_array_FPR,data_index,0,baseline_function,baseline_string_FPR,baseline_model_type,model_type,run_summary,OOD_dataset)
 
-
-
                 row_names[data_index] = f'ID:{ID_dataset}, OOD:{OOD_dataset}' 
-        
-        
+                
         data_array_AUROC = np.round(data_array_AUROC/count_array_AUROC,decimals=3)  
         data_array_AUPR = np.round(data_array_AUPR/count_array_AUPR,decimals=3)  
         data_array_FPR = np.round(data_array_FPR/count_array_FPR,decimals=3)
@@ -616,11 +613,217 @@ def knn_table_collated_v2(desired_approach = 'Quadratic_typicality', desired_mod
     combined_table = update_headings_additional(combined_table)
     combined_table = update_double_col_table(combined_table)
 
-
-    
     print(combined_table)
         
 
+# Same as before but also calculates the wilcoxon values to see whether the value is higher than the threshold
+def knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['Softmax','Mahalanobis'], baseline_model_types = ['CE','CE'],dataset_type ='grayscale'):
+
+    baselines_dict = {'Mahalanobis':{'AUROC':'Mahalanobis AUROC OOD'.lower(),'AUPR':'Mahalanobis AUPR'.lower(),'FPR':'Mahalanobis FPR'.lower()},
+                
+                'Softmax':{'AUROC':'Maximum Softmax Probability AUROC OOD'.lower(),'AUPR':'Maximum Softmax Probability AUPR OOD'.lower(),'FPR':'Maximum Softmax Probability FPR OOD'.lower()},
+                }
+
+    assert len(baseline_approaches) == len(baseline_model_types), 'number of baseline approaches do not match number of baseline models'
+    num_baselines = len(baseline_approaches)
+    # Make it so that the desired string and the baseline strings are decided by the suffix (ood, FPR, AUPR)
+    if desired_approach == 'Quadratic_typicality':
+        desired_string_AUROC = 'Normalized One Dim Class Quadratic Typicality KNN - 10 OOD'.lower() # Only get the key for the AUROC
+        desired_string_AUPR= 'Normalized One Dim Class Quadratic Typicality KNN - 10 AUPR'.lower()
+        desired_string_FPR = 'Normalized One Dim Class Quadratic Typicality KNN - 10 FPR'.lower()
+        desired_function = obtain_knn_value # Used to calculate the value
+
+    ####################
+    # make a loop to add the baseline strings and the baseline AUPR etc
+    baseline_strings_AUROC = []
+    baseline_strings_AUPR = []
+    baseline_strings_FPR = []
+    for approach in baseline_approaches:
+        assert approach == 'Mahalanobis' or approach =='Softmax', 'No other baselines implemented'
+        baseline_strings_AUROC.append(baselines_dict[approach]['AUROC'])
+        baseline_strings_AUPR.append(baselines_dict[approach]['AUPR'])
+        baseline_strings_FPR.append(baselines_dict[approach]['FPR'])
+
+    baseline_function = obtain_baseline
+    
+    # Fixed value of k of interest
+    fixed_k = 10
+    # Desired ID,OOD and Model  
+    root_dir = 'run_data/'
+
+    api = wandb.Api()
+    # Gets the runs corresponding to a specific filter
+    # https://github.com/wandb/client/blob/v0.10.31/wandb/apis/public.py
+    all_latex_tables = []
+    all_ID = ['MNIST','FashionMNIST','KMNIST'] if dataset_type =='grayscale' else ['CIFAR10','CIFAR100','Caltech256','TinyImageNet'] 
+    #all_ID = ['MNIST','FashionMNIST','KMNIST', 'CIFAR10','CIFAR100','Caltech101','Caltech256','TinyImageNet','Cub200','Dogs']
+    #all_ID = ['MNIST','FashionMNIST','KMNIST']
+    for ID_dataset in all_ID: # Go through the different ID dataset                
+        #runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"OOD hierarchy baselines","config.epochs": 300, 'state':'finished',"config.dataset": f"{ID_dataset}","$or": [{"config.model_type":"SupCon" }, {"config.model_type": "CE"}]})
+        runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.epochs": 300, 'state':'finished',"config.dataset": f"{ID_dataset}","$or": [{"config.model_type":"SupCon" }, {"config.model_type": "CE"}]})
+        #runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.epochs": 300, "config.dataset": f"{ID_dataset}","config.model_type":"SupCon"})
+        #runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.epochs": 300, "config.dataset": f"{ID_dataset}","config.model_type":"CE"})
+        # number of OOd datasets for this particular ID dataset
+        num_ood = len(dataset_dict[ID_dataset])
+        # data array
+        data_array_AUROC = np.zeros((num_ood,num_baselines+1)) 
+        count_array_AUROC = np.zeros((num_ood,num_baselines+1))  
+
+        data_array_AUPR = np.zeros((num_ood,num_baselines+1)) 
+        count_array_AUPR = np.zeros((num_ood,num_baselines+1)) 
+
+        data_array_FPR = np.zeros((num_ood,num_baselines+1)) 
+        count_array_FPR = np.zeros((num_ood,num_baselines+1))
+
+        ########### Code to calculate p-values ###################
+        num_repeats = 8
+        # Arrays to calculate the p-values
+        baseline_AUROC_values, baseline_AUPR_values, baseline_FPR_values =  np.empty((num_baselines,num_ood,num_repeats)), np.empty((num_baselines,num_ood,num_repeats)), np.empty((num_baselines,num_ood,num_repeats))
+        desired_AUROC_values, desired_AUPR_values, desired_FPR_values = np.empty((1,num_ood,num_repeats)), np.empty((1,num_ood,num_repeats)), np.empty((1,num_ood,num_repeats))
+
+        baseline_AUROC_values[:], baseline_AUPR_values[:], baseline_FPR_values[:] =  np.nan, np.nan, np.nan
+        desired_AUROC_values[:], desired_AUPR_values[:], desired_FPR_values[:] = np.nan, np.nan, np.nan
+
+        # Get scores for each of the OOD datasets for this ID dataset
+        collated_rank_score_auroc = np.empty((num_ood,num_baselines)) # + 1 to take into account an additional wilcoxon score which takes into account the entire dataset
+        collated_rank_score_auroc[:] = np.nan
+        
+        collated_rank_score_aupr = np.empty((num_ood,num_baselines)) # + 1 to take into account an additional wilcoxon score which takes into account the entire dataset
+        collated_rank_score_aupr[:] = np.nan
+
+        collated_rank_score_fpr = np.empty((num_ood,num_baselines)) # + 1 to take into account an additional wilcoxon score which takes into account the entire dataset
+        collated_rank_score_fpr[:] = np.nan
+        ##############################################################
+        row_names = [None] * num_ood # Make an empty list to take into account all the different values 
+        for i, run in enumerate(runs): 
+            run_summary = run.summary._json_dict
+            # .config contains the hyperparameters.
+            #  We remove special values that start with _.
+            run_config = {k: v for k,v in run.config.items()
+                 if not k.startswith('_')} 
+
+            group_name = run_config['group']
+            path_list = run.path
+            # include the group name in the run path
+            path_list.insert(-1, group_name)
+            run_path = '/'.join(path_list)
+
+            ID_dataset = run_config['dataset']
+            model_type = run_config['model_type']
+            Model_name = 'SupCLR' if model_type=='SupCon' else model_type
+            # Make a data array, where the number values are equal to the number of OOD classes present in the datamodule dict or equal to the number of keys
+
+            # name for the different rows of a table
+            #row_names = []
+            # https://stackoverflow.com/questions/10712002/create-an-empty-list-in-python-with-certain-size
+            
+            # go through the different knn keys
+            
+            # Obtain the ID and OOD dataset
+            # Make function to obtain quadratic typicality for a particular ID and OOD dataset
+            # Make function to obtain mahalanobis from a particular ID and OOD dataset
+            
+            # Obtain all the OOD datasets for a particular desired string
+            all_OOD_datasets = obtain_ood_datasets_baseline(desired_string_AUROC,baseline_strings_AUROC[0], run_summary,ID_dataset)
+            for OOD_dataset in all_OOD_datasets:
+                data_index = dataset_dict[ID_dataset][OOD_dataset] # index location
+                # updates the data array and the count array at a certain location with
+                
+                data_array_AUROC, count_array_AUROC =update_metric_and_count(data_array_AUROC,count_array_AUROC,data_index,-1,desired_function,desired_string_AUROC,desired_model_type,model_type,run_summary,OOD_dataset)
+                data_array_AUPR, count_array_AUPR =update_metric_and_count(data_array_AUPR,count_array_AUPR,data_index,-1,desired_function,desired_string_AUPR,desired_model_type,model_type,run_summary,OOD_dataset)
+                data_array_FPR, count_array_FPR =update_metric_and_count(data_array_FPR,count_array_FPR,data_index,-1,desired_function,desired_string_FPR,desired_model_type,model_type,run_summary,OOD_dataset)
+
+                desired_AUROC_values = update_metric_array(desired_AUROC_values, 0,data_index,desired_function,desired_string_AUROC,desired_model_type,model_type,run_summary,OOD_dataset,run_config['seed'])
+                desired_AUPR_values = update_metric_array(desired_AUPR_values, 0,data_index,desired_function,desired_string_AUPR,desired_model_type, model_type,run_summary,OOD_dataset,run_config['seed'])
+                desired_FPR_values = update_metric_array(desired_FPR_values, 0,data_index,desired_function,desired_string_FPR,desired_model_type, model_type,run_summary,OOD_dataset,run_config['seed'])
+
+                for i in range(len(baseline_approaches)):
+                    data_array_AUROC, count_array_AUROC =update_metric_and_count(data_array_AUROC,count_array_AUROC,data_index,i,baseline_function,baseline_strings_AUROC[i],baseline_model_types[i],model_type,run_summary,OOD_dataset)
+                    data_array_AUPR, count_array_AUPR =update_metric_and_count(data_array_AUPR,count_array_AUPR,data_index,i,baseline_function,baseline_strings_AUPR[i],baseline_model_types[i],model_type,run_summary,OOD_dataset)
+                    data_array_FPR, count_array_FPR =update_metric_and_count(data_array_FPR,count_array_FPR,data_index,i,baseline_function,baseline_strings_FPR[i],baseline_model_types[i],model_type,run_summary,OOD_dataset)
+
+                    baseline_AUROC_values = update_metric_array(baseline_AUROC_values,i,data_index,baseline_function,baseline_strings_AUROC[i],baseline_model_types[i] ,model_type,run_summary,OOD_dataset,run_config['seed'])
+                    baseline_AUPR_values = update_metric_array(baseline_AUPR_values,i,data_index,baseline_function,baseline_strings_AUPR[i],baseline_model_types[i], model_type,run_summary,OOD_dataset,run_config['seed'])
+                    baseline_FPR_values = update_metric_array(baseline_FPR_values,i,data_index,baseline_function,baseline_strings_FPR[i], baseline_model_types[i], model_type,run_summary,OOD_dataset,run_config['seed'])
+
+                row_names[data_index] = f'ID:{ID_dataset}, OOD:{OOD_dataset}' 
+
+        ####### Calculates p-values #############################
+        for i in range(num_baselines):
+            difference_auroc = np.array(baseline_AUROC_values[i]) - np.array(desired_AUROC_values[0]) # shape (num ood, repeats)
+            difference_aupr = np.array(baseline_AUPR_values[i]) - np.array(desired_AUPR_values[0]) # shape (num ood, repeats)
+
+            # REVERSED THE DIRECTION FOR FPR DUE TO LOWER BEING BETTER FOR FPR, SO I DO NOT NEED TO REVERSE THE DIRECTION OF THE TEST STATISTIC
+            difference_fpr = np.array(desired_FPR_values[0]) - np.array(baseline_FPR_values[i]) # shape (num ood, repeats)
+            # Calculate the p values for a particular OOD dataset for this ID dataset
+            for j in range(len(difference_auroc)): # go through all the different ID OOD dataset pairs
+                #stat, p_value  = wilcoxon(difference[i],alternative='less') # calculate the p value for a particular ID OOD dataset pair
+                stat, p_value_auroc  = wilcoxon(difference_auroc[j],alternative='less') # calculate the p value for a particular ID OOD dataset pair
+                stat, p_value_aupr  = wilcoxon(difference_aupr[j],alternative='less') # calculate the p value for a particular ID OOD dataset pair
+                stat, p_value_fpr  = wilcoxon(difference_fpr[j],alternative='less') # calculate the p value for a particular ID OOD dataset pair
+
+                collated_rank_score_auroc[j,i] = p_value_auroc # add the p_value to the rank score for this particular dataset
+                collated_rank_score_aupr[j,i] = p_value_aupr # add the p_value to the rank score for this particular dataset
+                collated_rank_score_fpr[j,i] = p_value_fpr # add the p_value to the rank score for this particular dataset
+        
+
+        p_value_column_names = copy.deepcopy(baseline_approaches)
+        
+        # Post processing latex table
+
+        auroc_insignificance_df = insignificance_dataframe(collated_rank_score_auroc,0.05,row_names)
+        aupr_insignificance_df = insignificance_dataframe(collated_rank_score_aupr,0.05,row_names)
+        fpr_insignificance_df = insignificance_dataframe(collated_rank_score_fpr,0.05,row_names)
+
+
+        '''
+        ######## Checking if true or false values are present in the string 
+        auroc_insignificance_latex = auroc_insignificance_df.to_latex() 
+        strings = re.findall('&.+\\\\\n',auroc_insignificance_latex)
+        print('significant') if 'False' in strings[2] else print('insignificant')
+        '''
+
+        
+        ##########################################################
+        data_array_AUROC = np.round(data_array_AUROC/count_array_AUROC,decimals=3)  
+        data_array_AUPR = np.round(data_array_AUPR/count_array_AUPR,decimals=3)  
+        data_array_FPR = np.round(data_array_FPR/count_array_FPR,decimals=3)
+        column_names = baseline_approaches + [f'Quadratic {fixed_k} NN']        
+        auroc_df = pd.DataFrame(data_array_AUROC,columns = column_names, index=row_names)
+        aupr_df = pd.DataFrame(data_array_AUPR,columns = column_names, index=row_names)
+        fpr_df = pd.DataFrame(data_array_FPR,columns = column_names, index=row_names)
+        
+        #desired_approach.split("_")
+        caption = ID_dataset + ' Dataset'+ f' with {desired_approach.replace("_"," ")} {desired_model_type}'  # replace Underscore with spaces for the caption
+        label = f'tab:{ID_dataset}_Dataset_{desired_approach}_{desired_model_type}'
+        #caption = ID_dataset + ' Dataset'+ f' with {desired_approach.replace("_"," ")} {desired_model_type} vs {baseline_approach.replace("_"," ")} {baseline_model_type} Baseline'  # replace Underscore with spaces for the caption
+        #label = f'tab:{ID_dataset}_Dataset_{desired_approach}_{desired_model_type}_{baseline_approach}_{baseline_model_type}'
+        #latex_table = single_baseline_post_process_latex_table(auroc_df, caption, label,value)
+        latex_table = collated_multiple_baseline_post_process_latex_table_insignificance(auroc_df,aupr_df, fpr_df,auroc_insignificance_df,aupr_insignificance_df, fpr_insignificance_df,caption, label)
+        #latex_table =  collated_multiple_baseline_post_process_latex_table(auroc_df,aupr_df, fpr_df,caption, label)
+        #latex_table = full_post_process_latex_table(auroc_df, caption, label,value='max')
+        
+        all_latex_tables.append(latex_table)
+    
+
+    baseline_names = ''
+    for index in range(len(baseline_approaches)):
+        if index ==0:
+            baseline_names = baseline_names + baseline_approaches[index] + '_' + baseline_model_types[index]
+        else:
+            baseline_names = baseline_names + '_and_'+ baseline_approaches[index] + '_' + baseline_model_types[index]
+
+    combined_caption = f'AUROC, AUPR and FPR for different ID-OOD dataset pairs using {baseline_names.replace("_"," ")} baselines and {desired_approach.replace("_"," ")} {desired_model_type}'
+    combined_label =f'tab:datasets_comparison_{desired_approach}_{desired_model_type}_{baseline_names}'
+    combined_table = combine_multiple_tables(all_latex_tables,combined_caption, combined_label)
+    combined_table = separate_columns(combined_table)
+    combined_table = separate_top_columns(combined_table)
+    combined_table = add_baseline_names_row(combined_table,baseline_approaches)
+    combined_table = remove_hline_processing(combined_table)
+    combined_table = update_headings_additional(combined_table)
+    combined_table = update_double_col_table(combined_table)
+
+    print(combined_table)
 
 # Used to create a dataframe
 def create_dataframe(data_array,column_names,OOD_names,ID_names):
@@ -629,6 +832,27 @@ def create_dataframe(data_array,column_names,OOD_names,ID_names):
     data_dict.update(data)
     df = pd.DataFrame(data= data_dict,index=ID_names)
     return df
+
+
+# Checks if there is an insignificant difference (if false, the results are statistically significant)
+def insignificance_dataframe(data_array,significance_value,index_names):
+    '''
+    inputs:
+    data_array: array which shows the the p-value scores
+    significance_value:  the threshold where values below have statisitcally significant results and values above are not significant
+    index_names: name of index to make the data frame 
+
+    output:
+    insignificance_df: data frame with true and false values to see if the approach is not statistically better, false means results are statistically better
+    '''
+    
+    data_array = data_array - significance_value
+    data_array = np.where(data_array>0,data_array, 0) #  any value which is higher than zero stays as zero,whilst values below become zero
+    array = np.any(data_array, axis=1) # check all the columns I believe, checks whether any of the columns are true, if true along any column, the approach is not statistically significant to all the baselines, aim to have all columns as false
+    insignificance_df = pd.DataFrame(array, index = index_names)
+    return insignificance_df
+
+
 
 def update_metric(metric_array,data_index, second_index,metric_function, metric_string, metric_model_type,run_model_type, summary, OOD_dataset):
     if metric_model_type == run_model_type:
@@ -736,6 +960,34 @@ def obtain_baseline_mahalanobis(summary,OOD_dataset,string1 = 'Mahalanobis AUROC
 
 
 
+
+# small hack to make it work for the seeds of interest
+def update_metric_list(metric_list,data_index,metric_function, metric_string, metric_model_type,run_model_type, summary, OOD_dataset,seed):
+    #print('metric model type:',metric_model_type)
+    seeds = [25,50,75,100,125,150,175]
+    if metric_model_type == run_model_type and seed in seeds:
+        metric_value = metric_function(metric_string,summary,OOD_dataset) # calculates the value
+        metric_list[data_index].append(metric_value)
+        return metric_list
+    else:
+        return metric_list # metric array with no changes
+
+
+# Used to calculate the metric when using a numpy array instead of a list
+def update_metric_array(metric_array,baseline_index,data_index,metric_function, metric_string, metric_model_type,run_model_type, summary, OOD_dataset,run_seed):
+    #print('metric model type:',metric_model_type)
+    seeds = [25,50,75,100,125,150,175,200]
+
+    if metric_model_type == run_model_type and run_seed in seeds:
+
+        metric_value = metric_function(metric_string,summary,OOD_dataset) # calculates the value
+        repeat_index = seeds.index(run_seed)
+        
+        metric_array[baseline_index,data_index,repeat_index] = metric_value
+        return metric_array
+    else:
+        return metric_array# metric array with no changes
+
 if __name__== '__main__':
     #knn_auroc_table()
     #knn_auroc_table_mean()
@@ -748,4 +1000,6 @@ if __name__== '__main__':
     #knn_table_collated(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approach = 'Mahalanobis', baseline_model_type = 'SupCon')
     #knn_table_collated_v2(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['Softmax','Mahalanobis'], baseline_model_types = ['CE','CE'],dataset_type ='RGB')
     #knn_table_collated_v2(desired_approach = 'Quadratic_typicality', desired_model_type = 'CE', baseline_approaches = ['Mahalanobis'], baseline_model_types = ['CE'],dataset_type ='RGB')
-    knn_table_collated_v2(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['Mahalanobis'], baseline_model_types = ['SupCon'],dataset_type ='RGB')
+    #knn_table_collated_v2(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['Mahalanobis'], baseline_model_types = ['SupCon'],dataset_type ='RGB')
+    #knn_table_collated_v2(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['Mahalanobis'], baseline_model_types = ['SupCon'],dataset_type ='RGB')
+    knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['Softmax','Mahalanobis'], baseline_model_types = ['CE','CE'],dataset_type ='grayscale')
