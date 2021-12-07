@@ -619,7 +619,7 @@ def knn_table_collated_v2(desired_approach = 'Quadratic_typicality', desired_mod
         
 
 # Same as before but also calculates the wilcoxon values to see whether the value is higher than the threshold
-def knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['Softmax','Mahalanobis'], baseline_model_types = ['CE','CE'],dataset_type ='grayscale'):
+def knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['Softmax','Mahalanobis'], baseline_model_types = ['CE','CE'],dataset_type ='grayscale',t_test='less'):
     num_repeats = 8
     baselines_dict = {'Mahalanobis':{'AUROC':'Mahalanobis AUROC OOD'.lower(),'AUPR':'Mahalanobis AUPR'.lower(),'FPR':'Mahalanobis FPR'.lower()},
                 
@@ -748,11 +748,6 @@ def knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desir
                     baseline_AUPR_values = update_metric_array(baseline_AUPR_values,i,data_index,baseline_function,baseline_strings_AUPR[i],baseline_model_types[i], model_type,run_summary,OOD_dataset,run_config['seed'])
                     baseline_FPR_values = update_metric_array(baseline_FPR_values,i,data_index,baseline_function,baseline_strings_FPR[i], baseline_model_types[i], model_type,run_summary,OOD_dataset,run_config['seed'])
 
-                    
-                 
-
-        #print('TABLES baseline FPR values',baseline_FPR_values)
-
         ####### Calculates p-values #############################
         for i in range(num_baselines):
             difference_auroc = np.array(baseline_AUROC_values[i]) - np.array(desired_AUROC_values[0]) # shape (num ood, repeats)
@@ -763,15 +758,14 @@ def knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desir
             # Calculate the p values for a particular OOD dataset for this ID dataset
             for j in range(len(difference_auroc)): # go through all the different ID OOD dataset pairs
                 #stat, p_value  = wilcoxon(difference[i],alternative='less') # calculate the p value for a particular ID OOD dataset pair
-                stat, p_value_auroc  = wilcoxon(difference_auroc[j],alternative='less') # calculate the p value for a particular ID OOD dataset pair
-                stat, p_value_aupr  = wilcoxon(difference_aupr[j],alternative='less') # calculate the p value for a particular ID OOD dataset pair
-                stat, p_value_fpr  = wilcoxon(difference_fpr[j],alternative='less') # calculate the p value for a particular ID OOD dataset pair
-
+                stat, p_value_auroc  = wilcoxon(difference_auroc[j],alternative=t_test) # calculate the p value for a particular ID OOD dataset pair
+                stat, p_value_aupr  = wilcoxon(difference_aupr[j],alternative=t_test) # calculate the p value for a particular ID OOD dataset pair
+                stat, p_value_fpr  = wilcoxon(difference_fpr[j],alternative=t_test) # calculate the p value for a particular ID OOD dataset pair
+                
                 collated_rank_score_auroc[j,i] = p_value_auroc # add the p_value to the rank score for this particular dataset
                 collated_rank_score_aupr[j,i] = p_value_aupr # add the p_value to the rank score for this particular dataset
                 collated_rank_score_fpr[j,i] = p_value_fpr # add the p_value to the rank score for this particular dataset
         
-
         p_value_column_names = copy.deepcopy(baseline_approaches)
         
         # Post processing latex table
@@ -780,8 +774,6 @@ def knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desir
         #print('rank auroc',collated_rank_score_auroc)
         aupr_insignificance_df = insignificance_dataframe(collated_rank_score_aupr,0.05,row_names)
         fpr_insignificance_df = insignificance_dataframe(collated_rank_score_fpr,0.05,row_names)
-
-
         
         ##########################################################
         data_array_AUROC = np.round(data_array_AUROC/count_array_AUROC,decimals=3)  
@@ -798,7 +790,7 @@ def knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desir
         #caption = ID_dataset + ' Dataset'+ f' with {desired_approach.replace("_"," ")} {desired_model_type} vs {baseline_approach.replace("_"," ")} {baseline_model_type} Baseline'  # replace Underscore with spaces for the caption
         #label = f'tab:{ID_dataset}_Dataset_{desired_approach}_{desired_model_type}_{baseline_approach}_{baseline_model_type}'
         #latex_table = single_baseline_post_process_latex_table(auroc_df, caption, label,value)
-        latex_table = collated_multiple_baseline_post_process_latex_table_insignificance(auroc_df,aupr_df, fpr_df,auroc_insignificance_df,aupr_insignificance_df, fpr_insignificance_df,caption, label)
+        latex_table = collated_multiple_baseline_post_process_latex_table_insignificance(auroc_df,aupr_df, fpr_df,auroc_insignificance_df,aupr_insignificance_df, fpr_insignificance_df,t_test,caption, label)
         #latex_table =  collated_multiple_baseline_post_process_latex_table(auroc_df,aupr_df, fpr_df,caption, label)
         #latex_table = full_post_process_latex_table(auroc_df, caption, label,value='max')
         
@@ -850,7 +842,6 @@ def insignificance_dataframe(data_array,significance_value,index_names):
     array = np.any(data_array, axis=1) # check all the columns I believe, checks whether any of the columns are true, if true along any column, the approach is not statistically significant to all the baselines, aim to have all columns as false
     insignificance_df = pd.DataFrame(array, index = index_names)
     return insignificance_df
-
 
 
 def update_metric(metric_array,data_index, second_index,metric_function, metric_string, metric_model_type,run_model_type, summary, OOD_dataset):
@@ -1001,6 +992,7 @@ if __name__== '__main__':
     #knn_table_collated_v2(desired_approach = 'Quadratic_typicality', desired_model_type = 'CE', baseline_approaches = ['Mahalanobis'], baseline_model_types = ['CE'],dataset_type ='RGB')
     #knn_table_collated_v2(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['Mahalanobis'], baseline_model_types = ['SupCon'],dataset_type ='RGB')
     #knn_table_collated_v2(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['Mahalanobis'], baseline_model_types = ['SupCon'],dataset_type ='RGB')
-    knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['Softmax','Mahalanobis'], baseline_model_types = ['CE','CE'],dataset_type ='RGB')
+    #knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['Softmax','Mahalanobis'], baseline_model_types = ['CE','CE'],dataset_type ='RGB')
+    knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['Mahalanobis'], baseline_model_types = ['SupCon'],dataset_type ='RGB',t_test='two-sided')
 
 

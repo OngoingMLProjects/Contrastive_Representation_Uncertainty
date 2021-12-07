@@ -283,7 +283,7 @@ def collated_multiple_baseline_post_process_latex_table(df_auroc, df_aupr, df_fp
 
 
 # Utils for the latex table, same as before but also takes into accountthe p values- Compares between a single baseline and several metrics AUROC, AUPR and FPR
-def collated_multiple_baseline_post_process_latex_table_insignificance(df_auroc, df_aupr, df_fpr,df_auroc_insignificance, df_aupr_insignificance, df_fpr_insignificance ,caption,label):
+def collated_multiple_baseline_post_process_latex_table_insignificance(df_auroc, df_aupr, df_fpr,df_auroc_insignificance, df_aupr_insignificance, df_fpr_insignificance,t_test, caption,label):
     
     latex_table_auroc = df_auroc.to_latex()
     latex_table_auroc = replace_headings(df_auroc,latex_table_auroc)
@@ -298,13 +298,17 @@ def collated_multiple_baseline_post_process_latex_table_insignificance(df_auroc,
     latex_table_fpr = bold_min_value(df_fpr,latex_table_fpr)
 
     latex_table_auroc_insignificance, latex_table_aupr_insignificance, latex_table_fpr_insignificance = df_auroc_insignificance.to_latex(), df_aupr_insignificance.to_latex(), df_fpr_insignificance.to_latex()
-
-    latex_table_auroc = bold_significant_values(latex_table_auroc, latex_table_auroc_insignificance)
-    latex_table_aupr = bold_significant_values(latex_table_aupr, latex_table_aupr_insignificance)
-    latex_table_fpr = bold_significant_values(latex_table_fpr, latex_table_fpr_insignificance)
     
-
-
+    if t_test =='less' or t_test =='greater':
+        latex_table_auroc = asterix_typicality_values(latex_table_auroc, latex_table_auroc_insignificance)
+        latex_table_aupr = asterix_typicality_values(latex_table_aupr, latex_table_aupr_insignificance)
+        latex_table_fpr = asterix_typicality_values(latex_table_fpr, latex_table_fpr_insignificance)
+    elif t_test == 'two-sided':
+        latex_table_auroc = asterix_significant_values(latex_table_auroc, latex_table_auroc_insignificance)
+        latex_table_aupr = asterix_significant_values(latex_table_aupr, latex_table_aupr_insignificance)
+        latex_table_fpr = asterix_significant_values(latex_table_fpr, latex_table_fpr_insignificance)    
+    else:
+        print('Wrong name for t-test')
 
     # used to get the pattern of &, then empy space, then any character, empty space,  then & then empty space
     latex_table_auroc = join_multiple_columns(latex_table_auroc,'AUROC')
@@ -322,8 +326,10 @@ def collated_multiple_baseline_post_process_latex_table_insignificance(df_auroc,
 
     
     return latex_table
+
+
 # pass in the measurements as well as whether the values are insignificant
-def bold_significant_values(latex_table_values, latex_table_insignificance):
+def asterix_typicality_values(latex_table_values, latex_table_insignificance):
     value_strings = re.findall(r'\\textbf{\d\.\d{3}}\s+\\\\\n|\d\.\d{3}\s+\\\\\n',latex_table_values) # Checks whether it has one pattern or another , aim is to get the last value of interest
     insignificance_strings = re.findall('&\s+[^ 0].+\\\\\n',latex_table_insignificance) # Need to place a space between the ^ to show that the string should not be used 
     #print('latex table values', latex_table_values)
@@ -352,24 +358,38 @@ def bold_significant_values(latex_table_values, latex_table_insignificance):
     latex_table = ''.join(concatenated_list)
     return latex_table
     
+# pass in the measurements as well as whether the values are insignificant, used to two-sided t-test
+def asterix_significant_values(latex_table_values, latex_table_insignificance):
+    value_strings = re.findall(r'&\s+\\textbf{\d\.\d{3}}\s+&|&\s+\\textbf{\d\.\d{3}}\s+\\\\\n',latex_table_values) # Need to use or to prevent getting double bolds in the case of ties
+    insignificance_strings = re.findall('&\s+[^ 0].+\\\\\n',latex_table_insignificance) # Need to place a space between the ^ to show that the string should not be used 
+    #print('latex table values', latex_table_values)
+    #print('latex_table_insignficance',latex_table_insignificance)
+    updated_string = []
+    concatenated_list = []
+    # Recursive approach to prevent replacing values which appear multiple times
+    recursive_string = copy.deepcopy(latex_table_values)
+    for index in range(len(value_strings)):
+        # Break string into first part and second part (without value_strings[index])
+        first_string, recursive_string = recursive_string.split(value_strings[index],1)
+        # growing string
+        first_string = first_string + value_strings[index] #  add the value_strings[index] nacl
+
+        # add asterisk and then remove whitespace
+        value_only = re.findall(r'\\textbf{\d\.\d{3}}',value_strings[index])[0]
+        
+        bold_string = (value_only+'*') if 'False' in insignificance_strings[index] else value_only 
+        # check if False is present in the insignificance string, to make it bold
+        updated_string.append(bold_string)
+        
+        first_string = first_string.replace(value_only, updated_string[index])
+        concatenated_list.append(first_string)
+
+    # at the end of the list(add on the remaining of the recursive string)
+    concatenated_list.append(recursive_string)
+    latex_table = ''.join(concatenated_list)
+    return latex_table
+
     
-
-
-    '''
-    value_strings = re.findall('&.+\\\\\n',latex_table_values)
-    val = re.findall('^.+&+\\\\\n',latex_table_values)
-    val = re.findall(r'\b\w+\b',latex_table_values)
-    val = re.findall(r'&\s+\b\w+.+\b.+\s+',latex_table_values)
-    val = re.findall(r'&\s+.+[^&]',latex_table_values)
-    val = re.findall(r'&\s+\\textbf{0.996}\s+\\\\\n',latex_table_values)
-
-    val = re.findall(r'&\s+(\\textbf{\d\.\d{3}}|\d\.\d{3})\s+\\\\\n',latex_table_values)
-    val = re.findall(r'\\textbf{\d\.\d{3}}\s+\\\\\n|\d\.\d{3}\s+\\\\\n',latex_table_values) # Checks whether it has one pattern or another , aim is to get the last value of interest
-
-    val = re.findall(r'&\s+(\\textbf{\d\.\d{3}})\s+\\\\\n',latex_table_values)
-    val = re.findall(r'&\s+(\\textbf{\d\.\d{3}}|\d\.\d{3})',latex_table_values)
-    val = re.findall(r'&\s+(\\textbf{\d\.\d{3}}|\d\.\d{3})\s+',latex_table_values)
-    '''
 
 # Used to combine tables from different datasets together
 def combine_multiple_tables(latex_tables,caption,label): # Several latex tables
