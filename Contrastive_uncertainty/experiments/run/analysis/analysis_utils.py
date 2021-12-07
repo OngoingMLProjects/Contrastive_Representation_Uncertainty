@@ -300,7 +300,9 @@ def collated_multiple_baseline_post_process_latex_table_insignificance(df_auroc,
     latex_table_auroc_insignificance, latex_table_aupr_insignificance, latex_table_fpr_insignificance = df_auroc_insignificance.to_latex(), df_aupr_insignificance.to_latex(), df_fpr_insignificance.to_latex()
 
     latex_table_auroc = bold_significant_values(latex_table_auroc, latex_table_auroc_insignificance)
-
+    latex_table_aupr = bold_significant_values(latex_table_aupr, latex_table_aupr_insignificance)
+    latex_table_fpr = bold_significant_values(latex_table_fpr, latex_table_fpr_insignificance)
+    
 
 
 
@@ -322,12 +324,52 @@ def collated_multiple_baseline_post_process_latex_table_insignificance(df_auroc,
     return latex_table
 # pass in the measurements as well as whether the values are insignificant
 def bold_significant_values(latex_table_values, latex_table_insignificance):
-    insignificance_strings = re.findall('&.+\\\\\n',latex_table_insignificance)
-    value_strings = re.findall('&.+\\\\\n',latex_table_values)
-    val = re.findall('^.+&+\\\\\n',latex_table_values)
-    val = re.findall('\b.+\b\\\\\n',latex_table_values)
+    value_strings = re.findall(r'\\textbf{\d\.\d{3}}\s+\\\\\n|\d\.\d{3}\s+\\\\\n',latex_table_values) # Checks whether it has one pattern or another , aim is to get the last value of interest
+    insignificance_strings = re.findall('&\s+[^ 0].+\\\\\n',latex_table_insignificance) # Need to place a space between the ^ to show that the string should not be used 
+    #print('latex table values', latex_table_values)
+    #print('latex_table_insignficance',latex_table_insignificance)
+    updated_string = []
+    concatenated_list = []
+    # Recursive approach to prevent replacing values which appear multiple times
+    recursive_string = copy.deepcopy(latex_table_values)
+    for index in range(len(value_strings)):
+        # Break string into first part and second part (without value_strings[index])
+        first_string, recursive_string = recursive_string.split(value_strings[index],1)
+        # growing string
+        first_string = first_string + value_strings[index] #  add the value_strings[index] nacl
+        
+        value_only,_ = value_strings[index].split('\\\\\n',1)
+        # add asterisk and then remove whitespace
+        bold_string = (value_only+'*').replace(' ','') if 'False' in insignificance_strings[index] else value_only 
+        # check if False is present in the insignificance string, to make it bold
+        updated_string.append(bold_string)
+        
+        first_string = first_string.replace(value_only, updated_string[index])
+        concatenated_list.append(first_string)
+
+    # at the end of the list(add on the remaining of the recursive string)
+    concatenated_list.append(recursive_string)
+    latex_table = ''.join(concatenated_list)
+    return latex_table
+    
     
 
+
+    '''
+    value_strings = re.findall('&.+\\\\\n',latex_table_values)
+    val = re.findall('^.+&+\\\\\n',latex_table_values)
+    val = re.findall(r'\b\w+\b',latex_table_values)
+    val = re.findall(r'&\s+\b\w+.+\b.+\s+',latex_table_values)
+    val = re.findall(r'&\s+.+[^&]',latex_table_values)
+    val = re.findall(r'&\s+\\textbf{0.996}\s+\\\\\n',latex_table_values)
+
+    val = re.findall(r'&\s+(\\textbf{\d\.\d{3}}|\d\.\d{3})\s+\\\\\n',latex_table_values)
+    val = re.findall(r'\\textbf{\d\.\d{3}}\s+\\\\\n|\d\.\d{3}\s+\\\\\n',latex_table_values) # Checks whether it has one pattern or another , aim is to get the last value of interest
+
+    val = re.findall(r'&\s+(\\textbf{\d\.\d{3}})\s+\\\\\n',latex_table_values)
+    val = re.findall(r'&\s+(\\textbf{\d\.\d{3}}|\d\.\d{3})',latex_table_values)
+    val = re.findall(r'&\s+(\\textbf{\d\.\d{3}}|\d\.\d{3})\s+',latex_table_values)
+    '''
 
 # Used to combine tables from different datasets together
 def combine_multiple_tables(latex_tables,caption,label): # Several latex tables
@@ -414,7 +456,7 @@ def join_different_columns(latex_table_1,latex_table_2):
     latex_table = ''.join(concatenated_list)
     return latex_table
 
-# Make two separate columns from the ID dataset
+# Make two separate columns from the data, an ID dataset column and OOD dataset column
 def separate_columns(latex_table):
     
     desired_key = '\w+\:\w+\,\s+\w+\:\w+'
@@ -515,6 +557,13 @@ def update_headings_additional(latex_table):
 def update_double_col_table(latex_table):
     latex_table = latex_table.replace('table','table*')
     return latex_table
+
+# Code to separate the ID datasets from one another
+def separate_ID_datasets(latex_table):
+    desired_string = re.findall(r'\n\s+\n',latex_table)
+
+    updated_table = latex_table.replace('\n  \n','\n  \hline ') # whenever there is a gap between the ID datasets, there is two new lines in a row
+    return updated_table
 
 # replace the headings for a table which is made from several tables
 def replace_headings_collated_table(latex_table):

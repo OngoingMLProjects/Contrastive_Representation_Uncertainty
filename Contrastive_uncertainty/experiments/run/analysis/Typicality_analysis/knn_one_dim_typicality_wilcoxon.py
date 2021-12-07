@@ -1493,7 +1493,7 @@ def knn_auroc_wilcoxon_repeated_runs_v4(desired_approach = 'Quadratic_typicality
     # https://github.com/wandb/client/blob/v0.10.31/wandb/apis/public.py
 
     all_latex_tables = []
-    all_ID = ['MNIST','FashionMNIST','KMNIST'] if dataset_type =='grayscale' else ['CIFAR10','CIFAR100','Caltech256','TinyImageNet']
+    all_ID = ['MNIST','FashionMNIST','KMNIST'] if dataset_type =='grayscale' else ['CIFAR100']#['CIFAR10','CIFAR100','Caltech256','TinyImageNet']
     for ID_dataset in all_ID: # Go through the different ID dataset                
         #runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.epochs": 300, "config.dataset": f"{ID_dataset}","config.model_type":"SupCon"})
         #runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.epochs": 300, 'state':'finished',"config.dataset": f"{ID_dataset}","$or": [{"config.model_type":"SupCon" }, {"config.model_type": "CE"}]})
@@ -1559,6 +1559,8 @@ def knn_auroc_wilcoxon_repeated_runs_v4(desired_approach = 'Quadratic_typicality
                 
         #print(f'ID:{ID_dataset}')
         
+
+        #print('WILCOXON baseline FPR values',baseline_FPR_values)
         for i in range(num_baselines):
             difference_auroc = np.array(baseline_AUROC_values[i]) - np.array(desired_AUROC_values[0]) # shape (num ood, repeats)
             difference_aupr = np.array(baseline_AUPR_values[i]) - np.array(desired_AUPR_values[0]) # shape (num ood, repeats)
@@ -1583,7 +1585,6 @@ def knn_auroc_wilcoxon_repeated_runs_v4(desired_approach = 'Quadratic_typicality
         caption =  f'{desired_approach.replace("_"," ")} {desired_model_type}  Wilcoxon Signed Rank test - {ID_dataset} P values'
         label = f'tab:Wilcoxon_test_{ID_dataset}_Dataset_{desired_approach}_{desired_model_type}'
         
-
         auroc_df = pd.DataFrame(collated_rank_score_auroc,columns = column_names, index=row_names)
         aupr_df = pd.DataFrame(collated_rank_score_aupr,columns = column_names, index=row_names)
         fpr_df = pd.DataFrame(collated_rank_score_fpr,columns = column_names, index=row_names)
@@ -1592,8 +1593,7 @@ def knn_auroc_wilcoxon_repeated_runs_v4(desired_approach = 'Quadratic_typicality
         #label = f'tab:Wilcoxon_test_{ID_dataset}'
         # https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.set_option.html
         pd.set_option('display.precision',3) 
-        
-        
+                
         latex_table = multiple_baseline_collated_wilcoxon_post_process_latex_table(auroc_df,aupr_df,fpr_df,caption,label)
         all_latex_tables.append(latex_table)
 
@@ -1601,7 +1601,7 @@ def knn_auroc_wilcoxon_repeated_runs_v4(desired_approach = 'Quadratic_typicality
     combined_label =f'tab:{dataset_type}_datasets_comparison_{desired_approach}_{desired_model_type}'
     combined_table = combine_multiple_tables(all_latex_tables,combined_caption, combined_label)
     
-    print(combined_table)
+    #print(combined_table)
         
 # Joins the different wilcoxon tables together
 def collated_wilcoxon_post_process_latex_table(df_auroc, df_aupr, df_fpr,caption,label):
@@ -1671,4 +1671,5 @@ if __name__== '__main__':
     #knn_auroc_wilcoxon_repeated_runs_v2()
     #knn_auroc_wilcoxon_repeated_runs_v3()
     #knn_auroc_wilcoxon_repeated_runs_v3(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approach = 'Softmax', baseline_model_type = 'CE')
-    knn_auroc_wilcoxon_repeated_runs_v4(dataset_type='RGB')
+    #knn_auroc_wilcoxon_repeated_runs_v4(dataset_type='RGB')
+    knn_auroc_wilcoxon_repeated_runs_v4(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['Softmax','Mahalanobis'], baseline_model_types = ['CE','CE'],dataset_type ='RGB')
