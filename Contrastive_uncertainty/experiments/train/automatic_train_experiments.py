@@ -5,11 +5,12 @@ from Contrastive_uncertainty.general.run.model_names import model_names_dict
 
 def train(base_dict, trainer_dict):   
     # first obtain a base dict and a trainer dict
-    #model_types = [model_names_dict['SupCon']]
-    model_types = [model_names_dict['CE']]
+    model_types = [model_names_dict['SupCon']]
+    #model_types = [model_names_dict['CE']]
     seeds = [26,42]
+    datasets = ['Caltech256','CIFAR10','CIFAR100','TinyImageNet']
     #datasets = ['Caltech101','Caltech256','CIFAR10','CIFAR100','TinyImageNet','Cub200','Dogs'] # Need to perform MNIST experiments next
-    datasets = ['Caltech101','Caltech256','CIFAR10','CIFAR100','TinyImageNet','Cub200','Dogs','MNIST','FashionMNIST','KMNIST']
+    #datasets = ['Caltech101','Caltech256','CIFAR10','CIFAR100','TinyImageNet','Cub200','Dogs','MNIST','FashionMNIST','KMNIST']
     
 
     # Update the parameters of each model
