@@ -1,10 +1,7 @@
 import wandb
 from Contrastive_uncertainty.experiments.train.experimental_dict import model_dict
 
-
 def evaluate(run_paths,update_dict):    
-    
-
     # Iterate through the run paths
     for run_path in run_paths:
         api = wandb.Api()    

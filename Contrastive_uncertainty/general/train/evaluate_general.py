@@ -48,7 +48,6 @@ def evaluation(run_path, update_dict, model_module, model_function,datamodule_di
             config[update_k] = config[update_k] + update_v    
         else:
             config[update_k] = update_v
-
         
     datamodule = Datamodule_selection(datamodule_dict, config['dataset'],config)
 
