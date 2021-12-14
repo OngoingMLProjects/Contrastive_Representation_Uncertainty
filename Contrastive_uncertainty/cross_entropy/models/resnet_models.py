@@ -5,7 +5,7 @@ import torch.nn.functional as F
 
 import numpy as np
 from typing import Type, Any, Callable, Union, List, Optional
-from Contrastive_uncertainty.general.models.resnet_models import BasicBlock, Bottleneck, ResNet
+from Contrastive_uncertainty.general.models.resnet_models import BasicBlock, Bottleneck, ResNet, conv1x1, conv3x3
 
 # Differs from other cases as it only has class forward branch, no separate branch for unsupervised learning
 class CustomResNet(ResNet):
@@ -114,6 +114,7 @@ class GramBasicBlock(BasicBlock):
 
     def __init__(
         self,
+        model,
         inplanes: int,
         planes: int,
         stride: int = 1,
@@ -121,7 +122,8 @@ class GramBasicBlock(BasicBlock):
         groups: int = 1,
         base_width: int = 64,
         dilation: int = 1,
-        norm_layer: Optional[Callable[..., nn.Module]] = None
+        norm_layer: Optional[Callable[..., nn.Module]] = None,
+        
     ) -> None:
         
         super(GramBasicBlock, self).__init__(inplanes,
@@ -132,33 +134,35 @@ class GramBasicBlock(BasicBlock):
         base_width,
         dilation,
         norm_layer)
+
+        self.model = model
         
     def forward(self, x: Tensor) -> Tensor:
         identity = x
 
         out = self.conv1(x)
-        model.record(out)
+        self.model.record(out)
         
         out = self.bn1(out)
         out = self.relu(out)
-        model.record(out)
+        self.model.record(out)
 
         out = self.conv2(out)
-        model.record(out)
+        self.model.record(out)
 
         out = self.bn2(out)
-        model.record(out)
+        self.model.record(out)
 
         if self.downsample is not None:
             identity = self.downsample(x)
 
         out += identity
         out = self.relu(out)
-        model.record(out)
+        self.model.record(out)
         return out
 
 
-class GramBottleneck(nn.Module):
+class GramBottleneck(Bottleneck):
     # Bottleneck in torchvision places the stride for downsampling at 3x3 convolution(self.conv2)
     # while original implementation places the stride at the first 1x1 convolution(self.conv1)
     # according to "Deep residual learning for image recognition"https://arxiv.org/abs/1512.03385.
@@ -168,6 +172,7 @@ class GramBottleneck(nn.Module):
     expansion: int = 4
     def __init__(
         self,
+        model,
         inplanes: int,
         planes: int,
         stride: int = 1,
@@ -175,10 +180,11 @@ class GramBottleneck(nn.Module):
         groups: int = 1,
         base_width: int = 64,
         dilation: int = 1,
-        norm_layer: Optional[Callable[..., nn.Module]] = None
+        norm_layer: Optional[Callable[..., nn.Module]] = None,
+        
     ) -> None:
 
-        super(Bottleneck, self).__init__(inplanes,
+        super(GramBottleneck, self).__init__(inplanes,
         planes,
         stride,
         downsample,
@@ -187,24 +193,26 @@ class GramBottleneck(nn.Module):
         dilation,
         norm_layer)
 
+        self.model = model
+
     # Need to call the neural network model in order to access the approach
     def forward(self, x: Tensor) -> Tensor:
         identity = x
 
         out = self.conv1(x)
-        model.record(out)
+        self.model.record(out)
         out = self.bn1(out)
         out = self.relu(out)
-        model.record(out)
+        self.model.record(out)
 
         out = self.conv2(out)
-        model.record(out)
+        self.model.record(out)
         out = self.bn2(out)
         out = self.relu(out)
-        model.record(out)
+        self.model.record(out)
 
         out = self.conv3(out)
-        model.record(out)
+        self.model.record(out)
         out = self.bn3(out)
 
         if self.downsample is not None:
@@ -212,14 +220,14 @@ class GramBottleneck(nn.Module):
 
         out += identity
         out = self.relu(out)
-        model.record(out)
+        self.model.record(out)
         return out
 
-class GramResNet(nn.Module):
+class GramResNet(ResNet):
 
     def __init__(
         self,
-        block: Type[Union[BasicBlock, Bottleneck]],
+        block: Type[Union[GramBasicBlock, GramBottleneck]],
         layers: List[int],
         num_classes: int = 1000,
         zero_init_residual: bool = False,
@@ -240,9 +248,53 @@ class GramResNet(nn.Module):
         
         self.collecting = False
 
+        self.layer1 = self._make_layer(block, 64, layers[0])
+        self.layer2 = self._make_layer(block, 128, layers[1], stride=2,
+                                       dilate=replace_stride_with_dilation[0])
+        self.layer3 = self._make_layer(block, 256, layers[2], stride=2,
+                                       dilate=replace_stride_with_dilation[1])
+        self.layer4 = self._make_layer(block, 512, layers[3], stride=2,
+                                       dilate=replace_stride_with_dilation[2])
+
+        # Zero-initialize the last BN in each residual branch,
+        # so that the residual branch starts with zeros, and each residual block behaves like an identity.
+        # This improves the model by 0.2~0.3% according to https://arxiv.org/abs/1706.02677
+        if zero_init_residual:
+            for m in self.modules():
+                if isinstance(m, GramBottleneck):
+                    nn.init.constant_(m.bn3.weight, 0)  # type: ignore[arg-type]
+                elif isinstance(m, GramBasicBlock):
+                    nn.init.constant_(m.bn2.weight, 0)  # type: ignore[arg-type]
+
     def record(self, t):
         if self.collecting:
             self.gram_feats.append(t)
+
+    
+    def _make_layer(self, block: Type[Union[GramBasicBlock, GramBottleneck]], planes: int, blocks: int,
+                    stride: int = 1, dilate: bool = False) -> nn.Sequential:
+        norm_layer = self._norm_layer
+        downsample = None
+        previous_dilation = self.dilation
+        if dilate:
+            self.dilation *= stride
+            stride = 1
+        if stride != 1 or self.inplanes != planes * block.expansion:
+            downsample = nn.Sequential(
+                conv1x1(self.inplanes, planes * block.expansion, stride),
+                norm_layer(planes * block.expansion),
+            )
+
+        layers = []
+        layers.append(block(self.inplanes, planes, stride, downsample, self.groups,
+                            self.base_width, previous_dilation, norm_layer))
+        self.inplanes = planes * block.expansion
+        for _ in range(1, blocks):
+            layers.append(block(self.inplanes, planes, groups=self.groups,
+                                base_width=self.base_width, dilation=self.dilation,
+                                norm_layer=norm_layer,model= self))
+
+        return nn.Sequential(*layers)
 
     def _forward_impl(self, x: Tensor) -> Tensor:
         # See note [TorchScript super()]
@@ -341,7 +393,7 @@ class CustomGramResNet(GramResNet):
         self,
         latent_size: int,
         num_channels:int,
-        block: Type[Union[BasicBlock, Bottleneck]],
+        block: Type[Union[GramBasicBlock, GramBottleneck]],
         layers: List[int],
         num_classes: int = 1000,
         zero_init_residual: bool = False,
@@ -387,17 +439,17 @@ class CustomGramResNet(GramResNet):
         return z
 
 
-def _custom_resnet(
+def _custom_gram_resnet(
     arch: str,
     latent_size:int,
     num_channels:int,
-    block: Type[Union[BasicBlock, Bottleneck]],
+    block: Type[Union[GramBasicBlock, GramBottleneck]],
     layers: List[int],
     pretrained: bool,
     progress: bool,
     **kwargs: Any
 ) -> ResNet:
-    model = CustomResNet(latent_size,num_channels,block, layers, **kwargs)
+    model = CustomGramResNet(latent_size,num_channels,block, layers, **kwargs)
     if pretrained:
         state_dict = load_state_dict_from_url(model_urls[arch],
                                               progress=progress)
@@ -405,32 +457,32 @@ def _custom_resnet(
     return model
 
 
-def custom_resnet18(latent_size:int = 128, num_channels:int =3,pretrained: bool = False, progress: bool = True, **kwargs: Any) -> CustomResNet:
+def custom_gram_resnet18(latent_size:int = 128, num_channels:int =3,pretrained: bool = False, progress: bool = True, **kwargs: Any) -> CustomGramResNet:
     r"""ResNet-18 model from
     `"Deep Residual Learning for Image Recognition" <https://arxiv.org/pdf/1512.03385.pdf>`_.
     Args:
         pretrained (bool): If True, returns a model pre-trained on ImageNet
         progress (bool): If True, displays a progress bar of the download to stderr
     """
-    return _custom_resnet('resnet18',latent_size,num_channels, BasicBlock, [2, 2, 2, 2], pretrained, progress,
+    return _custom_gram_resnet('resnet18',latent_size,num_channels, GramBasicBlock, [2, 2, 2, 2], pretrained, progress,
                    **kwargs)
 
-def custom_resnet34(latent_size:int = 128, num_channels:int =3,pretrained: bool = False, progress: bool = True, **kwargs: Any) -> CustomResNet:
+def custom_gram_resnet34(latent_size:int = 128, num_channels:int =3,pretrained: bool = False, progress: bool = True, **kwargs: Any) -> CustomGramResNet:
     r"""ResNet-34 model from
     `"Deep Residual Learning for Image Recognition" <https://arxiv.org/pdf/1512.03385.pdf>`_.
     Args:
         pretrained (bool): If True, returns a model pre-trained on ImageNet
         progress (bool): If True, displays a progress bar of the download to stderr
     """
-    return _custom_resnet('resnet34',latent_size,num_channels, BasicBlock, [3, 4, 6, 3], pretrained, progress,
+    return _custom_gram_resnet('resnet34',latent_size,num_channels, GramBasicBlock, [3, 4, 6, 3], pretrained, progress,
                    **kwargs)
 
-def custom_resnet50(latent_size:int = 128, num_channels:int =3,pretrained: bool = False, progress: bool = True, **kwargs: Any) -> CustomResNet:
+def custom_gram_resnet50(latent_size:int = 128, num_channels:int =3,pretrained: bool = False, progress: bool = True, **kwargs: Any) -> CustomGramResNet:
     r"""ResNet-50 model from
     `"Deep Residual Learning for Image Recognition" <https://arxiv.org/pdf/1512.03385.pdf>`_.
     Args:
         pretrained (bool): If True, returns a model pre-trained on ImageNet
         progress (bool): If True, displays a progress bar of the download to stderr
     """
-    return _custom_resnet('resnet50',latent_size,num_channels, Bottleneck, [3, 4, 6, 3], pretrained, progress,
+    return _custom_resnet('resnet50',latent_size,num_channels, GramBottleneck, [3, 4, 6, 3], pretrained, progress,
                    **kwargs)
