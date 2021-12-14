@@ -44,6 +44,7 @@ def evaluate(run_paths,update_dict):
 
         
         # Checks if there are any callbacks to perform, if there is,then evaluate, otherwise look at next run
+        
         if len(filtered_callbacks) > 0:
             evaluate_method(run_path, filtered_update_dict, model_module, model_instance_method, model_data_dict,model_ood_dict)
         

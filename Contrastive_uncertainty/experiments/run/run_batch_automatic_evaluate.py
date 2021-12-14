@@ -3,17 +3,17 @@ import wandb
 # Import general params
 
 from Contrastive_uncertainty.experiments.train.automatic_evaluate_experiments import evaluate
-from Contrastive_uncertainty.experiments.config.trainer_params import trainer_hparams
-
+from Contrastive_uncertainty.experiments.config.batch_trainer_params import batch_trainer_hparams
 
 # Code to obtain run paths from a project and group
 
-
-run_paths = []
 api = wandb.Api()
-#runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.model_type": "CE","config.epochs":300,"$or": [{'state':'finished'}, {'state':'crashed'},{'state':'failed'}]})
-runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.model_type": "SupCon","config.seed":125,"config.epochs":300,"$or": [{'state':'finished'}, {'state':'crashed'},{'state':'failed'}]})
-collated_runs = [runs]
+#runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.model_type": "SupCon","config.seed":125,"config.epochs":300,"$or": [{'state':'finished'}, {'state':'crashed'},{'state':'failed'}]})
+runs_1 = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.model_type": "SupCon","config.seed":26,"config.epochs":300,"$or": [{'state':'finished'}, {'state':'crashed'},{'state':'failed'}]})
+runs_2 = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.model_type": "SupCon","config.seed":42,"config.epochs":300,"$or": [{'state':'finished'}, {'state':'crashed'},{'state':'failed'}]})
+batch_runs = [runs_1,runs_2]
+
+assert len(batch_runs) == len(batch_trainer_hparams)
 
 #runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.epochs":300,"config.model_type":"CE","config.model_type":"SupCon","$or": [{"config.dataset":"CIFAR100" }, {"config.dataset":"Cub200"},{"config.dataset":"TinyImageNet"}]})
 #runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.epochs":300,"$or": [{"config.model_type":"CE" }, {"config.model_type":"SupCon"}]})
@@ -46,8 +46,6 @@ collated_runs = [runs]
 
 #runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"New Model Testing",'state':'finished'})
 
-
-
 # Choose specifcally the specific group, the CIFAR100 dataset as well as choosing Moco or Supcon model
 #runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"OOD hierarchy baselines","config.dataset": "CIFAR100","$or": [{"config.model_type":"Moco" }, {"config.model_type": "SupCon"}]})
 
@@ -62,19 +60,17 @@ collated_runs = [runs]
 #runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"Separate branch combinations","config.branch_weights":[0,0,1]})
 
 #runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","$or": [{"config.model_type":"CE"}, {"config.dataset": "MNIST"}, {"config.dataset": "FashionMNIST"}]})
-
 '''
 for i in range(len(runs)):
     # Joins together the path of the runs which are separated into different parts in a list
     run_path = '/'.join(runs[i].path)
     run_paths.append(run_path)
-
 '''
 
-for run_set in collated_runs:
+for index, run_set in enumerate(batch_runs):
+    run_paths = []
     for i in range(len(run_set)):
         run_path = '/'.join(run_set[i].path)
         run_paths.append(run_path)
-
-#run_paths = ['nerdk312/evaluation/yl6vj4pi']
-evaluate(run_paths, trainer_hparams)
+    # perform the simulation for this particular run set
+    evaluate(run_paths,batch_trainer_hparams[index])
