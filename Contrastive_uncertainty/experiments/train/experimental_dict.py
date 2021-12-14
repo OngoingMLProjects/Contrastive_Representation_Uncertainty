@@ -30,7 +30,6 @@ from Contrastive_uncertainty.general.train.evaluate_general import evaluation as
 
 from Contrastive_uncertainty.general.train.evaluate_general_confusion import evaluation as general_confusion_evaluation
 
-
 # Import datamodule info
 from Contrastive_uncertainty.general.datamodules.datamodule_dict import dataset_dict as general_dataset_dict, OOD_dict as general_OOD_dict
 

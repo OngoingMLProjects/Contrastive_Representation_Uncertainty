@@ -70,6 +70,7 @@ for i in range(len(runs)):
     run_paths.append(run_path)
 
 '''
+
 for run_set in collated_runs:
     for i in range(len(run_set)):
         run_path = '/'.join(run_set[i].path)

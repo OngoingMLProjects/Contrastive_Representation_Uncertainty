@@ -67,11 +67,8 @@ test_ratio = 1.0,
 val_check = 20,
 model_saving = 200, # Used to control how often the model is saved
 
-
 callbacks = ['Model_saving','Mahalanobis OOD Fractions'], #'Model_saving'
 )
-
-
 
 batch_base_hparams = [base_hparams]
 batch_trainer_hparams = [trainer_hparams]

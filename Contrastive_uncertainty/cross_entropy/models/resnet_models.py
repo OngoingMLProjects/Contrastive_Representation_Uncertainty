@@ -3,6 +3,7 @@ from torch import Tensor
 import torch.nn as nn
 import torch.nn.functional as F
 
+import numpy as np
 from typing import Type, Any, Callable, Union, List, Optional
 from Contrastive_uncertainty.general.models.resnet_models import BasicBlock, Bottleneck, ResNet
 
@@ -58,8 +59,333 @@ class CustomResNet(ResNet):
         
         return z
     
+def _custom_resnet(
+    arch: str,
+    latent_size:int,
+    num_channels:int,
+    block: Type[Union[BasicBlock, Bottleneck]],
+    layers: List[int],
+    pretrained: bool,
+    progress: bool,
+    **kwargs: Any
+) -> ResNet:
+    model = CustomResNet(latent_size,num_channels,block, layers, **kwargs)
+    if pretrained:
+        state_dict = load_state_dict_from_url(model_urls[arch],
+                                              progress=progress)
+        model.load_state_dict(state_dict)
+    return model
+
+
+def custom_resnet18(latent_size:int = 128, num_channels:int =3,pretrained: bool = False, progress: bool = True, **kwargs: Any) -> CustomResNet:
+    r"""ResNet-18 model from
+    `"Deep Residual Learning for Image Recognition" <https://arxiv.org/pdf/1512.03385.pdf>`_.
+    Args:
+        pretrained (bool): If True, returns a model pre-trained on ImageNet
+        progress (bool): If True, displays a progress bar of the download to stderr
+    """
+    return _custom_resnet('resnet18',latent_size,num_channels, BasicBlock, [2, 2, 2, 2], pretrained, progress,
+                   **kwargs)
+
+def custom_resnet34(latent_size:int = 128, num_channels:int =3,pretrained: bool = False, progress: bool = True, **kwargs: Any) -> CustomResNet:
+    r"""ResNet-34 model from
+    `"Deep Residual Learning for Image Recognition" <https://arxiv.org/pdf/1512.03385.pdf>`_.
+    Args:
+        pretrained (bool): If True, returns a model pre-trained on ImageNet
+        progress (bool): If True, displays a progress bar of the download to stderr
+    """
+    return _custom_resnet('resnet34',latent_size,num_channels, BasicBlock, [3, 4, 6, 3], pretrained, progress,
+                   **kwargs)
+
+def custom_resnet50(latent_size:int = 128, num_channels:int =3,pretrained: bool = False, progress: bool = True, **kwargs: Any) -> CustomResNet:
+    r"""ResNet-50 model from
+    `"Deep Residual Learning for Image Recognition" <https://arxiv.org/pdf/1512.03385.pdf>`_.
+    Args:
+        pretrained (bool): If True, returns a model pre-trained on ImageNet
+        progress (bool): If True, displays a progress bar of the download to stderr
+    """
+    return _custom_resnet('resnet50',latent_size,num_channels, Bottleneck, [3, 4, 6, 3], pretrained, progress,
+                   **kwargs)
+
+
+
+class GramBasicBlock(BasicBlock):
+    expansion: int = 1
+
+    def __init__(
+        self,
+        inplanes: int,
+        planes: int,
+        stride: int = 1,
+        downsample: Optional[nn.Module] = None,
+        groups: int = 1,
+        base_width: int = 64,
+        dilation: int = 1,
+        norm_layer: Optional[Callable[..., nn.Module]] = None
+    ) -> None:
+        
+        super(GramBasicBlock, self).__init__(inplanes,
+        planes,
+        stride,
+        downsample,
+        groups,
+        base_width,
+        dilation,
+        norm_layer)
+        
+    def forward(self, x: Tensor) -> Tensor:
+        identity = x
+
+        out = self.conv1(x)
+        model.record(out)
+        
+        out = self.bn1(out)
+        out = self.relu(out)
+        model.record(out)
+
+        out = self.conv2(out)
+        model.record(out)
+
+        out = self.bn2(out)
+        model.record(out)
+
+        if self.downsample is not None:
+            identity = self.downsample(x)
+
+        out += identity
+        out = self.relu(out)
+        model.record(out)
+        return out
+
+
+class GramBottleneck(nn.Module):
+    # Bottleneck in torchvision places the stride for downsampling at 3x3 convolution(self.conv2)
+    # while original implementation places the stride at the first 1x1 convolution(self.conv1)
+    # according to "Deep residual learning for image recognition"https://arxiv.org/abs/1512.03385.
+    # This variant is also known as ResNet V1.5 and improves accuracy according to
+    # https://ngc.nvidia.com/catalog/model-scripts/nvidia:resnet_50_v1_5_for_pytorch.
+
+    expansion: int = 4
+    def __init__(
+        self,
+        inplanes: int,
+        planes: int,
+        stride: int = 1,
+        downsample: Optional[nn.Module] = None,
+        groups: int = 1,
+        base_width: int = 64,
+        dilation: int = 1,
+        norm_layer: Optional[Callable[..., nn.Module]] = None
+    ) -> None:
+
+        super(Bottleneck, self).__init__(inplanes,
+        planes,
+        stride,
+        downsample,
+        groups,
+        base_width,
+        dilation,
+        norm_layer)
+
+    # Need to call the neural network model in order to access the approach
+    def forward(self, x: Tensor) -> Tensor:
+        identity = x
+
+        out = self.conv1(x)
+        model.record(out)
+        out = self.bn1(out)
+        out = self.relu(out)
+        model.record(out)
+
+        out = self.conv2(out)
+        model.record(out)
+        out = self.bn2(out)
+        out = self.relu(out)
+        model.record(out)
+
+        out = self.conv3(out)
+        model.record(out)
+        out = self.bn3(out)
+
+        if self.downsample is not None:
+            identity = self.downsample(x)
+
+        out += identity
+        out = self.relu(out)
+        model.record(out)
+        return out
+
+class GramResNet(nn.Module):
+
+    def __init__(
+        self,
+        block: Type[Union[BasicBlock, Bottleneck]],
+        layers: List[int],
+        num_classes: int = 1000,
+        zero_init_residual: bool = False,
+        groups: int = 1,
+        width_per_group: int = 64,
+        replace_stride_with_dilation: Optional[List[bool]] = None,
+        norm_layer: Optional[Callable[..., nn.Module]] = None
+    ) -> None:
+
+        super(ResNet, self).__init__(block,
+        layers,
+        num_classes,
+        zero_init_residual,
+        groups,
+        width_per_group,
+        replace_stride_with_dilation,
+        norm_layer)
+        
+        self.collecting = False
+
+    def record(self, t):
+        if self.collecting:
+            self.gram_feats.append(t)
+
+    def _forward_impl(self, x: Tensor) -> Tensor:
+        # See note [TorchScript super()]
+        #import ipdb; ipdb.set_trace()
+        x = self.conv1(x)
+        x = self.bn1(x)
+        x = self.relu(x)
+        x = self.maxpool(x)
+
+        x = self.layer1(x)
+        x = self.layer2(x)
+        x = self.layer3(x)
+        x = self.layer4(x)
+
+        x = self.avgpool(x)
+        x = torch.flatten(x, 1)
+        x = self.fc(x)
+
+        return x
+
+    def forward(self, x: Tensor) -> Tensor:
+        return self._forward_impl(x)
     
-   
+    def gram_feature_list(self,x):
+        self.collecting = True
+        self.gram_feats = []
+        self.forward(x)
+        self.collecting = False
+        temp = self.gram_feats
+        self.gram_feats = []
+        return temp
+
+    def get_min_max(self, data, power):
+        mins = []
+        maxs = []
+        
+        for i in range(0,len(data),128):
+            batch = data[i:i+128].cuda()
+            feat_list = self.gram_feature_list(batch)
+            for L,feat_L in enumerate(feat_list):
+                if L==len(mins):
+                    mins.append([None]*len(power))
+                    maxs.append([None]*len(power))
+                
+                for p,P in enumerate(power):
+                    g_p = self.G_p(feat_L,P)
+                    
+                    current_min = g_p.min(dim=0,keepdim=True)[0]
+                    current_max = g_p.max(dim=0,keepdim=True)[0]
+                    
+                    if mins[L][p] is None:
+                        mins[L][p] = current_min
+                        maxs[L][p] = current_max
+                    else:
+                        mins[L][p] = torch.min(current_min,mins[L][p])
+                        maxs[L][p] = torch.max(current_max,maxs[L][p])
+        
+        return mins,maxs
+    
+    def get_deviations(self,data,power,mins,maxs):
+        deviations = []
+        
+        for i in range(0,len(data),128):            
+            batch = data[i:i+128].cuda()
+            feat_list = self.gram_feature_list(batch)
+            batch_deviations = []
+            for L,feat_L in enumerate(feat_list):
+                dev = 0
+                for p,P in enumerate(power):
+                    g_p = self.G_p(feat_L,P)
+                    
+                    dev +=  (F.relu(mins[L][p]-g_p)/torch.abs(mins[L][p]+10**-6)).sum(dim=1,keepdim=True)
+                    dev +=  (F.relu(g_p-maxs[L][p])/torch.abs(maxs[L][p]+10**-6)).sum(dim=1,keepdim=True)
+                batch_deviations.append(dev.cpu().detach().numpy())
+            batch_deviations = np.concatenate(batch_deviations,axis=1)
+            deviations.append(batch_deviations)
+        deviations = np.concatenate(deviations,axis=0)
+        
+        return deviations
+    
+    def G_p(self, ob,p):
+        temp = ob.detach()
+
+        temp = temp**p
+        temp = temp.reshape(temp.shape[0],temp.shape[1],-1)
+        temp = ((torch.matmul(temp,temp.transpose(dim0=2,dim1=1)))).sum(dim=2) 
+        temp = (temp.sign()*torch.abs(temp)**(1/p)).reshape(temp.shape[0],-1)
+
+        return temp
+
+
+
+
+class CustomGramResNet(GramResNet):
+    def __init__(
+        self,
+        latent_size: int,
+        num_channels:int,
+        block: Type[Union[BasicBlock, Bottleneck]],
+        layers: List[int],
+        num_classes: int = 1000,
+        zero_init_residual: bool = False,
+        groups: int = 1,
+        width_per_group: int = 64,
+        replace_stride_with_dilation: Optional[List[bool]] = None,
+        norm_layer: Optional[Callable[..., nn.Module]] = None
+    ) -> None:
+
+        super(CustomGramResNet, self).__init__(block,
+        layers,
+        num_classes,
+        zero_init_residual,
+        groups,
+        width_per_group,
+        replace_stride_with_dilation,
+        norm_layer)
+
+        self.conv1 = nn.Conv2d(
+            num_channels, 64, kernel_size=3, stride=1, padding=1, bias=False
+        )
+        self.maxpool = nn.Identity()
+
+        self.class_fc1 = nn.Linear(512 * block.expansion, latent_size)
+        self.class_fc2 = nn.Linear(latent_size, num_classes)
+    
+    # Nawid - made new function to obtain the representation of the data
+    def forward(self,x:Tensor)-> Tensor:
+        x = self.conv1(x)
+        x = self.bn1(x)
+        x = self.relu(x)
+        x = self.maxpool(x)
+
+        x = self.layer1(x)
+        x = self.layer2(x)
+        x = self.layer3(x)
+        x = self.layer4(x)
+
+        x = self.avgpool(x)
+        x = torch.flatten(x, 1)
+        z = F.relu(self.class_fc1(x)) # Unnormalized currently though it will be normalised in the method    
+        
+        return z
+
 
 def _custom_resnet(
     arch: str,
