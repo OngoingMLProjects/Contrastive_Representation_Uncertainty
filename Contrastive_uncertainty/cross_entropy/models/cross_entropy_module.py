@@ -7,7 +7,7 @@ import torchvision
 from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from pytorch_lightning.loggers import WandbLogger
 
-from Contrastive_uncertainty.cross_entropy.models.resnet_models import custom_resnet18,custom_resnet34,custom_resnet50
+from Contrastive_uncertainty.cross_entropy.models.resnet_models import custom_resnet18,custom_resnet34,custom_resnet50, custom_gram_resnet18,custom_gram_resnet34, custom_gram_resnet50
 from Contrastive_uncertainty.general.utils.hybrid_utils import label_smoothing, LabelSmoothingCrossEntropy
 from Contrastive_uncertainty.general.utils.pl_metrics import precision_at_k,mean
 from Contrastive_uncertainty.general.run.model_names import model_names_dict
@@ -55,7 +55,15 @@ class CrossEntropyModule(pl.LightningModule):
         elif self.hparams.instance_encoder =='resnet50':
             print('using resnet50')
             encoder = custom_resnet50(latent_size = self.hparams.emb_dim,num_channels = self.num_channels,num_classes=self.num_classes)
+        ''''''
+        elif self.hparams.instance_encoder =='gram_resnet18':
+            print('using gram resnet18')
+            encoder =custom_gram_resnet18(latent_size = self.hparams.emb_dim,num_channels = self.num_channels,num_classes=self.num_classes)
         
+        elif self.hparams.instance_encoder =='gram_resnet50':
+            print('using gram resnet50')
+            encoder = custom_gram_resnet50(latent_size = self.hparams.emb_dim,num_channels = self.num_channels,num_classes=self.num_classes)
+        '''
         return encoder
 
     def callback_vector(self, x): # vector for the representation before using separate branches for the task

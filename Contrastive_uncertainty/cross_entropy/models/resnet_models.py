@@ -236,8 +236,8 @@ class GramResNet(ResNet):
         replace_stride_with_dilation: Optional[List[bool]] = None,
         norm_layer: Optional[Callable[..., nn.Module]] = None
     ) -> None:
-
-        super(ResNet, self).__init__(block,
+        #import ipdb; ipdb.set_trace()
+        super(GramResNet, self).__init__(block,
         layers,
         num_classes,
         zero_init_residual,
@@ -247,6 +247,9 @@ class GramResNet(ResNet):
         norm_layer)
         
         self.collecting = False
+        
+
+
 
         self.layer1 = self._make_layer(block, 64, layers[0])
         self.layer2 = self._make_layer(block, 128, layers[1], stride=2,
@@ -448,7 +451,7 @@ def _custom_gram_resnet(
     pretrained: bool,
     progress: bool,
     **kwargs: Any
-) -> ResNet:
+) -> GramResNet:
     model = CustomGramResNet(latent_size,num_channels,block, layers, **kwargs)
     if pretrained:
         state_dict = load_state_dict_from_url(model_urls[arch],
@@ -484,5 +487,5 @@ def custom_gram_resnet50(latent_size:int = 128, num_channels:int =3,pretrained: 
         pretrained (bool): If True, returns a model pre-trained on ImageNet
         progress (bool): If True, displays a progress bar of the download to stderr
     """
-    return _custom_resnet('resnet50',latent_size,num_channels, GramBottleneck, [3, 4, 6, 3], pretrained, progress,
+    return _custom_gram_resnet('resnet50',latent_size,num_channels, GramBottleneck, [3, 4, 6, 3], pretrained, progress,
                    **kwargs)

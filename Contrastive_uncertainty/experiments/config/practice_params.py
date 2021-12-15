@@ -10,7 +10,7 @@ weight_decay = 1e-4,
 
 # Training parameters in common
 emb_dim = 128,
-instance_encoder = 'resnet50',#'resnet18',
+instance_encoder = 'gram_resnet18', #'resnet50',#'resnet18',
 
 dataset ='MNIST',
 #OOD_dataset =['MNIST'],
@@ -26,7 +26,6 @@ dataset ='MNIST',
 project = 'practice',
 group = None,
 notes = None, # Add notes to the specific models each time
-
 
 # Cross entropy Specific parameters
 label_smoothing = False,

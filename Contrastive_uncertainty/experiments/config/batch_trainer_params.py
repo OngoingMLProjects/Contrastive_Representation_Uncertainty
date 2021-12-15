@@ -17,7 +17,8 @@ validation_ratio = 1.0,
 test_ratio = 1.0,
 val_check = 1,  # evaluation, Moco_training
 
-callbacks = ['Mahalanobis Distance','Nearest 10 Neighbours Class Quadratic 1D Typicality'],
+#callbacks = ['Mahalanobis Distance','Nearest 10 Neighbours Class Quadratic 1D Typicality'],
+callbacks = ['Mahalanobis Distance','Maximum Softmax Probability'],
 )
 
 trainer_hparams_2 = dict(
@@ -37,7 +38,8 @@ validation_ratio = 1.0,
 test_ratio = 1.0,
 val_check = 1,  # evaluation, Moco_training
 
-callbacks = ['Mahalanobis Distance','Nearest 10 Neighbours Class Quadratic 1D Typicality'],
+#callbacks = ['Mahalanobis Distance','Nearest 10 Neighbours Class Quadratic 1D Typicality'],
+callbacks = ['Mahalanobis Distance','Maximum Softmax Probability'],
 )
 
 batch_trainer_hparams = [trainer_hparams_1,trainer_hparams_2]
