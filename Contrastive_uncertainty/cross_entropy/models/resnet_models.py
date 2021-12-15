@@ -113,7 +113,7 @@ class GramStorage():
         self.collecting = False
         self.gram_feats = []
 
-        
+
     def record(self,t):
         if self.collecting:
             self.gram_feats.append(t)
@@ -308,6 +308,7 @@ class GramResNet(nn.Module):
                 elif isinstance(m, GramBasicBlock):
                     nn.init.constant_(m.bn2.weight, 0)  # type: ignore[arg-type]
 
+                    
     def _make_layer(self, block: Type[Union[GramBasicBlock, GramBottleneck]], planes: int, blocks: int,
                     stride: int = 1, dilate: bool = False) -> nn.Sequential:
         norm_layer = self._norm_layer
