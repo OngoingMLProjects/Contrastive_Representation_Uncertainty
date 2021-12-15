@@ -55,7 +55,7 @@ class CrossEntropyModule(pl.LightningModule):
         elif self.hparams.instance_encoder =='resnet50':
             print('using resnet50')
             encoder = custom_resnet50(latent_size = self.hparams.emb_dim,num_channels = self.num_channels,num_classes=self.num_classes)
-        ''''''
+        
         elif self.hparams.instance_encoder =='gram_resnet18':
             print('using gram resnet18')
             encoder =custom_gram_resnet18(latent_size = self.hparams.emb_dim,num_channels = self.num_channels,num_classes=self.num_classes)
@@ -63,7 +63,7 @@ class CrossEntropyModule(pl.LightningModule):
         elif self.hparams.instance_encoder =='gram_resnet50':
             print('using gram resnet50')
             encoder = custom_gram_resnet50(latent_size = self.hparams.emb_dim,num_channels = self.num_channels,num_classes=self.num_classes)
-        '''
+        
         return encoder
 
     def callback_vector(self, x): # vector for the representation before using separate branches for the task
