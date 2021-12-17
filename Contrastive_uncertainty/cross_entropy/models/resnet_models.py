@@ -308,7 +308,7 @@ class GramResNet(nn.Module):
                 elif isinstance(m, GramBasicBlock):
                     nn.init.constant_(m.bn2.weight, 0)  # type: ignore[arg-type]
 
-                    
+
     def _make_layer(self, block: Type[Union[GramBasicBlock, GramBottleneck]], planes: int, blocks: int,
                     stride: int = 1, dilate: bool = False) -> nn.Sequential:
         norm_layer = self._norm_layer
@@ -336,7 +336,6 @@ class GramResNet(nn.Module):
 
     def _forward_impl(self, x: Tensor) -> Tensor:
         # See note [TorchScript super()]
-        #import ipdb; ipdb.set_trace()
         x = self.conv1(x)
         x = self.bn1(x)
         x = self.relu(x)
@@ -372,11 +371,12 @@ class GramResNet(nn.Module):
         for i in range(0,len(data),128):
             batch = data[i:i+128].cuda()
             feat_list = self.gram_feature_list(batch)
+            # go through the features
             for L,feat_L in enumerate(feat_list):
                 if L==len(mins):
                     mins.append([None]*len(power))
                     maxs.append([None]*len(power))
-                
+                # go through the different powers
                 for p,P in enumerate(power):
                     g_p = self.G_p(feat_L,P)
                     
@@ -399,27 +399,26 @@ class GramResNet(nn.Module):
             batch = data[i:i+128].cuda()
             feat_list = self.gram_feature_list(batch)
             batch_deviations = []
-            for L,feat_L in enumerate(feat_list):
+            for L,feat_L in enumerate(feat_list): # list of length 40 with each element having shape (batch,channels, height, width), there are 10 activation maps with the same shape and there are 4 different types of activation maps
                 dev = 0
                 for p,P in enumerate(power):
-                    g_p = self.G_p(feat_L,P)
+                    g_p = self.G_p(feat_L,P) # shape (batch, num_channels ) where channels s the same as the channels in feat_L
                     
                     dev +=  (F.relu(mins[L][p]-g_p)/torch.abs(mins[L][p]+10**-6)).sum(dim=1,keepdim=True)
-                    dev +=  (F.relu(g_p-maxs[L][p])/torch.abs(maxs[L][p]+10**-6)).sum(dim=1,keepdim=True)
+                    dev +=  (F.relu(g_p-maxs[L][p])/torch.abs(maxs[L][p]+10**-6)).sum(dim=1,keepdim=True) # shape (batch,1)
                 batch_deviations.append(dev.cpu().detach().numpy())
-            batch_deviations = np.concatenate(batch_deviations,axis=1)
+            batch_deviations = np.concatenate(batch_deviations,axis=1) #  shape (batch, len(feat_list))
             deviations.append(batch_deviations)
-        deviations = np.concatenate(deviations,axis=0)
-        
+        deviations = np.concatenate(deviations,axis=0) # shape (datasize, len(feat_list))
         return deviations
     
     def G_p(self, ob,p):
         temp = ob.detach()
 
-        temp = temp**p
-        temp = temp.reshape(temp.shape[0],temp.shape[1],-1)
-        temp = ((torch.matmul(temp,temp.transpose(dim0=2,dim1=1)))).sum(dim=2) 
-        temp = (temp.sign()*torch.abs(temp)**(1/p)).reshape(temp.shape[0],-1)
+        temp = temp**p # shape( batch, channels, height, width)
+        temp = temp.reshape(temp.shape[0],temp.shape[1],-1) # shape (batch, channels, height * width)
+        temp = ((torch.matmul(temp,temp.transpose(dim0=2,dim1=1)))).sum(dim=2) # shape (batch, channels)
+        temp = (temp.sign()*torch.abs(temp)**(1/p)).reshape(temp.shape[0],-1) # shape (batch, channels)
 
         return temp
 

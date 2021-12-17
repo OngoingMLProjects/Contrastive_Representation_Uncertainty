@@ -37,7 +37,7 @@ api = wandb.Api()
 
 #runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"to_delete"})
 #runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.model_type": "SupCon","config.epochs":300, 'state':'finished'})
-runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.epochs":300, 'state':'finished'})
+runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.epochs":300,"config.model_type": "CE", 'state':'finished'})
 # Make the run paths for the different runs
 for i in range(len(runs)):
     # Joins together the path of the runs which are separated into different parts in a list

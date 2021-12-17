@@ -27,8 +27,8 @@ val_check = 1,  # evaluation, Moco_training
 #callbacks = ['Maximum Softmax Probability'],
 #callbacks = ['Mahalanobis Distance','Maximum Softmax Probability'],
 #callbacks = ['Maximum Softmax Probability','Nearest 10 Neighbours Class Quadratic 1D Typicality'],
-callbacks = ['Nearest 10 Neighbours Class Typicality'],
-
+#callbacks = ['Nearest 10 Neighbours Class Typicality'],
+callbacks = ['Gram'],
 #callbacks = ['Mahalanobis Distance'],
 #callbacks = ['Nearest 10 Neighbours Class Quadratic 1D Typicality'],
 #callbacks = ['Nearest 10 Neighbours Class 1D Typicality','Nearest 10 Neighbours Class Quadratic 1D Typicality','Mahalanobis Distance'],

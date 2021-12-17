@@ -13,7 +13,7 @@ callback_names['NN Quadratic']:['Normalized One Dim Class Quadratic Typicality K
 callback_names['NN Linear']: ['Normalized One Dim Class Typicality KNN - 10 OOD -','Normalized One Dim Class Typicality KNN - 10 AUPR OOD -','Normalized One Dim Class Typicality KNN - 10 FPR OOD -'],
 callback_names['MSP']: ['Maximum Softmax Probability AUROC OOD','Maximum Softmax Probability AUPR OOD','Maximum Softmax Probability FPR OOD'],
 callback_names['NN All Dim Class']:['Normalized All Dim Class Typicality KNN - 10 OOD -','Normalized All Dim Class Typicality KNN - 10 AUPR OOD -','Normalized All Dim Class Typicality KNN - 10 FPR OOD -'],
-callback_names['Gram']:['Gram']} # Callback information for ablation
+callback_names['Gram']:['Gram AUROC OOD','Gram AUPR OOD','Gram FPR OOD']} # Callback information for ablation
 
 
 # could potentially make a separate callback dict for the case of the ablations

@@ -13,7 +13,7 @@ emb_dim = 128,
 instance_encoder = 'gram_resnet18', #'resnet50',#'resnet18',
 
 dataset ='MNIST',
-#OOD_dataset =['MNIST'],
+OOD_dataset =['MNIST'],
 #OOD_dataset =['MNIST'],
 #OOD_dataset =['MNIST','FashionMNIST','KMNIST','EMNIST','Places365','VOC'],
 #OOD_dataset =['Places365'],
