@@ -22,7 +22,7 @@ import plotly.graph_objs as go
 from plotly.subplots import make_subplots
 from sklearn.metrics import roc_auc_score
 
-
+from Contrastive_uncertainty.general.utils.ood_utils import get_measures # Used to calculate the AUROC, FPR and AUPR
 from Contrastive_uncertainty.general.utils.hybrid_utils import OOD_conf_matrix
 #from Contrastive_uncertainty.Contrastive.models.loss_functions import class_discrimination
 from Contrastive_uncertainty.general.callbacks.general_callbacks import quickloading
@@ -46,17 +46,37 @@ class ODIN(pl.Callback):
         
         self.OOD_dataname = self.OOD_Datamodule.name
         self.summary_key = f'ODIN AUROC OOD {self.OOD_dataname}'
+        self.summary_aupr = self.summary_key.replace("AUROC", "AUPR")
+        self.summary_fpr = self.summary_key.replace("AUROC", "FPR") 
+        
         # https://github.com/facebookresearch/odin/blob/main/code/main.py - default parameters
         self.temperature = 1000
-        self.epsilon = 0.0014
+        #self.epsilon = 0.0014
+
+        self.minimum_FPR = 1.0 # Highest possible FPR
+        self.optimal_episilon = 0.0
 
     
     def on_test_epoch_end(self, trainer, pl_module):
         # Perform callback only for the situation
         torch.set_grad_enabled(True) # need to set grad enabled true during the test step
         pl_module.eval()
+        self.hyperparameter_tune(trainer,pl_module)
         self.forward_callback(trainer,pl_module)
     
+    def hyperparameter_tune(self,trainer,pl_module):
+        self.OOD_Datamodule.setup()
+        test_loader = self.Datamodule.test_dataloader()
+        val_ood_loader = self.OOD_Datamodule.val_dataloader()
+        if isinstance(val_ood_loader, tuple) or isinstance(val_ood_loader, list):
+            _, val_ood_loader = val_ood_loader # separate for the case of the train val loader and the test val loader
+        
+        epsilon_values = np.linspace(0,0.004,5) # otain 5 values to examine between the intervals
+        for epsilon in epsilon_values: # iterate through the epsilon values
+            dtest = self.get_perturbed_scores(trainer,pl_module,test_loader,epsilon)
+            dood_val = self.get_perturbed_scores(trainer,pl_module, val_ood_loader,epsilon)
+            self.get_hyperparameter_eval_results(dtest, dood_val,epsilon)
+
     # Performs all the computation in the callback
     def forward_callback(self,trainer,pl_module):
         self.OOD_Datamodule.setup() # SETUP AGAIN TO RESET AFTER PROVIDING THE TRANSFORM FOR THE DATA
@@ -68,9 +88,8 @@ class ODIN(pl.Callback):
         # Obtain representations of the data
             
         #self.get_perturbed_scores(trainer,pl_module, train_loader)
-        dtest = self.get_perturbed_scores(trainer, pl_module, test_loader)
-        dood = self.get_perturbed_scores(trainer, pl_module, ood_loader)
-        
+        dtest = self.get_perturbed_scores(trainer, pl_module, test_loader,self.optimal_episilon)
+        dood = self.get_perturbed_scores(trainer, pl_module, ood_loader,self.optimal_episilon)
         self.get_eval_results(dtest,dood)
 
     # Scores when the inputs are not perturbed by a gradient    
@@ -104,7 +123,7 @@ class ODIN(pl.Callback):
         return np.array(collated_scores)
 
 
-    def get_perturbed_scores(self,trainer,pl_module,dataloader):
+    def get_perturbed_scores(self,trainer,pl_module,dataloader,epsilon):
         collated_scores = []
         loader = quickloading(self.quick_callback, dataloader)
         for index, (img, *label, indices) in enumerate(loader):
@@ -120,16 +139,16 @@ class ODIN(pl.Callback):
                 label = label[0]
             img = img.to(pl_module.device)
 
-            scores = self.odin_scoring(trainer, pl_module, img)
+            scores = self.odin_scoring(trainer, pl_module, img,epsilon)
             collated_scores += list(scores.data.cpu().numpy())
         return collated_scores
     
     # Second working version of calculating the gradients, able to perturb the input and calculate all the different values present
-    def odin_scoring(self, trainer, pl_module, x):
+    def odin_scoring(self, trainer, pl_module, x,epsilon):
         
         grad = self.get_grads(trainer,pl_module,x)
         # Perturb input
-        perturbed_inputs = torch.add(x, grad, alpha=self.epsilon)
+        perturbed_inputs = torch.add(x, grad, alpha=epsilon)
         perturbed_logits = pl_module.class_forward(perturbed_inputs)
         perturbed_logits = perturbed_logits/self.temperature
         
@@ -194,5 +213,18 @@ class ODIN(pl.Callback):
             None.
         """
         # Nawid- get false postive rate and asweel as AUROC and aupr
-        auroc= get_roc_sklearn(dtest, dood)
+        auroc, aupr, fpr = get_measures(dood,dtest)
         wandb.run.summary[self.summary_key] = auroc
+        wandb.run.summary[self.summary_aupr] = aupr
+        wandb.run.summary[self.summary_fpr] = fpr
+
+    # updates the minimum fpr and the optimal epsilon (hyperparameter tuning)
+    def get_hyperparameter_eval_results(self,dtest, dood_val,epsilon):
+        """
+            None.
+        """
+        # Nawid- get false postive rate and asweel as AUROC and aupr
+        auroc, aupr, fpr = get_measures(dood_val,dtest)
+        if fpr < self.minimum_FPR:
+            self.minimum_FPR = fpr
+            self.optimal_episilon = epsilon

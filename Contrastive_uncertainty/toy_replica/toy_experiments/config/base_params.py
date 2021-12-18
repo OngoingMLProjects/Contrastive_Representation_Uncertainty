@@ -65,7 +65,7 @@ model_saving = 1, # Used to control how often the model is saved
 #callbacks =['Oracle Nearest 10 Neighbours Class 1D Typicality'],
 #callbacks = ['Different K Nearest Neighbours Class Typicality'],
 #callbacks = ['Different K Nearest Neighbours Marginal Typicality'],
-#callbacks = ['ODIN'],
+callbacks = ['ODIN'],
 #callbacks = ['Different K Nearest Neighbours Quadratic Class 1D Typicality'],
 #callbacks = ['Mahalanobis Distance'],
 #callbacks = ['Maximum Softmax Probability'],
@@ -77,7 +77,7 @@ model_saving = 1, # Used to control how often the model is saved
 #callbacks = ['Nearest Class Neighbours'], #['Mahalanobis OOD Fractions'], #['Model_saving'],
 
 
-callbacks = ['Nearest 10 Neighbours Class Typicality'],
+#callbacks = ['Nearest 10 Neighbours Class Typicality'],
 )
 
 
