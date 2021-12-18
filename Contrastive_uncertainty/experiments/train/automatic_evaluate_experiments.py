@@ -35,7 +35,6 @@ def evaluate(run_paths,update_dict):
         # if state crash:
         # filtered_callbacks = copy.deepcopy(update_dict['callbacks'])
         
-        
         evaluate_method = model_dict[model_type]['evaluate']
         model_module = model_dict[model_type]['model_module'] 
         model_instance_method = model_dict[model_type]['model_instance']

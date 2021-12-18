@@ -47,15 +47,6 @@ class Gram_OOD(pl.Callback):
 
     def forward_callback(self,trainer,pl_module):
         self.OOD_Datamodule.setup() # SETUP AGAIN TO RESET AFTER PROVIDING THE TRANSFORM FOR THE DATA
-
-        # train_loader = self.Datamodule.deterministic_train_dataloader()
-        # 
-        # test_loader = self.Datamodule.deterministic_train_dataloader()
-        # ood_loader = self.OOD_Datamodule.deterministic_train_dataloader()
-        # '''
-        # test_loader = self.Datamodule.test_dataloader()
-        # ood_loader = self.OOD_Datamodule.test_dataloader()
-        # '''
         # train_logits, train_confs, train_preds,labels_train = self.get_predictions(pl_module,train_loader)
         # test_logits, test_confs, test_preds,labels_test = self.get_predictions(pl_module,test_loader)
         # ood_logits, ood_confs, ood_preds,labels_ood = self.get_predictions(pl_module,test_loader)
@@ -64,26 +55,20 @@ class Gram_OOD(pl.Callback):
         self.OOD_Datamodule.batch_size = 1
         
         updated_train_loader = self.Datamodule.deterministic_train_dataloader()
-        '''
+        
         updated_test_loader = self.Datamodule.test_dataloader()
         updated_ood_loader = self.OOD_Datamodule.test_dataloader()
-        '''
         
-        self.OOD_Datamodule.train_transforms = self.Datamodule.test_transforms
-        self.Datamodule.train_transforms = self.Datamodule.test_transforms
-        updated_test_loader = self.Datamodule.deterministic_train_dataloader()
-        updated_ood_loader = self.OOD_Datamodule.deterministic_train_dataloader()
+        #updated_test_loader = self.Datamodule.deterministic_train_dataloader()
+        #updated_ood_loader = self.OOD_Datamodule.deterministic_train_dataloader()
         
-        #minimal_trainloader = torch.utils.data.Subset(updated_train_loader, train_indices)
-
-        #data_train = list(minimal_trainloader)
         data_train = list(updated_train_loader)
         data = list(updated_test_loader)
         ood_data = list(updated_ood_loader)
         self.compute_minmaxs(pl_module,data_train)
         #self.compare_deviations(pl_module,ood_data,ood_data)
         test_deviations = self.compute_test_deviations(pl_module,data)
-        ood_deviations = self.compute_ood_deviations(pl_module,data)
+        ood_deviations = self.compute_ood_deviations(pl_module,ood_data)
         self.get_eval_results(test_deviations, ood_deviations)
         # Obtain the predictions
         # Change code which goes from cpu for gpu into normal version

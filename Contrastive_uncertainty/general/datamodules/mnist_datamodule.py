@@ -20,7 +20,7 @@ class MNISTDataModule(LightningDataModule):
     def __init__(
             self,
             data_dir: str = None,
-            val_split: int = 59800,#5000,
+            val_split: int = 5000,
             num_workers: int = 16,
             batch_size: int = 32,
             seed: int = 42,
@@ -131,7 +131,6 @@ class MNISTDataModule(LightningDataModule):
             [train_length - self.val_split, self.val_split],
             generator=torch.Generator().manual_seed(self.seed)
         )
-        #import ipdb; ipdb.set_trace()
 
     def setup_val(self):
 

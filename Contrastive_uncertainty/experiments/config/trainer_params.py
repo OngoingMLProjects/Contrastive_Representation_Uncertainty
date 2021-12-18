@@ -41,3 +41,8 @@ callbacks = ['Gram'],
 #callbacks = ['Class Mahalanobis','Mahalanobis OOD Fractions', 'Nearest Neighbours'],
 #callbacks = ['Model_saving']
 )
+
+if 'Gram' in trainer_hparams['callbacks']:
+    trainer_hparams['instance_encoder'] = 'gram_resnet50'
+else:
+    pass
