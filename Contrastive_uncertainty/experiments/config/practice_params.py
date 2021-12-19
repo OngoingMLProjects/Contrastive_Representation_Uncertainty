@@ -10,8 +10,8 @@ weight_decay = 1e-4,
 
 # Training parameters in common
 emb_dim = 128,
-instance_encoder = 'gram_resnet18', #'resnet50',#'resnet18',
-
+#instance_encoder = 'gram_resnet18', #'resnet50',#'resnet18',
+instance_encoder = 'resnet18', #'resnet50',#'resnet18',
 dataset ='MNIST',
 OOD_dataset =['MNIST'],
 #OOD_dataset =['MNIST'],
@@ -66,7 +66,8 @@ test_ratio = 1.0,
 val_check = 20,
 model_saving = 200, # Used to control how often the model is saved
 #callbacks = [],
-callbacks = ['Gram OOD'],
+#callbacks = ['Gram OOD'],
+callbacks = ['ODIN'],
 #callbacks = ['Contrastive Explanation Method'],
 #callbacks = ['Mahalanobis Distance','Maximum Softmax Probability','ODIN'],
 #callbacks = ['Nearest 10 Neighbours Class Quadratic 1D Typicality'],

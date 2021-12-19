@@ -43,7 +43,6 @@ class ODIN(pl.Callback):
         self.OOD_Datamodule.test_transforms = self.Datamodule.test_transforms #  Make the transform of the OOD data the same as the actual data
         self.quick_callback = quick_callback # Quick callback used to make dataloaders only use a single batch of the data in order to make the testing process occur quickly
         
-        
         self.OOD_dataname = self.OOD_Datamodule.name
         self.summary_key = f'ODIN AUROC OOD {self.OOD_dataname}'
         self.summary_aupr = self.summary_key.replace("AUROC", "AUPR")
@@ -213,7 +212,8 @@ class ODIN(pl.Callback):
             None.
         """
         # Nawid- get false postive rate and asweel as AUROC and aupr
-        auroc, aupr, fpr = get_measures(dood,dtest)
+        # Need to use the negative as higher scores are better for the case of ODIN, similar to the situation of the maximum softmax probability case
+        auroc, aupr, fpr = get_measures(-dood,-dtest)
         wandb.run.summary[self.summary_key] = auroc
         wandb.run.summary[self.summary_aupr] = aupr
         wandb.run.summary[self.summary_fpr] = fpr

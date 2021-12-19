@@ -336,7 +336,7 @@ class Gram_OOD(pl.Callback):
         
         dtest = test_deviations.sum(axis=1)
         dood = ood_deviations.sum(axis=1)
-
+        
         auroc, aupr, fpr = get_measures(dood,dtest)
         wandb.run.summary[self.summary_key] = auroc
         wandb.run.summary[self.summary_aupr] = aupr
