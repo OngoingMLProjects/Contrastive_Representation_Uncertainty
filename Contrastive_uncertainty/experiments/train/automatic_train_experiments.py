@@ -7,8 +7,8 @@ def train(base_dict, trainer_dict):
     # first obtain a base dict and a trainer dict
     #model_types = [model_names_dict['SupCon']]
     model_types = [model_names_dict['Moco']]
-    seeds = [125,150,175,200]
-    datasets = ['CIFAR10','CIFAR100','MNIST','FashionMNIST','KMNIST']
+    seeds = [26,42,25,50,75,100,125,150,175,200]
+    datasets = ['TinyImageNet','Caltech256']
     #datasets = ['Caltech101','Caltech256','CIFAR10','CIFAR100','TinyImageNet','Cub200','Dogs'] # Need to perform MNIST experiments next
     #datasets = ['Caltech101','Caltech256','CIFAR10','CIFAR100','TinyImageNet','Cub200','Dogs','MNIST','FashionMNIST','KMNIST']
     

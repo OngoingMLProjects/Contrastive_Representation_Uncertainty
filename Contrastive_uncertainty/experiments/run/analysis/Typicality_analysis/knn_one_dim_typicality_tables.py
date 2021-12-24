@@ -624,6 +624,9 @@ def knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desir
     baselines_dict = {'Mahalanobis':{'AUROC':'Mahalanobis AUROC OOD'.lower(),'AUPR':'Mahalanobis AUPR'.lower(),'FPR':'Mahalanobis FPR'.lower()},
                 
                 'Softmax':{'AUROC':'Maximum Softmax Probability AUROC OOD'.lower(),'AUPR':'Maximum Softmax Probability AUPR OOD'.lower(),'FPR':'Maximum Softmax Probability FPR OOD'.lower()},
+
+                'ODIN':{'AUROC':'ODIN AUROC OOD'.lower(),'AUPR':'ODIN AUPR OOD'.lower(),'FPR':'ODIN FPR OOD'.lower()},
+
                 }
 
     assert len(baseline_approaches) == len(baseline_model_types), 'number of baseline approaches do not match number of baseline models'
@@ -641,7 +644,7 @@ def knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desir
     baseline_strings_AUPR = []
     baseline_strings_FPR = []
     for approach in baseline_approaches:
-        assert approach == 'Mahalanobis' or approach =='Softmax', 'No other baselines implemented'
+        assert approach == 'Mahalanobis' or approach =='Softmax' or approach =='ODIN', 'No other baselines implemented'
         baseline_strings_AUROC.append(baselines_dict[approach]['AUROC'])
         baseline_strings_AUPR.append(baselines_dict[approach]['AUPR'])
         baseline_strings_FPR.append(baselines_dict[approach]['FPR'])
@@ -814,8 +817,13 @@ def knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desir
     combined_table = update_double_col_table(combined_table)
     combined_table = separate_ID_datasets(combined_table) # Used to add a line between the ID datasets
     
-    print(combined_table)
+
+
+    #new_table = re.sub("\s\s+", " ", combined_table)
+    #print(combined_table)
     
+    new_table = re.sub("\s\s+", " ", combined_table)
+    print(new_table) 
 # Used to create a dataframe
 def create_dataframe(data_array,column_names,OOD_names,ID_names):
     data_dict = {'OOD datasets':OOD_names}
@@ -992,8 +1000,11 @@ if __name__== '__main__':
     #knn_table_collated_v2(desired_approach = 'Quadratic_typicality', desired_model_type = 'CE', baseline_approaches = ['Mahalanobis'], baseline_model_types = ['CE'],dataset_type ='RGB')
     #knn_table_collated_v2(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['Mahalanobis'], baseline_model_types = ['SupCon'],dataset_type ='RGB')
     #knn_table_collated_v2(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['Mahalanobis'], baseline_model_types = ['SupCon'],dataset_type ='RGB')
+    
+    
+    
     #knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['Softmax','Mahalanobis'], baseline_model_types = ['CE','CE'],dataset_type ='RGB',t_test='less')
     #knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desired_model_type = 'CE', baseline_approaches = ['Mahalanobis'], baseline_model_types = ['CE'],dataset_type ='RGB',t_test='two-sided')
-    knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['Mahalanobis'], baseline_model_types = ['SupCon'],dataset_type ='RGB',t_test='two-sided')
-
-
+    #knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['Mahalanobis'], baseline_model_types = ['SupCon'],dataset_type ='RGB',t_test='two-sided')
+    knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['Softmax','ODIN','Mahalanobis'], baseline_model_types = ['CE','CE','CE'],dataset_type ='RGB',t_test='less')
+    

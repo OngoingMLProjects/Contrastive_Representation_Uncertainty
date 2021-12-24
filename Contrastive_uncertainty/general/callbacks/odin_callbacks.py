@@ -30,6 +30,8 @@ from Contrastive_uncertainty.general.utils.pl_metrics import precision_at_k, mea
 from Contrastive_uncertainty.general.run.model_names import model_names_dict
 from Contrastive_uncertainty.general.callbacks.ood_callbacks import get_roc_sklearn
 
+
+#https://uvadlc-notebooks.readthedocs.io/en/latest/tutorial_notebooks/tutorial10/Adversarial_Attacks.html - Also  a good resource for adversarial example
 # Implementation based on these resources
 # https://github.com/facebookresearch/odin/blob/main/code/calData.py
 #https://github.com/guyera/Generalized-ODIN-Implementation/blob/master/code/cal.py
@@ -90,7 +92,7 @@ class ODIN(pl.Callback):
         dtest = self.get_perturbed_scores(trainer, pl_module, test_loader,self.optimal_episilon)
         dood = self.get_perturbed_scores(trainer, pl_module, ood_loader,self.optimal_episilon)
         self.get_eval_results(dtest,dood)
-
+    '''
     # Scores when the inputs are not perturbed by a gradient    
     def get_unperturbed_scores(self,trainer,pl_module,dataloader):
         collated_scores = []
@@ -120,7 +122,7 @@ class ODIN(pl.Callback):
             scores, _ = torch.max(probs,dim=1) # use the maximum logit value as the scores
             
         return np.array(collated_scores)
-
+    '''
 
     def get_perturbed_scores(self,trainer,pl_module,dataloader,epsilon):
         collated_scores = []
@@ -139,7 +141,9 @@ class ODIN(pl.Callback):
             img = img.to(pl_module.device)
 
             scores = self.odin_scoring(trainer, pl_module, img,epsilon)
-            collated_scores += list(scores.data.cpu().numpy())
+            # Need to use the negative as higher scores are better for the case of ODIN, similar to the situation of the maximum softmax probability case
+            collated_scores += list(-scores.data.cpu().numpy())
+
         return collated_scores
     
     # Second working version of calculating the gradients, able to perturb the input and calculate all the different values present
@@ -163,7 +167,7 @@ class ODIN(pl.Callback):
         probs = F.softmax(perturbed_logits,dim=1)
         scores, _ = torch.max(probs,dim=1)
         return scores
-
+    
     # Calculates gradient for perturbation
     def get_grads(self,trainer,pl_module,x):
         # Calculate gradient
@@ -182,6 +186,24 @@ class ODIN(pl.Callback):
         # normalize grad
         grad = self.normalize_grad(x_params.grad)
         return grad
+    
+    ''' # Based on https://uvadlc-notebooks.readthedocs.io/en/latest/tutorial_notebooks/tutorial10/Adversarial_Attacks.html
+    # Define separate optimizer to perform several steps of gradient descent
+    def get_grads(self, trainer,pl_module,x):
+        x_params = nn.Parameter(x,requires_grad=True)
+        x_params.retain_grad()
+        optimizer = torch.optim.SGD([x_params], lr=1e-1, momentum=0.8)
+        logits = pl_module.class_forward(x_params)
+        logits = logits/self.temperature     
+        #probs = F.softmax(logits,dim=1)
+        import ipdb; ipdb.set_trace()
+        labels = torch.argmax(logits,dim=1) # use the maximum probability indices as the labels 
+        loss = nn.CrossEntropyLoss()(logits, labels)
+        loss.backward()
+        
+        # normalize grad
+        grad = self.normalize_grad(x_params.grad)
+    ''' 
 
     # Used to normalize the gradient to the space of images
     def normalize_grad(self,grad):
@@ -212,8 +234,8 @@ class ODIN(pl.Callback):
             None.
         """
         # Nawid- get false postive rate and asweel as AUROC and aupr
-        # Need to use the negative as higher scores are better for the case of ODIN, similar to the situation of the maximum softmax probability case
-        auroc, aupr, fpr = get_measures(-dood,-dtest)
+        
+        auroc, aupr, fpr = get_measures(dood,dtest)
         wandb.run.summary[self.summary_key] = auroc
         wandb.run.summary[self.summary_aupr] = aupr
         wandb.run.summary[self.summary_fpr] = fpr
