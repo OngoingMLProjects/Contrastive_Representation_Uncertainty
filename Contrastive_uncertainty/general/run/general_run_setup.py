@@ -14,6 +14,7 @@ DifferentKNNMarginal1DTypicality, DifferentKNNMarginalTypicality, DifferentKNNCl
 from Contrastive_uncertainty.general.callbacks.softmax_probability_callbacks import Max_Softmax_Probability
 from Contrastive_uncertainty.general.callbacks.cem_callbacks import ContrastiveExplanationMethod, ContrastiveExplanationDistance
 from Contrastive_uncertainty.general.callbacks.gram_ood_callback import Gram_OOD
+from Contrastive_uncertainty.general.callbacks.kde_ood_callback import KDE_OOD
 
 def train_run_name(model_name, config, group=None):
     run_name = 'Train_' + model_name + '_DS:'+str(config['dataset']) +'_Epochs:'+ str(config['epochs']) + '_seed:' +str(config['seed'])  
@@ -56,6 +57,8 @@ def callback_dictionary(Datamodule,config,data_dict):
                 f'Maximum Softmax Probability {ood_dataset}': Max_Softmax_Probability(Datamodule,OOD_Datamodule,quick_callback=quick_callback), # softmax probability baseline (need to train cross entropy models for the case of this baseline)
 
                 f'ODIN {ood_dataset}': ODIN(Datamodule,OOD_Datamodule,quick_callback=quick_callback),
+
+                f'KDE {ood_dataset}': KDE_OOD(Datamodule, OOD_Datamodule, quick_callback= quick_callback),
 
                 'Contrastive Explanation Method':ContrastiveExplanationMethod(Datamodule,quick_callback=quick_callback),
                 'Contrastive Explanation Distance':ContrastiveExplanationDistance(Datamodule,quick_callback=quick_callback),

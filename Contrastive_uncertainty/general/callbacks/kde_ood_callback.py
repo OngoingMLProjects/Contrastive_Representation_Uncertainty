@@ -46,7 +46,6 @@ class KDE_OOD(pl.Callback):
         self.summary_aupr = self.summary_key.replace("AUROC", "AUPR")
         self.summary_fpr = self.summary_key.replace("AUROC", "FPR")
 
-    
     def on_test_epoch_end(self, trainer, pl_module):
         self.forward_callback(trainer=trainer, pl_module=pl_module)
 
@@ -122,11 +121,11 @@ class KDE_OOD(pl.Callback):
         # Nawid - obtain the scores for the test data and the OOD data
         
         kde = KernelDensity(bandwidth=1.0, kernel='gaussian')
-        kde.fit(ftrain_norm[:, None])
+        kde.fit(ftrain_norm)
 
         # score_samples returns the log of the probability density
-        dtest = kde.score_samples(ftest_norm[:, None])
-        dood = kde.score_samples(food_norm[:, None])
+        dtest = kde.score_samples(ftest_norm)
+        dood = kde.score_samples(food_norm)
 
         # Nawid- get false postive rate and asweel as AUROC and aupr
         # Nawid - Use the negative scores to make it similar to the mahalanobis distance as the higher the KDE scores, the better it is, whilst higher the mahalanobis scores,the worse it is        
