@@ -5,7 +5,8 @@ callback_names = {'MD':'Mahalanobis Distance',
 'NN All Dim Class':'Nearest 10 Neighbours Class Typicality',
 'Gram':'Gram',
 'ODIN':'ODIN',
-'KDE':'KDE'} # Ablation
+'KDE':'KDE',
+'CAM':'CAM'} # Ablation
 
 # format of Mahalanobis distance: Repeat MD
 repeat_names = {value: f'Repeat {key}' for key,value in callback_names.items()}
@@ -17,7 +18,8 @@ callback_names['MSP']: ['Maximum Softmax Probability AUROC OOD','Maximum Softmax
 callback_names['NN All Dim Class']:['Normalized All Dim Class Typicality KNN - 10 OOD -','Normalized All Dim Class Typicality KNN - 10 AUPR OOD -','Normalized All Dim Class Typicality KNN - 10 FPR OOD -'],
 callback_names['Gram']:['Gram AUROC OOD','Gram AUPR OOD','Gram FPR OOD'],
 callback_names['ODIN']:['ODIN AUROC OOD','ODIN AUPR OOD','ODIN FPR OOD'],
-callback_names['KDE']:['KDE AUROC OOD','KDE AUPR OOD','KDE FPR OOD']
+callback_names['KDE']:['KDE AUROC OOD','KDE AUPR OOD','KDE FPR OOD'],
+callback_names['CAM']:[],
 } # Callback information for ablation
 
 

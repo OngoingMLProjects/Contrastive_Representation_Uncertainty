@@ -54,7 +54,7 @@ practice_trainer_hparams = dict(
 
 # Miscellaneous arguments in common
 seed = 26,
-epochs = 300,
+epochs = 1,
 bsz = 16,
 
 # Trainer configurations in common
@@ -67,7 +67,8 @@ val_check = 20,
 model_saving = 200, # Used to control how often the model is saved
 #callbacks = [],
 #callbacks = ['Gram OOD'],
-callbacks = ['ODIN'],
+#callbacks = ['ODIN'],
+callbacks = ['CAM'],
 #callbacks = ['Contrastive Explanation Method'],
 #callbacks = ['Mahalanobis Distance','Maximum Softmax Probability','ODIN'],
 #callbacks = ['Nearest 10 Neighbours Class Quadratic 1D Typicality'],
