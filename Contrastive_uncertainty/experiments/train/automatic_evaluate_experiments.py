@@ -1,8 +1,9 @@
 # Automatic version which checks the callbacks for the particular file
+from re import I
 import wandb
 import copy
 from Contrastive_uncertainty.experiments.train.experimental_dict import model_dict
-from Contrastive_uncertainty.experiments.train.repeat_callbacks_dict import callback_names, repeat_names, desired_key_dict
+from Contrastive_uncertainty.experiments.train.repeat_callbacks_dict import callback_names, repeat_names, desired_key_dict, desired_ID_key_dict
 
 def evaluate(run_paths,update_dict):    
     # Dict for the model name, parameters and specific training loop
@@ -61,7 +62,17 @@ def callback_filter(summary_info,evaluation_dict):
     for key in updated_desired_key_dict: # go through all the keys in the updated_desired_key dict (which has same keys as desired key dict )  
         for value in desired_key_dict[key]: # go through the different values in a key
             updated_desired_key_dict[key].extend([value + f' {ood_dataset}' for ood_dataset in OOD_datasets]) # add list related to the OOD dataset
-       
+
+    # get the keys for the desired_ID_key_dict
+    updated_desired_ID_key_dict = {key:[] for key in desired_ID_key_dict}
+    # add the keys of the ID case to the total keys
+    updated_desired_key_dict.update(updated_desired_ID_key_dict)
+
+    for key in updated_desired_ID_key_dict:
+        # add the value of the ID case into the updated desired key dict which holds all the different keys
+        for value in desired_ID_key_dict[key]:
+            updated_desired_key_dict[key].extend([value])
+      
     filtered_callbacks = []
     # Make a dict connecting the callbacks and the inputs from the callbacks
     for callback in callbacks:
@@ -69,12 +80,11 @@ def callback_filter(summary_info,evaluation_dict):
 
         desired_strings = updated_desired_key_dict[callback] # get the summary strings related to the callback
         # iterate throguh the strings
-        for desired_string in desired_strings:
+        for desired_string in desired_strings:            
             desired_keys = [key for key, value in summary_info.items() if desired_string.lower().replace(" ","") in key.lower().replace(" ","")] # check if the key has the desired string, remove the spaces to get rid of any issues with space
             if len(desired_keys) == 0 or repeat_callback: # if any of the strings in a callback is zero, append the callback to filtered callback and go to the next callback
                 filtered_callbacks.append(callback)
                 break
-                
     '''
     filtered_callbacks = []
     # Make a dict connecting the callbacks and the inputs from the callbacks

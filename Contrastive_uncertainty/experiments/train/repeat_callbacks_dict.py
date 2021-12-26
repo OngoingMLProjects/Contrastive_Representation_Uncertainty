@@ -8,7 +8,7 @@ callback_names = {'MD':'Mahalanobis Distance',
 'KDE':'KDE',
 'CAM':'CAM'} # Ablation
 
-# format of Mahalanobis distance: Repeat MD
+# format of Mahalanobis distance: Repeat MD, used to choose whether to repeat a callback or not
 repeat_names = {value: f'Repeat {key}' for key,value in callback_names.items()}
 
 desired_key_dict = {callback_names['MD']:['Mahalanobis AUROC OOD','Mahalanobis AUPR OOD','Mahalanobis FPR OOD'],
@@ -19,8 +19,9 @@ callback_names['NN All Dim Class']:['Normalized All Dim Class Typicality KNN - 1
 callback_names['Gram']:['Gram AUROC OOD','Gram AUPR OOD','Gram FPR OOD'],
 callback_names['ODIN']:['ODIN AUROC OOD','ODIN AUPR OOD','ODIN FPR OOD'],
 callback_names['KDE']:['KDE AUROC OOD','KDE AUPR OOD','KDE FPR OOD'],
-callback_names['CAM']:[],
 } # Callback information for ablation
 
+# Key dict only for the ID data
+desired_ID_key_dict = {callback_names['CAM']:['GradCam Heatmaps']}
 
 # could potentially make a separate callback dict for the case of the ablations
