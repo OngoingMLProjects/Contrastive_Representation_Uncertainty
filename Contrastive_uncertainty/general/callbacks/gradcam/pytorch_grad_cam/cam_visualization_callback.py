@@ -40,10 +40,9 @@ class Cam_Visualization(pl.Callback):
         self.get_visualization(trainer,pl_module, test_loader)
 
     def get_visualization(self,trainer, pl_module, dataloader):
-        loader = quickloading(self.quick_callback, dataloader)
-        
+        # Iterate over a single data sample
+        loader = [next(iter(dataloader))] # Always use a single batch for the samples
 
-        
         for index, (img, *label, indices) in enumerate(loader):
             assert len(loader)>0, 'loader is empty'
             if isinstance(img, tuple) or isinstance(img, list):
@@ -51,19 +50,22 @@ class Cam_Visualization(pl.Callback):
             
             img = img.to(pl_module.device)
             #target_layers = [pl_module.encoder.layer4[-1]]
-            target_layers = [pl_module.encoder.layer4[-1]]
+            if pl_module.name =='Moco':
+                encoder = pl_module.encoder_q # need to use query encoder as gradients need to flow
+            else:
+                encoder = pl_module.encoder
+            target_layers = [encoder.layer4[-1]]
 
             # If None, returns the map for the highest scoring category.
             # Otherwise, targets the requested category.
             target_category = None
 
-            cam = GradCAM(pl_module.encoder,target_layers=target_layers,use_cuda= True)
+            cam = GradCAM(encoder,target_layers=target_layers,use_cuda= True)
             cam.batch_size = 32
 
             # You can also pass aug_smooth=True and eigen_smooth=True, to apply smoothing.
             grayscale_cam = cam(input_tensor=img)
             
-
             # In this example grayscale_cam has only one image in the batch:
             #grayscale_cam = grayscale_cam[0,:]
             rgb_img = img.data.cpu().numpy()

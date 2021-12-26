@@ -51,14 +51,17 @@ def evaluate(run_paths,update_dict):
 def callback_filter(summary_info,evaluation_dict):
     callbacks = evaluation_dict['callbacks']
     
+    # NEED TO MAKE A CALLBACK DICT WHICH DOES NOT TAKE INTO ACCOUNT OOD DATASETS
+    # Need to check the summary information for GRADCAM heatmaps
+    # 
+    
     # Update to take into account different OOD datasets
     OOD_datasets = evaluation_dict['OOD_dataset']
     updated_desired_key_dict = {key:[] for key in desired_key_dict} # obtain a list for the dataset
     for key in updated_desired_key_dict: # go through all the keys in the updated_desired_key dict (which has same keys as desired key dict )  
         for value in desired_key_dict[key]: # go through the different values in a key
             updated_desired_key_dict[key].extend([value + f' {ood_dataset}' for ood_dataset in OOD_datasets]) # add list related to the OOD dataset
-    
-    
+       
     filtered_callbacks = []
     # Make a dict connecting the callbacks and the inputs from the callbacks
     for callback in callbacks:
