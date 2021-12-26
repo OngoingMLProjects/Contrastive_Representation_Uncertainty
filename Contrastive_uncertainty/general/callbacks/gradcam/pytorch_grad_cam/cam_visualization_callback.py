@@ -19,6 +19,7 @@ import sklearn.metrics as skm
 import faiss
 import statistics 
 import scipy
+from PIL import Image
 
 from Contrastive_uncertainty.general.callbacks.general_callbacks import quickloading
 from Contrastive_uncertainty.general.callbacks.gradcam.pytorch_grad_cam import GradCAM, ScoreCAM, GradCAMPlusPlus, AblationCAM, XGradCAM, EigenCAM
@@ -40,10 +41,10 @@ class Cam_Visualization(pl.Callback):
         self.forward_callback(trainer=trainer, pl_module=pl_module) 
 
     def forward_callback(self,trainer,pl_module):
-        train_loader = self.Datamodule.deterministic_train_dataloader()
-        test_loader = self.Datamodule.test_dataloader()
+        #train_loader = self.Datamodule.deterministic_train_dataloader()
+        test_loader = self.Datamodule.test_dataloader() # use test loader as there is less data augmentation for the test loader
         
-        self.get_visualization(pl_module, train_loader)
+        self.get_visualization(pl_module, test_loader)
 
     def get_visualization(self, pl_module, dataloader):
         loader = quickloading(self.quick_callback, dataloader)
@@ -52,9 +53,7 @@ class Cam_Visualization(pl.Callback):
             if isinstance(img, tuple) or isinstance(img, list):
                     img, *aug_img = img # Used to take into accoutn whether the data is a tuple of the different augmentations
             
-
             img = img.to(pl_module.device)
-
             target_layers = [pl_module.encoder.layer4[-1]]
 
             # If None, returns the map for the highest scoring category.
@@ -66,17 +65,17 @@ class Cam_Visualization(pl.Callback):
 
             # You can also pass aug_smooth=True and eigen_smooth=True, to apply smoothing.
             grayscale_cam = cam(input_tensor=img)
-
-            # In this example grayscale_cam has only one image in the batch:
-            grayscale_cam = grayscale_cam[0,:]
-            #visualization = show_cam_on_image(rgb_img, grayscale_cam, use_rgb=True)
-
             
 
-            ''' Need to change this part        
-            rgb_img = cv2.imread(args.image_path, 1)[:, :, ::-1]
-            rgb_img = cv2.resize(rgb_img, (224, 224))
-            rgb_img = np.float32(rgb_img) / 255
-            input_tensor = preprocess_image(rgb_img, mean=[0.5, 0.5, 0.5],
-                                        std=[0.5, 0.5, 0.5]) # change to tensor and normalize the image
+            # In this example grayscale_cam has only one image in the batch:
+            #grayscale_cam = grayscale_cam[0,:]
+            rgb_img = img.data.cpu().numpy()
+            rgb_img = rgb_img.reshape(rgb_img.shape[0],rgb_img.shape[2],rgb_img.shape[3],rgb_img.shape[1])
+            mean, std = self.Datamodule.test_transforms.normalization.mean, self.Datamodule.test_transforms.normalization.std 
+            
+            visualization = show_cam_on_image(rgb_img, grayscale_cam,mean, std, use_rgb=True)            
+
+            '''            
+            img = Image.fromarray(visualization[0], 'RGB')
+            img.show()
             '''
