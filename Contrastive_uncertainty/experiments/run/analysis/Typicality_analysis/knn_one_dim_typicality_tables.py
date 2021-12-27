@@ -627,6 +627,8 @@ def knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desir
 
                 'ODIN':{'AUROC':'ODIN AUROC OOD'.lower(),'AUPR':'ODIN AUPR OOD'.lower(),'FPR':'ODIN FPR OOD'.lower()},
 
+                'KDE':{'AUROC':'KDE AUROC OOD'.lower(),'AUPR':'KDE AUPR OOD'.lower(),'FPR':'KDE FPR OOD'.lower()},
+                
                 }
 
     assert len(baseline_approaches) == len(baseline_model_types), 'number of baseline approaches do not match number of baseline models'
@@ -637,14 +639,14 @@ def knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desir
         desired_string_AUPR= 'Normalized One Dim Class Quadratic Typicality KNN - 10 AUPR'.lower()
         desired_string_FPR = 'Normalized One Dim Class Quadratic Typicality KNN - 10 FPR'.lower()
         desired_function = obtain_knn_value # Used to calculate the value
-    
+     
     ####################
     # make a loop to add the baseline strings and the baseline AUPR etc
     baseline_strings_AUROC = []
     baseline_strings_AUPR = []
     baseline_strings_FPR = []
     for approach in baseline_approaches:
-        assert approach == 'Mahalanobis' or approach =='Softmax' or approach =='ODIN', 'No other baselines implemented'
+        assert approach == 'Mahalanobis' or approach =='Softmax' or approach =='ODIN' or approach =='KDE', 'No other baselines implemented'
         baseline_strings_AUROC.append(baselines_dict[approach]['AUROC'])
         baseline_strings_AUPR.append(baselines_dict[approach]['AUPR'])
         baseline_strings_FPR.append(baselines_dict[approach]['FPR'])
@@ -715,7 +717,7 @@ def knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desir
             model_type = run_config['model_type']
             Model_name = 'SupCLR' if model_type=='SupCon' else model_type
             # Make a data array, where the number values are equal to the number of OOD classes present in the datamodule dict or equal to the number of keys
-
+            print('Run seed',run_config['seed'])
             # name for the different rows of a table
             # https://stackoverflow.com/questions/10712002/create-an-empty-list-in-python-with-certain-size
             row_names = [None] * num_ood # Make an empty list to take into account all the different values 
@@ -818,12 +820,15 @@ def knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desir
     combined_table = separate_ID_datasets(combined_table) # Used to add a line between the ID datasets
     
 
-
+    print(combined_table)
     #new_table = re.sub("\s\s+", " ", combined_table)
-    #print(combined_table)
-    
+    #
+    '''
     new_table = re.sub("\s\s+", " ", combined_table)
     print(new_table) 
+    '''
+
+
 # Used to create a dataframe
 def create_dataframe(data_array,column_names,OOD_names,ID_names):
     data_dict = {'OOD datasets':OOD_names}
@@ -956,9 +961,6 @@ def obtain_baseline_mahalanobis(summary,OOD_dataset,string1 = 'Mahalanobis AUROC
         mahalanobis_AUROC = round(summary[OOD_dataset_specific_mahalanobis_key[0]],3)
         return mahalanobis_AUROC
 
-
-
-
 # small hack to make it work for the seeds of interest
 def update_metric_list(metric_list,data_index,metric_function, metric_string, metric_model_type,run_model_type, summary, OOD_dataset,seed):
     #print('metric model type:',metric_model_type)
@@ -975,11 +977,11 @@ def update_metric_list(metric_list,data_index,metric_function, metric_string, me
 def update_metric_array(metric_array,baseline_index,data_index,metric_function, metric_string, metric_model_type,run_model_type, summary, OOD_dataset,run_seed):
     #print('metric model type:',metric_model_type)
     seeds = [25,50,75,100,125,150,175,200]
-
     if metric_model_type == run_model_type and run_seed in seeds:
 
         metric_value = metric_function(metric_string,summary,OOD_dataset) # calculates the value
         repeat_index = seeds.index(run_seed)
+        
         
         metric_array[baseline_index,data_index,repeat_index] = metric_value
         return metric_array
@@ -1006,5 +1008,9 @@ if __name__== '__main__':
     #knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['Softmax','Mahalanobis'], baseline_model_types = ['CE','CE'],dataset_type ='RGB',t_test='less')
     #knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desired_model_type = 'CE', baseline_approaches = ['Mahalanobis'], baseline_model_types = ['CE'],dataset_type ='RGB',t_test='two-sided')
     #knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['Mahalanobis'], baseline_model_types = ['SupCon'],dataset_type ='RGB',t_test='two-sided')
-    knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['Softmax','ODIN','Mahalanobis'], baseline_model_types = ['CE','CE','CE'],dataset_type ='RGB',t_test='less')
+    #knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['Softmax','ODIN','Mahalanobis'], baseline_model_types = ['CE','CE','CE'],dataset_type ='RGB',t_test='less')
     
+
+
+    knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['KDE'], baseline_model_types = ['Moco'],dataset_type ='grayscale',t_test='less')
+
