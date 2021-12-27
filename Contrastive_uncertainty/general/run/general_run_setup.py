@@ -16,6 +16,8 @@ from Contrastive_uncertainty.general.callbacks.cem_callbacks import ContrastiveE
 from Contrastive_uncertainty.general.callbacks.gram_ood_callback import Gram_OOD
 from Contrastive_uncertainty.general.callbacks.kde_ood_callback import KDE_OOD
 from Contrastive_uncertainty.general.callbacks.gradcam.pytorch_grad_cam.cam_visualization_callback import Cam_Visualization
+from Contrastive_uncertainty.general.callbacks.total_centroid_similarity_callback import Total_Centroid_KL, Class_Centroid_Radii_Overlap
+from Contrastive_uncertainty.general.callbacks.feature_entropy_callback import Feature_Entropy
 
 def train_run_name(model_name, config, group=None):
     run_name = 'Train_' + model_name + '_DS:'+str(config['dataset']) +'_Epochs:'+ str(config['epochs']) + '_seed:' +str(config['seed'])  
@@ -49,7 +51,9 @@ def callback_dictionary(Datamodule,config,data_dict):
                     'Visualisation': Visualisation(Datamodule, quick_callback=quick_callback),
                     'Nearest 10 Class Neighbours':NearestClassNeighbours(Datamodule, quick_callback=quick_callback,K=10),
                     'Nearest 5 Class Neighbours':NearestClassNeighbours(Datamodule, quick_callback=quick_callback,K=5),
-                    'CAM':Cam_Visualization(Datamodule,quick_callback)}
+                    'CAM':Cam_Visualization(Datamodule,quick_callback),
+                    f'Total Centroid KL': Total_Centroid_KL(Datamodule, quick_callback=quick_callback),
+                    f'Feature Entropy': Feature_Entropy(Datamodule,quick_callback)}
 
     for ood_dataset in config['OOD_dataset']:
         OOD_Datamodule = Datamodule_selection(data_dict, ood_dataset, config)

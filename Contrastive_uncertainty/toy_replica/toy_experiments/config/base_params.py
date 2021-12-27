@@ -47,7 +47,7 @@ trainer_hparams = dict(
 # Miscellaneous arguments in common
 seed = 26,
 epochs = 1,
-bsz = 128,
+bsz = 256,
 
 # Trainer configurations in common
 fast_run = False,
@@ -66,7 +66,8 @@ model_saving = 1, # Used to control how often the model is saved
 #callbacks = ['Different K Nearest Neighbours Class Typicality'],
 #callbacks = ['Different K Nearest Neighbours Marginal Typicality'],
 #callbacks = ['ODIN'],
-callbacks = ['KDE'],
+#callbacks = ['KDE'],
+callbacks = ['Total Centroid KL'],
 #callbacks = ['Different K Nearest Neighbours Quadratic Class 1D Typicality'],
 #callbacks = ['Mahalanobis Distance'],
 #callbacks = ['Maximum Softmax Probability'],

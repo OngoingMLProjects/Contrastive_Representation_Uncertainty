@@ -7,7 +7,7 @@ def train(batch_base_dict, batch_trainer_dict):
       
     # Actively choose which modeles to choose in the acceptable models 
     acceptable_single_models = ['Baselines',
-    model_names_dict['CE'],
+    #model_names_dict['CE'],
     #model_names_dict['Moco'],
     #model_names_dict['SupCon'],
     #model_names_dict['Centroid_VicReg'],
