@@ -59,9 +59,8 @@ class Cam_Visualization(pl.Callback):
             # If None, returns the map for the highest scoring category.
             # Otherwise, targets the requested category.
             target_category = None
-
             cam = GradCAM(encoder,target_layers=target_layers,use_cuda= True)
-            cam.batch_size = 32
+            cam.batch_size = 32     
 
             # You can also pass aug_smooth=True and eigen_smooth=True, to apply smoothing.
             grayscale_cam = cam(input_tensor=img)
@@ -69,6 +68,7 @@ class Cam_Visualization(pl.Callback):
             # In this example grayscale_cam has only one image in the batch:
             #grayscale_cam = grayscale_cam[0,:]
             rgb_img = img.data.cpu().numpy()
+            rgb_img = rgb_img[:32] # only get the first 32 values
             rgb_img = rgb_img.reshape(rgb_img.shape[0],rgb_img.shape[2],rgb_img.shape[3],rgb_img.shape[1])
             mean, std = self.Datamodule.test_transforms.normalization.mean, self.Datamodule.test_transforms.normalization.std 
             

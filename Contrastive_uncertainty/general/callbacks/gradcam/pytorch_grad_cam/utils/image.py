@@ -75,11 +75,21 @@ def show_cam_on_image(img: np.ndarray,
         ToTensor(),
         Normalize((-mean / std).tolist(), (1.0 / std).tolist())
     ])
+    # mask is a grayscale and therefore cannot be preprocessed by something with a mean and standard deviation with 3 channels
     for datapoint, mask_datapoint in zip(img,mask): # go through each individual image
+        datapoint= preprocessing(datapoint) # torch tensor which is renormalized
+        datapoint = torch.clamp(datapoint, min=0.0, max=1.0) # adhoc forcibly clamp values between 0 and 1
+        datapoint = datapoint.data.cpu().numpy() # shape (channel, height, width)
+        datapoint = datapoint.reshape(datapoint.shape[1],datapoint.shape[2],datapoint.shape[0])
+
+        '''
         datapoint,mask_datapoint = preprocessing(datapoint), preprocessing(mask_datapoint) # torch tensor which is renormalized
         datapoint,mask_datapoint = datapoint.data.cpu().numpy(), mask_datapoint.data.cpu().numpy() # shape (channel, height, width)
         datapoint, mask_datapoint = datapoint.reshape(datapoint.shape[1],datapoint.shape[2],datapoint.shape[0]), mask_datapoint.reshape(mask_datapoint.shape[1],mask_datapoint.shape[2],mask_datapoint.shape[0])
-        
+        '''
+
+
+
         heatmap = cv2.applyColorMap(np.uint8(255 * mask_datapoint), colormap)
         if use_rgb:
             heatmap = cv2.cvtColor(heatmap, cv2.COLOR_BGR2RGB)

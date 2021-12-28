@@ -11,7 +11,7 @@ from Contrastive_uncertainty.experiments.config.trainer_params import trainer_hp
 
 run_paths = []
 api = wandb.Api()
-
+'''
 runs1 = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.dataset": "CIFAR100","config.epochs":300,"$or": [{'state':'finished'}, {'state':'crashed'},{'state':'failed'}]})
 runs2 = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.dataset": "CIFAR10","config.epochs":300,"$or": [{'state':'finished'}, {'state':'crashed'},{'state':'failed'}]})
 runs3 = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.dataset": "Caltech256","config.epochs":300,"$or": [{'state':'finished'}, {'state':'crashed'},{'state':'failed'}]})
@@ -19,8 +19,8 @@ runs4 = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines 
 runs5 = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.dataset": "MNIST","config.epochs":300,"$or": [{'state':'finished'}, {'state':'crashed'},{'state':'failed'}]})
 runs6 = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.dataset": "FashionMNIST","config.epochs":300,"$or": [{'state':'finished'}, {'state':'crashed'},{'state':'failed'}]})
 runs7 = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.dataset": "KMNIST","config.epochs":300,"$or": [{'state':'finished'}, {'state':'crashed'},{'state':'failed'}]})
-
 '''
+
 runs1 = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.model_type": "SupCon","config.dataset": "CIFAR100","config.epochs":300,"$or": [{'state':'finished'}, {'state':'crashed'},{'state':'failed'}]})
 runs2 = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.model_type": "SupCon","config.dataset": "CIFAR10","config.epochs":300,"$or": [{'state':'finished'}, {'state':'crashed'},{'state':'failed'}]})
 runs3 = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.model_type": "SupCon","config.dataset": "Caltech256","config.epochs":300,"$or": [{'state':'finished'}, {'state':'crashed'},{'state':'failed'}]})
@@ -28,7 +28,7 @@ runs4 = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines 
 runs5 = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.model_type": "SupCon","config.dataset": "MNIST","config.epochs":300,"$or": [{'state':'finished'}, {'state':'crashed'},{'state':'failed'}]})
 runs6 = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.model_type": "SupCon","config.dataset": "FashionMNIST","config.epochs":300,"$or": [{'state':'finished'}, {'state':'crashed'},{'state':'failed'}]})
 runs7 = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.model_type": "SupCon","config.dataset": "KMNIST","config.epochs":300,"$or": [{'state':'finished'}, {'state':'crashed'},{'state':'failed'}]})
-'''
+
 #runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.model_type": "SupCon","config.seed":125,"config.epochs":300,"$or": [{'state':'finished'}, {'state':'crashed'},{'state':'failed'}]})
 collated_runs = [runs1, runs2, runs3, runs4, runs5, runs6, runs7]
 
@@ -95,12 +95,13 @@ for i in range(len(runs)):
     run_paths.append(run_path)
 
 '''
-
+'''
 for run_set in collated_runs:
     for i in range(len(run_set)):
         run_path = '/'.join(run_set[i].path)
         run_paths.append(run_path)
+'''
 
 #run_paths = ['nerdk312/practice/lxry3nuz']
-#run_paths = ['nerdk312/evaluation/yl6vj4pi']
+run_paths = ['nerdk312/evaluation/8uj964u5']
 evaluate(run_paths, trainer_hparams)
