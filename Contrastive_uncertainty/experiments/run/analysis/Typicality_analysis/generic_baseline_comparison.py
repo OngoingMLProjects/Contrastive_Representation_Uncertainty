@@ -26,11 +26,6 @@ from Contrastive_uncertainty.experiments.run.analysis.analysis_utils import add_
 
 from Contrastive_uncertainty.experiments.run.analysis.Typicality_analysis.knn_one_dim_typicality_tables import obtain_baseline, insignificance_dataframe, update_metric_and_count, update_metric_array
 
-
-
-
-
-
 # same as the previous function but used for a generic case of calculating the values
 def general_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['Softmax','Mahalanobis'], baseline_model_types = ['CE','CE'],dataset_type ='grayscale',t_test='less'):
     num_repeats = 8
@@ -248,13 +243,8 @@ def general_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', d
     
     print(combined_table)
 
-
-
-
 # Obtain the OOD datasets for a particular string
-def obtain_ood_datasets_generic(desired_string,summary,ID_dataset, dataset_dict):
-    
-    
+def obtain_ood_datasets_generic(desired_string,summary,ID_dataset, dataset_dict):    
     keys = [key for key, value in summary.items() if desired_string in key.lower()]
     all_OOD_datasets = []
     # obtain all the OOD datasets which are not known
@@ -278,7 +268,6 @@ def process_dataset_dict(dataset_dict):
         dataset_dict[key] = dict(zip(ood_datasets,indices)) # make a dictionary from combining two lists together
     
     return dataset_dict
-
 
 
 if __name__== '__main__':

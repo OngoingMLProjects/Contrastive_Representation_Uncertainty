@@ -744,13 +744,13 @@ def post_process_latex_table(latex_table):
 
 if __name__ =='__main__':
     #desired_key = 'Centroid Distances Average vector_table'
-    #desired_key = 'KL Divergence(Total||Class)'
+    desired_key = 'KL Divergence(Total||Class)'
     #desired_key = 'Different K Normalized One Dim Class Typicality KNN'
-    desired_key = 'Different K Normalized Quadratic One Dim Class Typicality KNN'
+    #desired_key = 'Different K Normalized Quadratic One Dim Class Typicality KNN'
     #run_filter={"config.group":"Baselines Repeats"}
     #run_filter={"config.group":"OOD hierarchy baselines","config.model_type": "SupCon", 'state':'finished'}
-    run_filter={"config.group":"OOD hierarchy baselines","config.model_type": "SupCon","config.dataset": "CIFAR100"}
+    #run_filter={"config.group":"OOD hierarchy baselines","config.model_type": "SupCon","config.dataset": "CIFAR100"}
     #run_filter={"config.group":"OOD hierarchy baselines","config.model_type": "SupCon"}
     #run_filter={"config.group":"New Model Testing","config.epochs":300}
-    #run_filter={"config.group":"Baselines Repeats","$or": [{"config.model_type":"Moco"}, {"config.model_type": "SupCon"}]}
+    run_filter={"config.group":"Baselines Repeats","$or": [{"config.model_type":"Moco"}, {"config.model_type": "SupCon"}]}
     generic_saving(desired_key,run_filter)
