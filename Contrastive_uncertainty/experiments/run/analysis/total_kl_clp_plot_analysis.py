@@ -43,7 +43,7 @@ def total_kl_clp_plot():
                 #runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats", "config.seed": {"$lt": 125} })
                 #runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats", "config.seed":{"$ne": 26} })
                 # Need to use an 'and' statement to combine the different conditions on the approach
-                runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.model_type":Model ,"$and": [{"config.seed":{"$ne": 26}},{"config.seed":{"$ne": 42}}]})
+                runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.dataset":ID,"config.model_type":Model ,"$and": [{"config.seed":{"$ne": 26}},{"config.seed":{"$ne": 42}}]})
 
 
                 #runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"OOD hierarchy baselines","config.seed":[{"$ne": 26},{"$ne": 42}]})
@@ -55,6 +55,7 @@ def total_kl_clp_plot():
                             'model_type':{'Moco':0, 'SupCon':1}}
 
                 root_dir = 'run_data/'
+                collated_total_kl_values = []
                 for i, run in enumerate(runs): 
                     
                     #print('run:',i)
@@ -103,8 +104,10 @@ def total_kl_clp_plot():
                             total_kl_data = json.load(f)
                         # Calculate the mean distance
                         total_kl_values = total_kl_div_vector(total_kl_data)
-                        break # To stop the loop
+                        collated_total_kl_values.append(total_kl_values)
 
+                        #break # To stop the loop
+                    
                     
                 clp_runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"Confusion Log Probability Evaluation"})
                 #desired_key = 'Class Wise Confusion Log Probability'
@@ -141,8 +144,13 @@ def total_kl_clp_plot():
                             class_wise_clp_json = json.load(f)
                         
                         clp_values = class_confusion_log_probability_vector(class_wise_clp_json)
-                        import ipdb; ipdb.set_trace()
-                        collated_array = np.stack((total_kl_values,clp_values),axis=1)  
+                        # Gets the number of repeat measurements
+                        num_repeats = len(collated_total_kl_values)
+                        collated_clp_values = np.tile(clp_values,num_repeats)
+                        collated_total_kl_values = np.concatenate(collated_total_kl_values)
+                        #collated_total_kl_values = np.stack(collated_total_kl_values,axis=0)
+                        collated_array = np.stack((collated_total_kl_values,collated_clp_values),axis=1)
+                        #collated_array = np.stack((total_kl_values,clp_values),axis=1)  
                         df = pd.DataFrame(collated_array)
                         columns = ['KL(Total||Class) (Nats)', 'CLP']
                         df.columns = columns
@@ -150,14 +158,13 @@ def total_kl_clp_plot():
                         fit = np.polyfit(df['KL(Total||Class) (Nats)'], df['CLP'], 1)
                         fig = plt.figure(figsize=(10, 7))
                         sns.regplot(x = df['KL(Total||Class) (Nats)'], y = df['CLP'],color='blue')
-                        plt.annotate('y={:.2f}+{:.2f}*x'.format(fit[1], fit[0]), xy=(0.05, 0.95), xycoords='axes fraction')
+                        plt.annotate('y={:.3f}+{:.4f}*x'.format(fit[1], fit[0]), xy=(0.80, 0.95), xycoords='axes fraction') # Used to control where the line is annotated
                         #plt.text(3.2, -7.12, 'y={:.2f}+{:.2f}*x'.format(fit[1], fit[0]), color='darkblue', size=12)
                         plt.title(f'KL Divergence and Confusion Log Probability for {ID}-{OOD} pair using {Model_name} model', size=12)
                         # regression equations
                         
                         folder = f'Scatter_Plots/KL_CLP_plots/{model_type}'
                         
-
                         if not os.path.exists(folder):
                             os.makedirs(folder)
                         plt.savefig(f'{folder}/KL_CLP_{ID}_{OOD}_{Model_name}.png')
