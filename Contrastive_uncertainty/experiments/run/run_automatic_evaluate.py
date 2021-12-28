@@ -95,13 +95,13 @@ for i in range(len(runs)):
     run_paths.append(run_path)
 
 '''
-'''
+
 for run_set in collated_runs:
     for i in range(len(run_set)):
         run_path = '/'.join(run_set[i].path)
         run_paths.append(run_path)
-'''
+
 
 #run_paths = ['nerdk312/practice/lxry3nuz']
-run_paths = ['nerdk312/evaluation/8uj964u5']
+#run_paths = ['nerdk312/evaluation/8uj964u5']
 evaluate(run_paths, trainer_hparams)

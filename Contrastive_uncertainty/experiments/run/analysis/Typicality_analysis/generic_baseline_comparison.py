@@ -1,5 +1,6 @@
 # Code for making tables for the ID and OOD datasets
 
+from types import prepare_class
 from numpy.core.defchararray import count
 from pandas.core import base
 from torch.utils import data
@@ -21,13 +22,36 @@ import re
 import copy
 
 from Contrastive_uncertainty.experiments.run.analysis.analysis_utils import add_baseline_names_row, collated_baseline_post_process_latex_table, combine_multiple_tables, dataset_dict, key_dict, ood_dataset_string, post_process_latex_table,full_post_process_latex_table, remove_hline_processing, separate_top_columns, single_baseline_post_process_latex_table, collated_multiple_baseline_post_process_latex_table,combine_multiple_tables, separate_columns, separate_top_columns, update_double_col_table, update_headings_additional,\
-    collated_multiple_baseline_post_process_latex_table_insignificance, separate_ID_datasets
+    collated_multiple_baseline_post_process_latex_table_insignificance, separate_ID_datasets, add_model_names_row
 
-from Contrastive_uncertainty.experiments.run.analysis.Typicality_analysis.knn_one_dim_typicality_tables import obtain_baseline, obtain_ood_datasets, insignificance_dataframe, update_metric_and_count, update_metric_array
+from Contrastive_uncertainty.experiments.run.analysis.Typicality_analysis.knn_one_dim_typicality_tables import obtain_baseline, insignificance_dataframe, update_metric_and_count, update_metric_array
+
+
+
+
+
 
 # same as the previous function but used for a generic case of calculating the values
 def general_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['Softmax','Mahalanobis'], baseline_model_types = ['CE','CE'],dataset_type ='grayscale',t_test='less'):
     num_repeats = 8
+
+    dataset_dict = {'MNIST':['FashionMNIST','KMNIST'],
+            'FashionMNIST':['MNIST','KMNIST'],
+            'KMNIST':['MNIST','FashionMNIST'],
+            
+            'CIFAR10':['SVHN', 'CIFAR100','MNIST','FashionMNIST','KMNIST'],
+            'CIFAR100':['SVHN', 'CIFAR10','MNIST','FashionMNIST','KMNIST'],
+            'TinyImageNet':['SVHN', 'CIFAR10','CIFAR100','Caltech256','MNIST','FashionMNIST','KMNIST'],
+            'Caltech256':['SVHN','CIFAR10','CIFAR100','TinyImageNet','MNIST','FashionMNIST','KMNIST'],
+
+            'Caltech101':['STL10', 'CelebA','WIDERFace','SVHN', 'CIFAR10','CIFAR100', 'VOC', 'Places365', 'MNIST', 'FashionMNIST', 'KMNIST', 'EMNIST'],
+            #'Caltech256':['STL10', 'CelebA','WIDERFace','SVHN','Caltech101', 'CIFAR10','CIFAR100', 'VOC', 'Places365', 'MNIST', 'FashionMNIST', 'KMNIST', 'EMNIST'],
+            'Cub200':['STL10', 'CelebA','WIDERFace','SVHN','Caltech101', 'Caltech256','CIFAR10','CIFAR100', 'VOC', 'Places365','TinyImageNet','Dogs', 'MNIST', 'FashionMNIST', 'KMNIST', 'EMNIST'],
+            'Dogs':['STL10', 'CelebA','WIDERFace','SVHN','Caltech101', 'Caltech256','CIFAR10','CIFAR100', 'VOC', 'Places365','TinyImageNet','Cub200', 'MNIST', 'FashionMNIST', 'KMNIST', 'EMNIST'],
+}
+
+    dataset_dict = process_dataset_dict(dataset_dict)
+
     baselines_dict = {'Mahalanobis':{'AUROC':'Mahalanobis AUROC OOD'.lower(),'AUPR':'Mahalanobis AUPR'.lower(),'FPR':'Mahalanobis FPR'.lower()},
                 
                 'Softmax':{'AUROC':'Maximum Softmax Probability AUROC OOD'.lower(),'AUPR':'Maximum Softmax Probability AUPR OOD'.lower(),'FPR':'Maximum Softmax Probability FPR OOD'.lower()},
@@ -131,7 +155,7 @@ def general_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', d
             # Make function to obtain mahalanobis from a particular ID and OOD dataset
             
             # Obtain all the OOD datasets for a particular desired string
-            all_OOD_datasets = obtain_ood_datasets(desired_string_AUROC, run_summary,ID_dataset)
+            all_OOD_datasets = obtain_ood_datasets_generic(desired_string_AUROC, run_summary,ID_dataset,dataset_dict)
             #all_OOD_datasets = obtain_ood_datasets_baseline(desired_string_AUROC,baseline_strings_AUROC[0], run_summary,ID_dataset)
             for OOD_dataset in all_OOD_datasets:
                 
@@ -156,6 +180,7 @@ def general_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', d
                     baseline_AUPR_values = update_metric_array(baseline_AUPR_values,i,data_index,baseline_function,baseline_strings_AUPR[i],baseline_model_types[i], model_type,run_summary,OOD_dataset,run_config['seed'])
                     baseline_FPR_values = update_metric_array(baseline_FPR_values,i,data_index,baseline_function,baseline_strings_FPR[i], baseline_model_types[i], model_type,run_summary,OOD_dataset,run_config['seed'])
         ####### Calculates p-values #############################
+        #import ipdb; ipdb.set_trace()
         for i in range(num_baselines):
             difference_auroc = np.array(baseline_AUROC_values[i]) - np.array(desired_AUROC_values[0]) # shape (num ood, repeats)
             difference_aupr = np.array(baseline_AUPR_values[i]) - np.array(desired_AUPR_values[0]) # shape (num ood, repeats)
@@ -186,7 +211,7 @@ def general_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', d
         data_array_AUROC = np.round(data_array_AUROC/count_array_AUROC,decimals=3)  
         data_array_AUPR = np.round(data_array_AUPR/count_array_AUPR,decimals=3)  
         data_array_FPR = np.round(data_array_FPR/count_array_FPR,decimals=3)
-        column_names = baseline_approaches + [f'Quadratic NN']        
+        column_names = baseline_model_types + [desired_model_type]        
         auroc_df = pd.DataFrame(data_array_AUROC,columns = column_names, index=row_names)
         aupr_df = pd.DataFrame(data_array_AUPR,columns = column_names, index=row_names)
         fpr_df = pd.DataFrame(data_array_FPR,columns = column_names, index=row_names)
@@ -215,7 +240,7 @@ def general_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', d
     combined_table = combine_multiple_tables(all_latex_tables,combined_caption, combined_label)
     combined_table = separate_columns(combined_table)
     combined_table = separate_top_columns(combined_table)
-    combined_table = add_baseline_names_row(combined_table,baseline_approaches)
+    combined_table = add_model_names_row(combined_table,baseline_model_types,desired_model_type)
     combined_table = remove_hline_processing(combined_table)
     combined_table = update_headings_additional(combined_table)
     combined_table = update_double_col_table(combined_table)
@@ -223,6 +248,39 @@ def general_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', d
     
     print(combined_table)
 
+
+
+
+# Obtain the OOD datasets for a particular string
+def obtain_ood_datasets_generic(desired_string,summary,ID_dataset, dataset_dict):
+    
+    
+    keys = [key for key, value in summary.items() if desired_string in key.lower()]
+    all_OOD_datasets = []
+    # obtain all the OOD datasets which are not known
+    for key in keys:
+        OOD_dataset = ood_dataset_string(key, dataset_dict, ID_dataset)
+        if OOD_dataset is None or OOD_dataset == ID_dataset:
+            pass
+        else: 
+            all_OOD_datasets.append(OOD_dataset)
+
+    return all_OOD_datasets
+
+def process_dataset_dict(dataset_dict):
+    # Converts dataset dict to have same shape as before
+    # https://careerkarma.com/blog/python-convert-list-to-dictionary/#:~:text=To%20convert%20a%20list%20to%20a%20dictionary%20using%20the%20same,the%20values%20of%20a%20list.
+    # Makes a list of numbers
+    for key in dataset_dict.keys():
+        ood_datasets = dataset_dict[key]
+        # https://stackoverflow.com/questions/18265935/python-create-list-with-numbers-between-2-values?rq=1
+        indices = np.arange(len(ood_datasets)).tolist() # Create a list of numbers with from 0 to n based on the number of data points present
+        dataset_dict[key] = dict(zip(ood_datasets,indices)) # make a dictionary from combining two lists together
+    
+    return dataset_dict
+
+
+
 if __name__== '__main__':
-    general_table_collated_wilcoxon(desired_approach = 'Mahalanobis', desired_model_type = 'Moco', baseline_approaches = ['Mahalanobis'], baseline_model_types = ['SupCon'],dataset_type ='rgb',t_test='two-sided')
+    general_table_collated_wilcoxon(desired_approach = 'KDE', desired_model_type = 'CE', baseline_approaches = ['KDE'], baseline_model_types = ['Moco'],dataset_type ='rgb',t_test='two-sided')
 

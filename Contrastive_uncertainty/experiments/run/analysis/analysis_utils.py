@@ -550,6 +550,32 @@ def add_baseline_names_row(latex_table,baselines):
     # perform regex to get the first column of interest
     # append the regex column with the column of interest to get the data
 # Remove each of the different hlines
+
+
+# row for the baseline names
+def add_model_names_row(latex_table,baseline_models, desired_model):
+    '''
+    # calculate the number of columns
+    desired_column_key = '&.+\\\\\'
+    # Used to find the strings with the desired key (which is esentially the number of '&)
+    string = re.findall(desired_column_key,latex_table)
+    num_columns = string[0].count('&') # number of separate columns
+    '''
+    baseline_names = ''
+    for i in range(len(baseline_models)):
+        baseline_names = baseline_names + baseline_models[i] + '/'
+
+    split_string = "ID & OOD & AUROC & AUPR & FPR \\\\ \\hline\n"
+    latex_table_splits = latex_table.split(split_string)
+    additional_string = r'&   & \multicolumn{3}{c}' + '{' + f'{baseline_names}{desired_model}'+ r'} \\' + '\n\cmidrule(lr){3-5}'
+    #additional_string = r'&   & \multicolumn{3}{c}{MSP/ Mahalanobis/ 1D Typicality} \\' + '\n\cmidrule(lr){3-5}'
+    latex_table = latex_table_splits[0] + split_string + additional_string + latex_table_splits[1]        
+    return latex_table
+    
+    # perform regex to get the first column of interest
+    # append the regex column with the column of interest to get the data
+# Remove each of the different hlines
+
 def remove_hline_processing(latex_table):
     split_string = '\hline'
     latex_table_splits = latex_table.split(split_string)
