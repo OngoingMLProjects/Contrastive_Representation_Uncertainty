@@ -41,14 +41,12 @@ class NearestNeighbours(pl.Callback):
         self.OOD_Datamodule = OOD_Datamodule
         self.OOD_Datamodule.test_transforms = self.Datamodule.test_transforms #  Make the transform of the OOD data the same as the actual data
         self.quick_callback = quick_callback # Quick callback used to make dataloaders only use a single batch of the data in order to make the testing process occur quickly
-        
-      
+              
         self.OOD_dataname = self.OOD_Datamodule.name
         self.K = K
 
     def on_test_epoch_end(self, trainer, pl_module):
         self.forward_callback(trainer=trainer, pl_module=pl_module) 
-
 
     def forward_callback(self,trainer,pl_module):
         self.OOD_Datamodule.setup() # SETUP AGAIN TO RESET AFTER PROVIDING THE TRANSFORM FOR THE DATA
@@ -611,6 +609,101 @@ class NearestNeighboursQuadraticClass1DTypicality(NearestNeighboursClass1DTypica
             ddata = np.min(scores,axis=0)
 
             thresholds.append(ddata)
+
+        return thresholds
+
+    def get_scores(self, ftrain, ftest, food, labelstrain):
+        return super().get_scores(ftrain, ftest, food, labelstrain)
+
+    def get_eval_results(self, ftrain, ftest, food, labelstrain):
+        return super().get_eval_results(ftrain, ftest, food, labelstrain)
+
+
+
+# Ablation
+# Performs 1D typicality using a quadratic summation using the nearest neighbours as the batch for the data, without obtaining specific classes for the data
+class NearestNeighboursQuadraticMarginal1DTypicality(NearestNeighboursClass1DTypicality):
+    def __init__(self, Datamodule,OOD_Datamodule,
+        quick_callback:bool = True,K:int = 10):
+
+        super().__init__(Datamodule,OOD_Datamodule, quick_callback,K)
+        # Used to save the summary value
+        self.K = K
+        self.summary_key = f'Normalized One Dim Marginal Quadratic Typicality KNN - {self.K} OOD - {self.OOD_Datamodule.name}'
+        self.summary_aupr = f'Normalized One Dim Marginal Quadratic Typicality KNN - {self.K} AUPR OOD - {self.OOD_Datamodule.name}'
+        self.summary_fpr = f'Normalized One Dim Marginal Quadratic Typicality KNN - {self.K} FPR OOD - {self.OOD_Datamodule.name}'
+    
+    def forward_callback(self, trainer, pl_module):
+        return super().forward_callback(trainer, pl_module)
+        
+    def get_features(self, pl_module, dataloader):
+        return super().get_features(pl_module, dataloader)
+    
+    def normalise(self, ftrain, ftest, food):
+        return super().normalise(ftrain, ftest, food)
+    
+    def get_nearest_neighbours(self, ftest, food):
+        return super().get_nearest_neighbours(ftest, food)
+    
+    # get the features of the data which also has the KNN in either the test set or the OOD dataset
+    def get_knn_features(self, ftest, food, knn_indices):
+        return super().get_knn_features(ftest, food, knn_indices)
+    
+    def get_1d_train(self, ftrain, ypred):
+        # Nawid - get all the features which belong to each of the different classes
+        cov = np.cov(ftrain.T, bias=True) # Cov and means part should be fine
+        mean = np.mean(ftrain,axis=0,keepdims=True) # Calculates mean from (B,embdim) to (1,embdim)
+        
+        eigvalues, eigvectors = np.linalg.eigh(cov)
+        eigvalues = np.expand_dims(eigvalues,axis=1)
+        
+        # Used to prevent numerical error
+        perturbation = (np.sign(eigvalues)*1e-10)
+        perturbation[perturbation==0] = 1e-10 # Replace any zero values with 1e-10 (this is done as np.sign is zero when the specific class eigvalue is zero)
+
+
+        dtrain = np.matmul(eigvectors.T,(ftrain - mean).T)**2/(eigvalues + perturbation)
+        
+        # calculate the mean and the standard deviations of the different values
+        dtrain_1d_mean = np.mean(dtrain,axis= 1,keepdims=True) # shape (dim,1)
+        dtrain_1d_std = np.std(dtrain,axis=1,keepdims=True) # shape (dim,1)
+        
+        #normalised_dtrain = (dtrain - dtrain_1d_mean)
+        
+        # Value for a particular class
+        # Vector of datapoints(embdim,num_eigenvectors) (each column is eigenvector so the different columns is the number of eigenvectors)
+        # data - means is shape (B, emb_dim), therefore the matrix multiplication needs to be (num_eigenvectors, embdim), (embdim,batch) to give (num eigenvectors, Batch) and then this is divided by (num eigenvectors,1) 
+        # to give (num eigen vectors, batch) different values for 1 dimensional mahalanobis distances 
+        
+        # I believe the first din is the list of size class, where each entry is a vector of size (emb dim, batch) where each entry of the embed dim is the 1 dimensional mahalanobis distance along that dimension, so a vector of (embdim,1) represents the mahalanobis distance of each of the n dimensions for that particular data point
+
+        #Get entropy based on training data (or could get entropy using the validation data)
+        return mean, cov, eigvalues, eigvectors, dtrain_1d_mean, dtrain_1d_std
+
+    def get_thresholds(self, fdata, means, eigvalues, eigvectors, dtrain_1d_mean, dtrain_1d_std):
+        thresholds = []
+        num_batches = len(fdata)//self.K
+        # Currently goes through a single data point at a time which is not very efficient
+        for i in range(num_batches):
+            fdata_batch = fdata[(i*self.K):((i+1)*self.K)]
+            # Added additional constant to the eignvalue for the purpose of numerical stability
+
+            perturbation = (np.sign(eigvalues)*1e-10)
+
+            perturbation[perturbation==0] = 1e-10 # Replace any zero values with 1e-10 (this is done as np.sign is zero when the specific class eigvalue is zero)
+            ddata = np.matmul(eigvectors.T,(fdata_batch - means).T)**2/(eigvalues + perturbation)  # shape (dim, batch size)
+            
+             
+            # Normalise the data
+            ddata = (ddata - dtrain_1d_mean)/(dtrain_1d_std +1e-10) # shape (dim, batch)
+            
+            # shape (dim) average of all data in batch size
+            ddata = np.mean(ddata,axis= 1) # shape : (dim)
+
+            # Sum of the deviations of each individual dimension
+            ddata_deviation = np.sum(np.abs(ddata**2))
+
+            thresholds.append(ddata_deviation)
 
         return thresholds
 

@@ -1,3 +1,4 @@
+from numpy.core.fromnumeric import resize
 import torch
 from torch.autograd import grad
 import torch.nn.functional as F
@@ -12,6 +13,7 @@ import pandas as pd
 import wandb
 import sklearn.metrics as skm
 from PIL import Image
+import cv2
 
 from Contrastive_uncertainty.general.callbacks.general_callbacks import quickloading
 from Contrastive_uncertainty.general.callbacks.gradcam.pytorch_grad_cam import GradCAM, ScoreCAM, GradCAMPlusPlus, AblationCAM, XGradCAM, EigenCAM
@@ -58,6 +60,8 @@ class Cam_Visualization(pl.Callback):
 
             # If None, returns the map for the highest scoring category.
             # Otherwise, targets the requested category.
+            # If None, returns the map for the highest scoring category.
+            # Otherwise, targets the requested category.
             target_category = None
             cam = GradCAM(encoder,target_layers=target_layers,use_cuda= True)
             cam.batch_size = 32     
@@ -68,7 +72,7 @@ class Cam_Visualization(pl.Callback):
             # In this example grayscale_cam has only one image in the batch:
             #grayscale_cam = grayscale_cam[0,:]
             rgb_img = img.data.cpu().numpy()
-            rgb_img = rgb_img[:32] # only get the first 32 values
+            rgb_img = rgb_img[:cam.batch_size] # only get the first 32 values
             rgb_img = rgb_img.reshape(rgb_img.shape[0],rgb_img.shape[2],rgb_img.shape[3],rgb_img.shape[1])
             mean, std = self.Datamodule.test_transforms.normalization.mean, self.Datamodule.test_transforms.normalization.std 
             
@@ -77,7 +81,49 @@ class Cam_Visualization(pl.Callback):
             images = [Image.fromarray(image) for image in visualization]
           
             wandb.log({"GradCam Heatmaps": [wandb.Image(image) for image in images]})
+
+
+
+            '''
+            target_category = None
+            cam = GradCAM(encoder,target_layers=target_layers,use_cuda= True)
+            cam.batch_size = 32     
+
+            # You can also pass aug_smooth=True and eigen_smooth=True, to apply smoothing.
+            grayscale_cam = cam(input_tensor=img)
             
+            # In this example grayscale_cam has only one image in the batch:
+            #grayscale_cam = grayscale_cam[0,:]
+            rgb_img = img.data.cpu().numpy()
+            #import ipdb; ipdb.set_trace()
+            #rgb_img = cv2.resize(rgb_img[0], (224, 224))
+            import ipdb; ipdb.set_trace()
+            practice_img = img[0].cpu().permute(1, 2, 0) 
+            #resized = cv2.resize(practice_img.numpy(), dsize = (224, 224),interpolation=cv2.INTER_LINEAR)
+            #plt.imshow(resized)
+            plt.imshow(  img[0].cpu().permute(1, 2, 0)  )
+            import ipdb; ipdb.set_trace()
+            rgb_img = rgb_img.reshape(rgb_img.shape[0],rgb_img.shape[2],rgb_img.shape[3],rgb_img.shape[1])
+            img = Image.fromarray(rgb_img[0], 'RGB')
+            resized = cv2.resize(rgb_img[0], dsize = (224, 224),interpolation=cv2.INTER_LINEAR)
+            img = Image.fromarray(resized, 'RGB')
+            plt.imshow(rgb_img[0])
+            p
+            wandb.log({"Practice  Heatmaps": wandb.Image(resized)})
+            #wandb.log({"Practice  Heatmaps": [wandb.Image(image) for image in rgb_img]})
+            '''
+
+            '''
+            rgb_img = rgb_img[:cam.batch_size] # only get the first 32 values
+            rgb_img = rgb_img.reshape(rgb_img.shape[0],rgb_img.shape[2],rgb_img.shape[3],rgb_img.shape[1])
+            mean, std = self.Datamodule.test_transforms.normalization.mean, self.Datamodule.test_transforms.normalization.std 
+            
+            visualization = show_cam_on_image(rgb_img, grayscale_cam,mean, std, use_rgb=True)            
+            # https://docs.wandb.ai/guides/track/log/media
+            images = [Image.fromarray(image) for image in visualization]
+          
+            wandb.log({"GradCam Heatmaps": [wandb.Image(image) for image in images]})
+            '''
             # visualization = torch.tensor(visualization) # shape (batch, H,W,C)
             # 
             # visualization = visualization.reshape(visualization.shape[0],visualization.shape[3], visualization.shape[1], visualization.shape[2]) # shape (batch,C, H,W)
