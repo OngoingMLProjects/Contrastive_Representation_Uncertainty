@@ -11,7 +11,11 @@ callback_names = {'MD':'Mahalanobis Distance',
 'KDE':'KDE',
 'CAM':'CAM',
 'Total Centroid KL':'Total Centroid KL', # Ablation
-'Feature Entropy':'Feature Entropy'}
+'Feature Entropy':'Feature Entropy',
+# Marginal Quadratic Typicality
+'NN Marginal Quadratic':'Nearest 10 Neighbours Marginal Quadratic 1D Typicality',
+# Quadratic typicality with a single sample
+'NN Quadratic Single':'Nearest 1 Neighbours Class Quadratic 1D Typicality'}
 
 
 # format of Mahalanobis distance: Repeat MD, used to choose whether to repeat a callback or not
@@ -25,6 +29,8 @@ callback_names['NN All Dim Class']:['Normalized All Dim Class Typicality KNN - 1
 callback_names['Gram']:['Gram AUROC OOD','Gram AUPR OOD','Gram FPR OOD'],
 callback_names['ODIN']:['ODIN AUROC OOD','ODIN AUPR OOD','ODIN FPR OOD'],
 callback_names['KDE']:['KDE AUROC OOD','KDE AUPR OOD','KDE FPR OOD'],
+callback_names['NN Marginal Quadratic']:['Normalized One Dim Marginal Quadratic Typicality KNN - 10 OOD -','Normalized One Dim Marginal Quadratic Typicality KNN - 10 AUPR OOD -','Normalized One Dim Marginal Quadratic Typicality KNN - 10 FPR OOD -'], 
+callback_names['NN Quadratic Single']:['Normalized One Dim Class Quadratic Typicality KNN - 1 OOD -','Normalized One Dim Class Quadratic Typicality KNN - 1 AUPR OOD -','Normalized One Dim Class Quadratic Typicality KNN - 1 FPR OOD -'],
 } # Callback information for ablation
 
 # Key dict only for the ID data

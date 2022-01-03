@@ -322,7 +322,6 @@ class NearestNeighbours1DTypicality(NearestNeighbours):
         #Get entropy based on training data (or could get entropy using the validation data)
         return mean, cov, eigvalues, eigvectors, dtrain_1d_mean, dtrain_1d_std
     
-
     # get the features of the data which also has the KNN in either the test set or the OOD dataset
     def get_knn_features(self,ftest,food, knn_indices):
         num_ID = len(ftest)
@@ -450,9 +449,7 @@ class NearestNeighboursClass1DTypicality(NearestNeighbours1DTypicality):
     def get_knn_features(self, ftest, food, knn_indices):
         return super().get_knn_features(ftest, food, knn_indices)
 
-    
     def get_1d_train(self,ftrain, ypred):
-        
         xc = [ftrain[ypred == i] for i in np.unique(ypred)] # Nawid - training data which have been predicted to belong to a particular class
         covs = [np.cov(x.T, bias=True) for x in xc] # Cov and means part should be fine
         means = [np.mean(x,axis=0,keepdims=True) for x in xc] # Calculates mean from (B,embdim) to (1,embdim)
@@ -541,8 +538,6 @@ class NearestNeighboursClass1DTypicality(NearestNeighbours1DTypicality):
         wandb.run.summary[self.summary_key] = AUROC
         '''
         
-
-
 # Performs 1D typicality using a quadratic summation using the nearest neighbours as the batch for the data, and obtaining specific classes for the data
 class NearestNeighboursQuadraticClass1DTypicality(NearestNeighboursClass1DTypicality):
     def __init__(self, Datamodule,OOD_Datamodule,
@@ -771,7 +766,7 @@ class KNNClassTypicality(NearestNeighboursQuadraticClass1DTypicality):
         means = [np.mean(x,axis=0,keepdims=True) for x in xc] # Calculates mean from (B,embdim) to (1,embdim)
         # Calculate the covariance matrices for each of the different classes
         covs = [np.cov(x.T, bias=True) for x in xc]
-
+        
         dtrain_means = []
         dtrain_stds = []
         for class_num in range(len(np.unique(ypred))):
@@ -929,7 +924,7 @@ class OracleNearestNeighboursClass1DTypicality(NearestNeighboursClass1DTypicalit
         '''
 
 
-
+########################## Code for the different values of the KNN ###########################################
 
 # Performs 1D typicality using the different K values and saves them in a table
 class DifferentKNNClass1DTypicality(NearestNeighboursClass1DTypicality):
@@ -951,8 +946,6 @@ class DifferentKNNClass1DTypicality(NearestNeighboursClass1DTypicality):
     
     def normalise(self, ftrain, ftest, food):
         return super().normalise(ftrain, ftest, food)
-    
-
 
     # Uses self.K instead of K
     def get_nearest_neighbours(self, ftest, food,K):
@@ -1023,9 +1016,6 @@ class DifferentKNNClass1DTypicality(NearestNeighboursClass1DTypicality):
         table_df = pd.DataFrame(table_data)
         table = wandb.Table(dataframe=table_df)
         wandb.log({wandb_name:table})
-
-
-
 
 
 # Performs 1D typicality using the different K values and saves them in a table
