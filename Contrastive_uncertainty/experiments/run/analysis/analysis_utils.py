@@ -37,24 +37,24 @@ dataset_dict = {'MNIST':['FashionMNIST','KMNIST'],
             'FashionMNIST':['MNIST','KMNIST'],
             'KMNIST':['MNIST','FashionMNIST'],
             
-            'CIFAR10':['SVHN', 'CIFAR100','MNIST','FashionMNIST','KMNIST'],
-            'CIFAR100':['SVHN', 'CIFAR10','MNIST','FashionMNIST','KMNIST'],
+            'CIFAR10':['SVHN', 'CIFAR100','TinyImageNet','MNIST','FashionMNIST','KMNIST'],
+            'CIFAR100':['SVHN', 'CIFAR10','TinyImageNet','MNIST','FashionMNIST','KMNIST'],
             'TinyImageNet':['SVHN', 'CIFAR10','CIFAR100','Caltech256','MNIST','FashionMNIST','KMNIST'],
             'Caltech256':['SVHN','CIFAR10','CIFAR100','TinyImageNet','MNIST','FashionMNIST','KMNIST'],
-
-
             '''
+
+
             'CIFAR10':['SVHN', 'CIFAR100','Caltech256','TinyImageNet','MNIST','FashionMNIST','KMNIST'],
             'CIFAR100':['SVHN', 'CIFAR10','Caltech256','TinyImageNet','MNIST','FashionMNIST','KMNIST'],
             'TinyImageNet':['SVHN', 'CIFAR10','CIFAR100','Caltech256','MNIST','FashionMNIST','KMNIST'],
             'Caltech256':['SVHN','CIFAR10','CIFAR100','TinyImageNet','MNIST','FashionMNIST','KMNIST'],
             '''
-            '''
-            'CIFAR10':['STL10','SVHN', 'CIFAR100','Caltech256','TinyImageNet'],
-            'CIFAR100':['STL10','SVHN', 'CIFAR10','Caltech256','TinyImageNet'],
-            'TinyImageNet':['STL10', 'SVHN', 'CIFAR10','CIFAR100','Caltech256'],
-            'Caltech256':['STL10','SVHN','CIFAR10','CIFAR100','TinyImageNet'],
-            '''
+            
+            # 'CIFAR10':['STL10','SVHN', 'CIFAR100','Caltech256','TinyImageNet'],
+            # 'CIFAR100':['STL10','SVHN', 'CIFAR10','Caltech256','TinyImageNet'],
+            # 'TinyImageNet':['STL10', 'SVHN', 'CIFAR10','CIFAR100','Caltech256'],
+            # 'Caltech256':['STL10','SVHN','CIFAR10','CIFAR100','TinyImageNet'],
+            
 
             'Caltech101':['STL10', 'CelebA','WIDERFace','SVHN', 'CIFAR10','CIFAR100', 'VOC', 'Places365', 'MNIST', 'FashionMNIST', 'KMNIST', 'EMNIST'],
             #'Caltech256':['STL10', 'CelebA','WIDERFace','SVHN','Caltech101', 'CIFAR10','CIFAR100', 'VOC', 'Places365', 'MNIST', 'FashionMNIST', 'KMNIST', 'EMNIST'],

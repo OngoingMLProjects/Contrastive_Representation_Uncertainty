@@ -148,17 +148,21 @@ def total_kl_clp_plot():
                         num_repeats = len(collated_total_kl_values)
                         collated_clp_values = np.tile(clp_values,num_repeats)
                         collated_total_kl_values = np.concatenate(collated_total_kl_values)
+
+                        # Normalization
+                        collated_total_kl_values= collated_total_kl_values / np.max(collated_total_kl_values)
+
                         #collated_total_kl_values = np.stack(collated_total_kl_values,axis=0)
                         collated_array = np.stack((collated_total_kl_values,collated_clp_values),axis=1)
                         #collated_array = np.stack((total_kl_values,clp_values),axis=1)  
                         df = pd.DataFrame(collated_array)
-                        columns = ['KL(Total||Class) (Nats)', 'CLP']
+                        columns = ['KL(Overall||Class) (Nats)', 'CLP']
                         df.columns = columns
 
-                        fit = np.polyfit(df['KL(Total||Class) (Nats)'], df['CLP'], 1)
+                        fit = np.polyfit(df['KL(Overall||Class) (Nats)'], df['CLP'], 1)
                         fig = plt.figure(figsize=(10, 7))
-                        sns.regplot(x = df['KL(Total||Class) (Nats)'], y = df['CLP'],color='blue')
-                        plt.annotate('y={:.3f}+{:.4f}*x'.format(fit[1], fit[0]), xy=(0.80, 0.95), xycoords='axes fraction') # Used to control where the line is annotated
+                        sns.regplot(x = df['KL(Overall||Class) (Nats)'], y = df['CLP'],color='blue')
+                        plt.annotate('y={:.2f}+{:.2f}*x'.format(fit[1], fit[0]), xy=(0.80, 0.95), xycoords='axes fraction') # Used to control where the line is annotated
                         #plt.text(3.2, -7.12, 'y={:.2f}+{:.2f}*x'.format(fit[1], fit[0]), color='darkblue', size=12)
                         plt.title(f'KL Divergence and Confusion Log Probability for {ID}-{OOD} pair using {Model_name} model', size=12)
                         # regression equations

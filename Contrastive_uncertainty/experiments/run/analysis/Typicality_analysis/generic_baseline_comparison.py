@@ -28,7 +28,7 @@ from Contrastive_uncertainty.experiments.run.analysis.Typicality_analysis.knn_on
 
 # same as the previous function but used for a generic case of calculating the values
 def general_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['Softmax','Mahalanobis'], baseline_model_types = ['CE','CE'],dataset_type ='grayscale',t_test='less'):
-    num_repeats = 8
+    num_repeats = 6#8
 
     dataset_dict = {'MNIST':['FashionMNIST','KMNIST'],
             'FashionMNIST':['MNIST','KMNIST'],
@@ -90,7 +90,8 @@ def general_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', d
     #all_ID = ['MNIST','FashionMNIST','KMNIST', 'CIFAR10','CIFAR100','Caltech101','Caltech256','TinyImageNet','Cub200','Dogs']
     #all_ID = ['MNIST','FashionMNIST','KMNIST']
     for ID_dataset in all_ID: # Go through the different ID dataset                
-        runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.epochs": 300,"config.dataset": f"{ID_dataset}"})
+        #runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.epochs": 300,"config.dataset": f"{ID_dataset}"})
+        runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.epochs": 300,"config.dataset": f"{ID_dataset}","$and": [{"config.seed":{"$ne": 75}},{"config.seed":{"$ne": 100}}]})
         # number of OOd datasets for this particular ID dataset
         num_ood = len(dataset_dict[ID_dataset])
         
@@ -271,5 +272,5 @@ def process_dataset_dict(dataset_dict):
 
 
 if __name__== '__main__':
-    general_table_collated_wilcoxon(desired_approach = 'KDE', desired_model_type = 'CE', baseline_approaches = ['KDE'], baseline_model_types = ['Moco'],dataset_type ='rgb',t_test='two-sided')
+    general_table_collated_wilcoxon(desired_approach = 'KDE', desired_model_type = 'SupCon', baseline_approaches = ['KDE','KDE'], baseline_model_types = ['CE','Moco'],dataset_type ='rgb',t_test='less')
 

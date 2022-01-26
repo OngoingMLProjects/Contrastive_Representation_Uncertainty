@@ -753,7 +753,6 @@ class KNNClassTypicality(NearestNeighboursQuadraticClass1DTypicality):
     def get_nearest_neighbours(self, ftest, food):
         return super().get_nearest_neighbours(ftest, food)
 
-
     # get the features of the data which also has the KNN in either the test set or the OOD dataset
     def get_knn_features(self, ftest, food, knn_indices):
         return super().get_knn_features(ftest, food, knn_indices)
@@ -766,7 +765,6 @@ class KNNClassTypicality(NearestNeighboursQuadraticClass1DTypicality):
         means = [np.mean(x,axis=0,keepdims=True) for x in xc] # Calculates mean from (B,embdim) to (1,embdim)
         # Calculate the covariance matrices for each of the different classes
         covs = [np.cov(x.T, bias=True) for x in xc]
-        
         dtrain_means = []
         dtrain_stds = []
         for class_num in range(len(np.unique(ypred))):
@@ -798,6 +796,7 @@ class KNNClassTypicality(NearestNeighboursQuadraticClass1DTypicality):
         thresholds = []
         num_batches = len(fdata)//self.K
         # Currently goes through a single data point at a time which is not very efficient
+        
         for i in range(num_batches):
             fdata_batch = fdata[(i*self.K):((i+1)*self.K)]
             # Calculate the scores for a particular batch of data for all the different classes
@@ -825,7 +824,7 @@ class KNNClassTypicality(NearestNeighboursQuadraticClass1DTypicality):
             ddata = [np.abs(ddata[class_num]) for class_num in range(num_classes)]
             # NEED TO CONSIDER EXAMINING DIFFERENCE BETWEEN THE MEAN SQUARED OR THE SQUARED MEAN BETWEEN THE DATA POINTS, Main typicality approach finds (value- mean)**2 and then sums the different dimensions, therefore I should do (value -mean)**2
             #ddata = [np.abs(np.mean(ddata[class_num])-dtrain_means[class_num]) for class_num in range(num_classes)] # deviation from the mean for the different classes
-    
+
             ddata = np.min(ddata ,axis=0) # Finds min of all the class values
             thresholds.append(ddata)
         
