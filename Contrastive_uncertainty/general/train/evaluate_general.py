@@ -32,6 +32,7 @@ def evaluation(run_path, update_dict, model_module, model_function,datamodule_di
     
     model_dir = 'Models'
     model_dir = previous_model_directory(model_dir, run_path) # Used to preload the model
+
     
     # Updates OOD dataset if not manually specified in the update dict
     if 'OOD_dataset' in update_dict:
@@ -50,7 +51,6 @@ def evaluation(run_path, update_dict, model_module, model_function,datamodule_di
             config[update_k] = update_v
         
     datamodule = Datamodule_selection(datamodule_dict, config['dataset'],config)
-
     # CHANGE SECTION
     # Load from checkpoint using pytorch lightning loads everything directly to continue training from the class function
     # model = model_module.load_from_checkpoint(model_dir)
@@ -60,7 +60,7 @@ def evaluation(run_path, update_dict, model_module, model_function,datamodule_di
     callback_dict = callback_dictionary(datamodule, config, datamodule_dict)
     desired_callbacks = specific_callbacks(callback_dict, config['callbacks'])
     #wandb.config.update(config, allow_val_change=True) # Updates the config (particularly used to increase the number of epochs present)        
-        
+    
     wandb_logger.watch(model, log='gradients', log_freq=100) # logs the gradients
 
     trainer = pl.Trainer(fast_dev_run = config['fast_run'], progress_bar_refresh_rate=20,benchmark=True,
@@ -78,3 +78,4 @@ def evaluation(run_path, update_dict, model_module, model_function,datamodule_di
     wandb.log(repeat_bool)
 
     run.finish()
+    
