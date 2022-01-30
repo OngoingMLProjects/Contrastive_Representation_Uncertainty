@@ -10,7 +10,7 @@ from Contrastive_uncertainty.general.callbacks.odin_callbacks import ODIN
 from Contrastive_uncertainty.general.callbacks.nearest_neighbours_callbacks import NearestNeighbours, NearestClassNeighbours,\
 NearestNeighbours1DTypicality, NearestNeighboursClass1DTypicality,NearestNeighboursQuadraticClass1DTypicality, OracleNearestNeighboursClass1DTypicality, DifferentKNNClass1DTypicality,\
 DifferentKNNMarginal1DTypicality, DifferentKNNMarginalTypicality, DifferentKNNClassTypicality, DifferentKNNQuadraticClass1DTypicality, KNNClassTypicality,\
-NearestNeighboursQuadraticMarginal1DTypicality
+NearestNeighboursQuadraticMarginal1DTypicality, NearestNeighboursQuadraticClass1DScoresTypicality
 
 from Contrastive_uncertainty.general.callbacks.softmax_probability_callbacks import Max_Softmax_Probability
 from Contrastive_uncertainty.general.callbacks.cem_callbacks import ContrastiveExplanationMethod, ContrastiveExplanationDistance
@@ -88,6 +88,10 @@ def callback_dictionary(Datamodule,config,data_dict):
                 
                 # Single data point ablation
                 f'Nearest 1 Neighbours Class Quadratic 1D Typicality {ood_dataset}':NearestNeighboursQuadraticClass1DTypicality(Datamodule,OOD_Datamodule,quick_callback=quick_callback,K=1),
+
+                # Obtain the scores for the approach in comparison to the OOD dataset
+                f'Nearest 10 Neighbours Class 1D Scores Typicality  {ood_dataset}':NearestNeighboursQuadraticClass1DScoresTypicality(Datamodule,OOD_Datamodule,quick_callback=quick_callback,K=10),
+
 
                 f'Different K Nearest Neighbours Class 1D Typicality {ood_dataset}':DifferentKNNClass1DTypicality(Datamodule,OOD_Datamodule,quick_callback=quick_callback),
                 f'Different K Nearest Neighbours Quadratic Class 1D Typicality {ood_dataset}':DifferentKNNQuadraticClass1DTypicality(Datamodule,OOD_Datamodule,quick_callback=quick_callback),

@@ -669,12 +669,13 @@ def knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desir
     # Gets the runs corresponding to a specific filter
     # https://github.com/wandb/client/blob/v0.10.31/wandb/apis/public.py
     all_latex_tables = []
-    all_ID = ['MNIST','FashionMNIST','KMNIST'] if dataset_type =='grayscale' else ['CIFAR100'] #['CIFAR10','CIFAR100','Caltech256','TinyImageNet'] 
+    all_ID = ['MNIST','FashionMNIST','KMNIST'] if dataset_type =='grayscale' else ['CIFAR10','CIFAR100','Caltech256','TinyImageNet'] 
     #all_ID = ['MNIST','FashionMNIST','KMNIST', 'CIFAR10','CIFAR100','Caltech101','Caltech256','TinyImageNet','Cub200','Dogs']
     #all_ID = ['MNIST','FashionMNIST','KMNIST']
     for ID_dataset in all_ID: # Go through the different ID dataset                
         #runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.epochs": 300,"config.dataset": f"{ID_dataset}","$or": [{"config.model_type":"SupCon" }]})
-        runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.epochs": 300,"config.dataset": f"{ID_dataset}","$or": [{"config.model_type":"SupCon" }],"$and": [{"config.seed":{"$ne": 26}},{"config.seed":{"$ne": 42}},{"config.seed":{"$ne": 200}},{"config.seed":{"$ne": 100}}]})
+        #runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.epochs": 300,"config.dataset": f"{ID_dataset}","$or": [{"config.model_type":"SupCon" }],"$and": [{"config.seed":{"$ne": 26}},{"config.seed":{"$ne": 42}},{"config.seed":{"$ne": 200}},{"config.seed":{"$ne": 100}}]})
+        runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.epochs": 300,"config.dataset": f"{ID_dataset}","$or": [{"config.model_type":"SupCon" }]})
         # number of OOd datasets for this particular ID dataset
         num_ood = len(dataset_dict[ID_dataset])
         
@@ -738,7 +739,7 @@ def knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desir
             all_OOD_datasets = obtain_ood_datasets(desired_string_AUROC, run_summary,ID_dataset)
             #all_OOD_datasets = obtain_ood_datasets_baseline(desired_string_AUROC,baseline_strings_AUROC[0], run_summary,ID_dataset)
             #print('ID',ID_dataset)
-            print('SEED',run_config['seed'])
+            #print('SEED',run_config['seed'])
             for OOD_dataset in all_OOD_datasets:
                 
                 data_index = dataset_dict[ID_dataset][OOD_dataset] # index location
@@ -938,8 +939,8 @@ def obtain_knn_value(desired_string,summary,OOD_dataset):
 def obtain_baseline(desired_string, summary,OOD_dataset):
     #print('OOD dataset',OOD_dataset)
     desired_string = desired_string.lower() # double check that it has been lowered 
-    print('desired string', desired_string)
-    print('OOD dataset',OOD_dataset)
+    #print('desired string', desired_string)
+    #print('OOD dataset',OOD_dataset)
     keys = [key for key, value in summary.items() if desired_string in key.lower()]
     # get the specific mahalanobis keys for the specific OOD dataset
     OOD_dataset_specific_key = [key for key in keys if OOD_dataset.lower() in str.split(key.lower())]
@@ -1030,5 +1031,7 @@ if __name__== '__main__':
 
     #knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['NN Marginal Quadratic','NN Quadratic Single'], baseline_model_types = ['SupCon','SupCon'],dataset_type ='RGB',t_test='less')
     #knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['NN Quadratic Single'], baseline_model_types = ['SupCon'],dataset_type ='RGB',t_test='two-sided')
+    #knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['NN All Dim Class'], baseline_model_types = ['SupCon'],dataset_type ='RGB',t_test='less')
+
     knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['NN All Dim Class'], baseline_model_types = ['SupCon'],dataset_type ='RGB',t_test='less')
-    
+    #knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['NN Marginal Quadratic','NN Quadratic Single','NN All Dim Class'], baseline_model_types = ['SupCon','SupCon','SupCon'],dataset_type ='RGB',t_test='less')
