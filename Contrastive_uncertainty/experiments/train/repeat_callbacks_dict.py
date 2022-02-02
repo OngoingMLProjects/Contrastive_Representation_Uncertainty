@@ -16,7 +16,7 @@ callback_names = {'MD':'Mahalanobis Distance',
 'NN Marginal Quadratic':'Nearest 10 Neighbours Marginal Quadratic 1D Typicality',
 # Quadratic typicality with a single sample
 'NN Quadratic Single':'Nearest 1 Neighbours Class Quadratic 1D Typicality',
-'NN Quadratic 1D Scores':'NearestNeighboursQuadraticClass1DScoresTypicality'}
+'NN Quadratic 1D Scores':'Nearest 10 Neighbours Class 1D Scores Typicality'}
 
 
 # format of Mahalanobis distance: Repeat MD, used to choose whether to repeat a callback or not

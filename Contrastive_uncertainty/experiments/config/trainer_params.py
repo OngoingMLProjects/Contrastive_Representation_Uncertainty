@@ -1,3 +1,4 @@
+from Contrastive_uncertainty.experiments.run.analysis.analysis_utils import ood_dataset_string
 from pytorch_lightning import callbacks
 
 trainer_hparams = dict(
@@ -5,7 +6,8 @@ trainer_hparams = dict(
 seed = 26,
 epochs = 0,
 bsz = 128, #32,#64,
-OOD_dataset = ['MNIST', 'FashionMNIST', 'KMNIST'],
+#OOD_dataset = ['MNIST', 'FashionMNIST', 'KMNIST'],
+OOD_dataset = ['Caltech256','CIFAR10','CIFAR100','TinyImageNet'],
 #OOD_dataset = ['STL10', 'CelebA','WIDERFace','SVHN', 'Caltech101','Caltech256','CIFAR10','CIFAR100', 'VOC', 'Places365','TinyImageNet','Cub200','Dogs', 'MNIST', 'FashionMNIST', 'KMNIST', 'EMNIST'],
 #OOD_dataset = ['MNIST', 'FashionMNIST', 'KMNIST', 'EMNIST'],
 #OOD_dataset = ['KMNIST'],
