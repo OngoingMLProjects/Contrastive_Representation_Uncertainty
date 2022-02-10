@@ -589,7 +589,7 @@ class NearestNeighboursQuadraticClass1DTypicality(NearestNeighboursClass1DTypica
             
             ddata = [np.matmul(eigvectors[class_num].T,(fdata_batch - means[class_num]).T)**2/(eigvalues[class_num] + perturbations[class_num]) for class_num in range(len(means))] 
             #ddata = [np.matmul(eigvectors[class_num].T,(fdata_batch - means[class_num]).T)**2/(eigvalues[class_num] + (np.sign(eigvalues[class_num])*1e-10)) for class_num in range(len(means))] # Calculate the 1D scores for all the different classes 
-            import ipdb; ipdb.set_trace()
+            
             # obtain the normalised the scores for the different classes
             ddata = [ddata[class_num] - dtrain_1d_mean[class_num]/(dtrain_1d_std[class_num]  +1e-10) for class_num in range(len(means))] # shape (dim, batch)
             
@@ -615,9 +615,6 @@ class NearestNeighboursQuadraticClass1DTypicality(NearestNeighboursClass1DTypica
         return super().get_eval_results(ftrain, ftest, food, labelstrain)
 
 
-
-
-
 ################## Analysis - Used to save the individual scores ######################### 
 # Saving the individual scores for the approach
 # Performs 1D typicality using a quadratic summation using the nearest neighbours as the batch for the data, and obtaining specific classes for the data
@@ -630,7 +627,6 @@ class NearestNeighboursQuadraticClass1DScoresTypicality(NearestNeighboursQuadrat
         self.K = K
         self.summary_key = f'Normalized One Dim Scores Class Quadratic Typicality KNN - {self.K} OOD - {self.OOD_Datamodule.name}'
 
-    
     def forward_callback(self, trainer, pl_module):
         return super().forward_callback(trainer, pl_module)
         
@@ -669,7 +665,7 @@ class NearestNeighboursQuadraticClass1DScoresTypicality(NearestNeighboursQuadrat
             
             ddata = [np.matmul(eigvectors[class_num].T,(fdata_batch - means[class_num]).T)**2/(eigvalues[class_num] + perturbations[class_num]) for class_num in range(len(means))] 
             #ddata = [np.matmul(eigvectors[class_num].T,(fdata_batch - means[class_num]).T)**2/(eigvalues[class_num] + (np.sign(eigvalues[class_num])*1e-10)) for class_num in range(len(means))] # Calculate the 1D scores for all the different classes 
-            #import ipdb; ipdb.set_trace()
+            #
             # obtain the normalised the scores for the different classes
             ddata_deviation = [ddata[class_num] - dtrain_1d_mean[class_num]/(dtrain_1d_std[class_num]  +1e-10) for class_num in range(len(means))] # shape (dim, batch)
             
@@ -719,13 +715,6 @@ class NearestNeighboursQuadraticClass1DScoresTypicality(NearestNeighboursQuadrat
         din, dood = self.get_scores(ftrain_norm,ftest_norm, food_norm,labelstrain)
         # get the average deviations for the in-distribution and OOD data
         self.datasaving(din,dood,self.summary_key)
-
-        
-
-        
-        
-
-
 
 
 # Ablation
@@ -800,8 +789,7 @@ class NearestNeighboursQuadraticMarginal1DTypicality(NearestNeighboursClass1DTyp
 
             perturbation[perturbation==0] = 1e-10 # Replace any zero values with 1e-10 (this is done as np.sign is zero when the specific class eigvalue is zero)
             ddata = np.matmul(eigvectors.T,(fdata_batch - means).T)**2/(eigvalues + perturbation)  # shape (dim, batch size)
-            
-             
+                         
             # Normalise the data
             ddata = (ddata - dtrain_1d_mean)/(dtrain_1d_std +1e-10) # shape (dim, batch)
             

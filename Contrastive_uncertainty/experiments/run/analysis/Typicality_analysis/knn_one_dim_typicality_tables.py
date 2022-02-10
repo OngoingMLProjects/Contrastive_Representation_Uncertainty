@@ -209,7 +209,7 @@ def knn_auroc_table_mean():
                 count_array[data_index,0] += 1
                 count_array[data_index,1] += 1
                 row_names[data_index] = f'ID:{ID_dataset}, OOD:{OOD_dataset}' 
-        #import ipdb; ipdb.set_trace()
+        #
         data_array = np.round(data_array/count_array,decimals=3)    
         column_names = ['Mahalanobis', f'Quadratic {fixed_k} NN',]
         auroc_df = pd.DataFrame(data_array,columns = column_names, index=row_names)
@@ -755,7 +755,7 @@ def knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desir
                 desired_FPR_values = update_metric_array(desired_FPR_values, 0,data_index,desired_function,desired_string_FPR,desired_model_type, model_type,run_summary,OOD_dataset,run_config['seed'])
 
                 for i in range(num_baselines):
-                    #import ipdb; ipdb.set_trace()
+                    #
                     data_array_AUROC, count_array_AUROC =update_metric_and_count(data_array_AUROC,count_array_AUROC,data_index,i,baseline_function,baseline_strings_AUROC[i],baseline_model_types[i],model_type,run_summary,OOD_dataset)
                     data_array_AUPR, count_array_AUPR =update_metric_and_count(data_array_AUPR,count_array_AUPR,data_index,i,baseline_function,baseline_strings_AUPR[i],baseline_model_types[i],model_type,run_summary,OOD_dataset)
                     data_array_FPR, count_array_FPR =update_metric_and_count(data_array_FPR,count_array_FPR,data_index,i,baseline_function,baseline_strings_FPR[i],baseline_model_types[i],model_type,run_summary,OOD_dataset)
@@ -767,7 +767,7 @@ def knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desir
         ####### Calculates p-values #############################
 
         for i in range(num_baselines):
-            #import ipdb; ipdb.set_trace()
+            #
             difference_auroc = np.array(baseline_AUROC_values[i]) - np.array(desired_AUROC_values[0]) # shape (num ood, repeats)
             difference_aupr = np.array(baseline_AUPR_values[i]) - np.array(desired_AUPR_values[0]) # shape (num ood, repeats)
 

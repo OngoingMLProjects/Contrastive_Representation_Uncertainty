@@ -215,7 +215,7 @@ train_loader = datamodule.deterministic_train_dataloader()
 
 '''
 for i,k in zip(train_loader,test_loader):
-    import ipdb; ipdb.set_trace()
+    
 '''
 
 
@@ -233,5 +233,5 @@ for data in train_loader:
 
 mean /= nb_samples
 std /= nb_samples
-import ipdb; ipdb.set_trace()
+
 '''

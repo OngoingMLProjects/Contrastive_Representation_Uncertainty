@@ -1545,7 +1545,7 @@ def dataset_with_indices(cls):
     Modifies the given Dataset class to return a tuple data, target, index
     instead of just data, target.
     """
-    #import ipdb; ipdb.set_trace()
+    #
     def __getitem__(self, index):
         
         data, target = cls.__getitem__(self, index)
@@ -1566,7 +1566,7 @@ def dataset_with_indices_SVHN(cls):
     Modifies the given Dataset class to return a tuple data, target, index
     instead of just data, target.
     """
-    #import ipdb; ipdb.set_trace()
+    #
     def __getitem__(self, index):
         
         data, target = cls.__getitem__(self, index)
@@ -1590,7 +1590,7 @@ def dataset_with_indices_hierarchy(cls):
     """
     
     def __getitem__(self, index):
-        #import ipdb; ipdb.set_trace()
+        #
         data, target = cls.__getitem__(self, index)
         coarse_target = coarse_labels[target]
         return data, target, coarse_target, index
@@ -1609,7 +1609,7 @@ def dataset_with_indices_hierarchy(cls, coarse_labels_map):
     """
     
     def __getitem__(self, index):
-        #import ipdb; ipdb.set_trace()
+        #
         data, target = cls.__getitem__(self, index)
         coarse_target = coarse_labels_map[target]
         return data, target, coarse_target, index
@@ -1625,7 +1625,7 @@ def dataset_with_indices_emnist(cls):
     Modifies the given Dataset class to return a tuple data, target, index
     instead of just data, target.
     """
-    #import ipdb; ipdb.set_trace()
+    #
     def __getitem__(self, index):
         data, target = cls.__getitem__(self, index)
         target = target -1 #

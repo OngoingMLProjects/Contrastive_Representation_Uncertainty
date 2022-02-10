@@ -68,7 +68,7 @@ def train(base_params,trainer_params, model_module,model_function,datamodule_dic
     wandb.run.name = train_run_name(model.name,config)
 
     ############### DIFFERENCE - NEED TO USE OE DATAMODULE as input to fit ######################## 
-    #import ipdb; ipdb.set_trace()
+    #
     trainer.fit(model,datamodule)
     trainer.test(datamodule=datamodule,
             ckpt_path=None)  # uses last-saved model , use test set to call the reliability diagram only at the end of the training process

@@ -196,7 +196,7 @@ class ODIN(pl.Callback):
         logits = pl_module.class_forward(x_params)
         logits = logits/self.temperature     
         #probs = F.softmax(logits,dim=1)
-        import ipdb; ipdb.set_trace()
+        
         labels = torch.argmax(logits,dim=1) # use the maximum probability indices as the labels 
         loss = nn.CrossEntropyLoss()(logits, labels)
         loss.backward()

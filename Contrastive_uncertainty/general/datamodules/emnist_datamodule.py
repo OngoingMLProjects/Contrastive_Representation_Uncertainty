@@ -131,13 +131,13 @@ class EMNISTDataModule(LightningDataModule):
         self.idx2class = {v:f'{i} - {k}'for i, (k, v) in zip(range(len(dataset.class_to_idx)),dataset.class_to_idx.items())}
         # Need to change key and value around to get in the correct order
         self.idx2class = {k:v for k,v in self.idx2class.items() if k < self.num_classes}   
-        #import ipdb; ipdb.set_trace()
+        #
     
     
     def setup_train(self):
         train_transforms = self.default_transforms() if self.train_transforms is None else self.train_transforms
         dataset = self.DATASET_with_indices(self.data_dir,split='letters', train=True, download=False, transform=train_transforms, **self.extra_args)
-        # import ipdb; ipdb.set_trace()
+        # 
         train_length = len(dataset)
         self.train_dataset, _ = random_split(
             dataset,

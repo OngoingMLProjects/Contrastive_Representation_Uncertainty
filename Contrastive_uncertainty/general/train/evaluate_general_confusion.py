@@ -25,7 +25,7 @@ def evaluation(run_path, update_dict, model_module, model_function,datamodule_di
     #run = wandb.init(entity="nerdk312",config = params, project= params['project'], reinit=True,group=params['group'], notes=params['notes'])  # Required to have access to wandb config, which is needed to set up a sweep
     wandb_logger = WandbLogger(log_model=True, sync_step=False, commit=False)
     config = previous_config
-    #import ipdb; ipdb.set_trace()
+    #
     folder = 'Images'
     if not os.path.exists(folder):
         os.mkdir(folder)

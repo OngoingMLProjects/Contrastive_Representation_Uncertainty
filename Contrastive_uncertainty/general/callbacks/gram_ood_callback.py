@@ -228,7 +228,7 @@ class Gram_OOD(pl.Callback):
                 mins = self.cuda(self.mins[PRED])
                 maxs = self.cuda(self.maxs[PRED])
                 # get deviations has shape (batch, len(featL))
-                #import ipdb; ipdb.set_trace()
+                #
                 test_deviations = pl_module.encoder.get_deviations(test_PRED,power=POWERS,mins=mins,maxs=maxs)/test_confs_PRED[:,np.newaxis] # test_confs_PRED[:,np.newaxis] has shape (batch,1,num_classes)
                 self.cpu(mins)
                 self.cpu(maxs)
@@ -355,12 +355,12 @@ class Gram_OOD(pl.Callback):
 
             validation = all_test_deviations[validation_indices]
             test_deviations = all_test_deviations[test_indices] 
-            import ipdb; ipdb.set_trace()
+            
 
             t95 = validation.mean(axis=0)+10**-7
             if not normalize:
                 t95 = np.ones_like(t95)
             test_deviations = (test_deviations/t95[np.newaxis,:]).sum(axis=1)
             ood_deviations = (all_ood_deviations/t95[np.newaxis,:]).sum(axis=1)
-            import ipdb; ipdb.set_trace()
+            
     '''

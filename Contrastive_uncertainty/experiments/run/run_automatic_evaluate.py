@@ -18,7 +18,6 @@ runs3 = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines 
 runs4 = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.dataset": "TinyImageNet","config.model_type": "SupCon","config.epochs":300,"$or": [{'state':'finished'}, {'state':'crashed'},{'state':'failed'}]})
 
 
-
 #runs5 = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.dataset": "MNIST","config.epochs":300,"$or": [{'state':'finished'}, {'state':'crashed'},{'state':'failed'}]})
 #runs6 = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.dataset": "FashionMNIST","config.epochs":300,"$or": [{'state':'finished'}, {'state':'crashed'},{'state':'failed'}]})
 #runs7 = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.dataset": "KMNIST","config.epochs":300,"$or": [{'state':'finished'}, {'state':'crashed'},{'state':'failed'}]})
@@ -41,7 +40,7 @@ runs7 = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines 
 #runs4 = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.model_type": "SupCon","config.dataset": "TinyImageNet","config.epochs":300,"$or": [{'state':'finished'}, {'state':'crashed'},{'state':'failed'}]})
 
 #runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.model_type": "SupCon","config.seed":125,"config.epochs":300,"$or": [{'state':'finished'}, {'state':'crashed'},{'state':'failed'}]})
-collated_runs = [runs1,runs2,runs3, runs4]
+collated_runs = [runs1,runs2,runs3,runs4]
 
 '''
 #runs1 = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.model_type": "CE","config.dataset": "TinyImageNet","config.epochs":300,"$or": [{'state':'finished'}, {'state':'crashed'},{'state':'failed'}]})

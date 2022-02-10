@@ -319,14 +319,14 @@ class ResNetDecoder(nn.Module):
         # x = F.interpolate(x, scale_factor=4)
 
         x = x.view(x.size(0), 512 * self.expansion, 4, 4)
-        #import ipdb; ipdb.set_trace()
+        #
         x = self.upscale1(x)
 
         x = self.layer1(x)
         x = self.layer2(x)
         x = self.layer3(x)
         x = self.layer4(x)
-        #import ipdb; ipdb.set_trace()
+        #
         x = self.upscale(x)
 
         x = self.conv1(x)

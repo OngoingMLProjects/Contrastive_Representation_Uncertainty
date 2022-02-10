@@ -11,8 +11,8 @@ learning_rate= 0.03,#3e-4,
 momentum= 0.9,
 weight_decay = 1e-4,
 
-dataset = 'Blobs',
-OOD_dataset = ['TwoMoons'],
+dataset = 'MNIST',
+OOD_dataset = ['FashionMNIST'],
 
 label_smoothing =False,
 use_mlp = True,

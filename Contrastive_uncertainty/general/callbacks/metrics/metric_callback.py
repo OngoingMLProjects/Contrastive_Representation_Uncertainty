@@ -92,7 +92,7 @@ class MetricLogger(pl.Callback):
         
         if len(self.dataloader)> 1:
             _, self.dataloader = self.dataloader
-        #import ipdb; ipdb.set_trace()
+        #
         self.evaltypes = evaltypes
         self.quick_callback = quick_callback
         

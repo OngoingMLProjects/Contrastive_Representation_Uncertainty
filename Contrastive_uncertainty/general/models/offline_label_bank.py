@@ -38,7 +38,7 @@ class OfflineLabelMemory(nn.Module):
 
     def init_memory(self,model,feature, label):
         """Initialize memory modules."""
-        #import ipdb; ipdb.set_trace()  
+        #  
         self.initialized = True
         # Copy labels 
         self.label_bank.copy_(torch.from_numpy(label).long().to(model.device))

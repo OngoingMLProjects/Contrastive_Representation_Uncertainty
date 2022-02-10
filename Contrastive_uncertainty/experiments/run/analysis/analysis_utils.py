@@ -82,8 +82,10 @@ def ood_dataset_string(key, dataset_dict, ID_dataset):
     split_keys = key.lower().split() # Make the key lower and then split the string at locations where is a space
     #print(key)    
     OOD_dict = dataset_dict[ID_dataset]
-    
-    for key in OOD_dict.keys():
+    # Iterates for dictionaries as well as lists 
+    iterable = OOD_dict.keys() if isinstance(OOD_dict, dict) else OOD_dict
+        
+    for key in iterable: #OOD_dict.keys():
         if ID_dataset.lower() in split_keys:
             ood_dataset = None
             return ood_dataset 
@@ -220,7 +222,7 @@ def collated_baseline_post_process_latex_table(df_auroc, df_aupr, df_fpr,caption
     latex_table_fpr = join_columns(latex_table_fpr,'FPR')
 
     latex_table = join_different_columns(latex_table_auroc,latex_table_aupr) # joins the auroc and aupr table together
-    #import ipdb; ipdb.set_trace()
+    #
     latex_table = join_different_columns(latex_table, latex_table_fpr) # joins the auroc+aupr table with the fpr table
     latex_table = replace_headings_collated_table(latex_table) # replaces the heading to take into account the collated readings
     latex_table = post_process_latex_table(latex_table)
@@ -670,13 +672,13 @@ def bold_max_value(df,latex_table):
         numbers = re.findall("\d+\.\d+", string[index]) # fnd all the numbers in the substring (gets rid of the &)
         #max_number = max(numbers,key=lambda x:float(x))
         #max_number = float(max(numbers,key=lambda x:format(float(x),'.3f'))) #  Need to get the output as a float
-        #import ipdb; ipdb.set_trace()
+        #
         
         max_number = float(max(numbers,key=lambda x:float(x))) #  Need to get the output as a float
         # Need to change into 3 decimal places
         max_number = format(max_number,'.3f')
         bold_max = r'\textbf{' + max_number + '}'
-        #import ipdb; ipdb.set_trace()
+        #
         #string[index] = string[index].replace(f'{max_number}',f'\textbf{ {max_number} }') # Need to put spaces around otherwise it just shows max number
         updated_string.append(string[index].replace(f'{max_number}',bold_max)) # Need to put spaces around otherwise it just shows max number), also need to be place to make it so that \t does not act as space
         #updated_string.append(string[index].replace(f'{max_number}',fr'\textbf{ {max_number} }')) # Need to put spaces around otherwise it just shows max number), also need to be place to make it so that \t does not act as space
@@ -754,5 +756,5 @@ if __name__ =='__main__':
     #run_filter={"config.group":"OOD hierarchy baselines","config.model_type": "SupCon"}
     #run_filter={"config.group":"New Model Testing","config.epochs":300}
     #run_filter={"config.group":"Baselines Repeats","$or": [{"config.model_type":"Moco"}, {"config.model_type": "SupCon"}]}
-    run_filter={"config.group":"Baselines Repeats", "config.model_type": "SupCon","config.dataset": "TinyImageNet"}
+    run_filter={"config.group":"Baselines Repeats", "config.model_type": "SupCon","config.dataset": "Dogs"}
     generic_saving(desired_key,run_filter)

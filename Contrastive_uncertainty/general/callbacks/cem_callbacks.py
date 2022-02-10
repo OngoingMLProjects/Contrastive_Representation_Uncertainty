@@ -135,7 +135,7 @@ class ContrastiveExplanationMethod(pl.Callback):
             img = img[0:8].to(pl_module.device)
             imgs = torch.cat((img,deltas))
             #imgs = torch.stack((img,delta))
-            import ipdb; ipdb.set_trace()
+            
             grid_imgs = torchvision.utils.make_grid(imgs)
             images = wandb.Image(grid_imgs, caption="Top: Input, Bottom: Counterfactual")
             wandb.log({"examples": images})

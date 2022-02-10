@@ -95,14 +95,14 @@ class Cam_Visualization(pl.Callback):
             # In this example grayscale_cam has only one image in the batch:
             #grayscale_cam = grayscale_cam[0,:]
             rgb_img = img.data.cpu().numpy()
-            #import ipdb; ipdb.set_trace()
+            #
             #rgb_img = cv2.resize(rgb_img[0], (224, 224))
-            import ipdb; ipdb.set_trace()
+            
             practice_img = img[0].cpu().permute(1, 2, 0) 
             #resized = cv2.resize(practice_img.numpy(), dsize = (224, 224),interpolation=cv2.INTER_LINEAR)
             #plt.imshow(resized)
             plt.imshow(  img[0].cpu().permute(1, 2, 0)  )
-            import ipdb; ipdb.set_trace()
+            
             rgb_img = rgb_img.reshape(rgb_img.shape[0],rgb_img.shape[2],rgb_img.shape[3],rgb_img.shape[1])
             img = Image.fromarray(rgb_img[0], 'RGB')
             resized = cv2.resize(rgb_img[0], dsize = (224, 224),interpolation=cv2.INTER_LINEAR)

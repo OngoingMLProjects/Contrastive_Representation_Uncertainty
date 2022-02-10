@@ -75,7 +75,7 @@ class OutlierExposureToy(pl.LightningModule):
         return logits
 
     def loss_function(self, batch):
-        #import ipdb; ipdb.set_trace()
+        #
         (img_1, img_2), *labels, indices = batch
         
         # Takes into account if it has coarse labels
@@ -98,7 +98,7 @@ class OutlierExposureToy(pl.LightningModule):
 
 
     def training_step(self, batch, batch_idx):
-        import ipdb; ipdb.set_trace()
+        
         metrics = self.loss_function(batch)
         for k,v in metrics.items():
             if v is not None: self.log('Training ' + k, v.item(),on_epoch=True)
@@ -107,7 +107,7 @@ class OutlierExposureToy(pl.LightningModule):
         
 
     def validation_step(self, batch, batch_idx,dataset_idx):
-        import ipdb; ipdb.set_trace()
+        
         metrics = self.loss_function(batch)
         for k,v in metrics.items():
             if v is not None: self.log('Validation ' + k, v.item(),on_epoch=True)

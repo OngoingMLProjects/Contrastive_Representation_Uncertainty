@@ -18,7 +18,6 @@ for i in range(len(runs)):
     run_path = '/'.join(runs[i].path)
     run_paths.append(run_path)
 
-#import ipdb; ipdb.set_trace()
 #"Different branch weights"
 #"Group: Separate branch combinations"
 #"OOD detection at different scales experiment"

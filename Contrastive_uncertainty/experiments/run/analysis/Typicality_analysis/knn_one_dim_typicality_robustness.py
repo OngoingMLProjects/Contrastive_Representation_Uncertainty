@@ -149,7 +149,7 @@ def knn_std(string,OOD_dataset,summary,root_dir,run_path):
     '''
     if run_path == 'nerdk312/evaluation/OOD hierarchy baselines/p4ojvcp2':
         print('data dir:',data_dir)
-        #import ipdb; ipdb.set_trace()
+        #
     '''
     run_dir = root_dir + run_path
     read_dir = run_dir + '/' + data_dir

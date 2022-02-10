@@ -477,7 +477,7 @@ def knn_auroc_wilcoxon():
         latex_table = latex_table.replace('{}','{Datasets}')
         latex_table = latex_table.replace("lrrr","|p{3cm}|c|c|c|")
         latex_table = post_process_latex_table(latex_table)
-        #import ipdb; ipdb.set_trace()
+        #
 
         
         column_names = ['Baseline', f'{fixed_k} NN', 'Optimal KNN', f'Quadratic {fixed_k} NN',]
@@ -508,7 +508,7 @@ def knn_auroc_wilcoxon():
     print(latex_table)
     #negative_sum = np.sum(collated_difference_quadratic[collated_difference_quadratic<0])
     #positive_sum = np.sum(collated_difference_quadratic[collated_difference_quadratic>0])
-    #import ipdb; ipdb.set_trace()
+    #
     
 
 

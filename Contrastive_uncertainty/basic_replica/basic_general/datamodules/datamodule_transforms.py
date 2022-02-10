@@ -314,7 +314,6 @@ def dataset_with_indices(cls):
     Modifies the given Dataset class to return a tuple data, target, index
     instead of just data, target.
     """
-    #import ipdb; ipdb.set_trace()
     def __getitem__(self, index):
         
         data, target = cls.__getitem__(self, index)
@@ -335,7 +334,6 @@ def dataset_with_indices_emnist(cls):
     Modifies the given Dataset class to return a tuple data, target, index
     instead of just data, target.
     """
-    #import ipdb; ipdb.set_trace()
     def __getitem__(self, index):
         data, target = cls.__getitem__(self, index)
         target = target -1 #

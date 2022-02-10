@@ -72,7 +72,6 @@ class SupConModule(pl.LightningModule):
         Returns:
             A loss scalar.
         """
-        #import ipdb; ipdb.set_trace()
         if len(features.shape) < 3:
             raise ValueError('`features` needs to be [bsz, n_views, ...],'
                              'at least 3 dimensions are required')
@@ -150,7 +149,6 @@ class SupConModule(pl.LightningModule):
 
     def loss_function(self, batch):
         (img_1, img_2), *labels, indices = batch
-        #import ipdb; ipdb.set_trace()
         # Takes into account if it has coarse labels
         # Using * makes it into a list (so the length of the list is related to how many different labels types there are)
         if isinstance(labels, tuple) or isinstance(labels, list):

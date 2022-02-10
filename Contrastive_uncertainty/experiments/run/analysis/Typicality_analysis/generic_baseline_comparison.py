@@ -176,7 +176,7 @@ def general_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', d
                     baseline_AUPR_values = update_metric_array(baseline_AUPR_values,i,data_index,baseline_function,baseline_strings_AUPR[i],baseline_model_types[i], model_type,run_summary,OOD_dataset,run_config['seed'])
                     baseline_FPR_values = update_metric_array(baseline_FPR_values,i,data_index,baseline_function,baseline_strings_FPR[i], baseline_model_types[i], model_type,run_summary,OOD_dataset,run_config['seed'])
         ####### Calculates p-values #############################
-        #import ipdb; ipdb.set_trace()
+        #
         for i in range(num_baselines):
             difference_auroc = np.array(baseline_AUROC_values[i]) - np.array(desired_AUROC_values[0]) # shape (num ood, repeats)
             difference_aupr = np.array(baseline_AUPR_values[i]) - np.array(desired_AUPR_values[0]) # shape (num ood, repeats)
