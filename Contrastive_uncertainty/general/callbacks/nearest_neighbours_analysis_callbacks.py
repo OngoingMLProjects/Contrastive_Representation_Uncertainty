@@ -66,7 +66,9 @@ class AnalysisQuadraticClass1DScoresTypicality(NearestNeighboursQuadraticClass1D
     def get_1d_train(self, ftrain, ypred):
         return super().get_1d_train(ftrain, ypred)
     
+    # Look at obtaining the OOD datast for the situation which is the worse case
     def get_thresholds(self, fdata, means, eigvalues, eigvectors, dtrain_1d_mean, dtrain_1d_std):    
+        
         collated_class_dimesional_scores = [[] for i in range(self.Datamodule.num_classes)]
         num_batches = len(fdata)//self.K
         # Currently goes through a single data point at a time which is not very efficient
@@ -92,6 +94,8 @@ class AnalysisQuadraticClass1DScoresTypicality(NearestNeighboursQuadraticClass1D
             scores = [np.sum(np.abs(ddata_mean_deviation[class_num]**2),axis=0) for class_num in range(len(means))]
             ##################################################################
             # Obtain the 1d scores corresponding to the lowest class
+            
+            
             class_val = np.argmin(scores,axis=0) # get the specific clas of interest for the particular approach
             class_dimensional_scores = ddata_mean_deviation[np.argmin(scores,axis=0)]
             # Get the dimensional scores for the particular class
@@ -120,9 +124,9 @@ class AnalysisQuadraticClass1DScoresTypicality(NearestNeighboursQuadraticClass1D
 
         in_class_counts = np.array([len(din[class_val]) for class_val in range(self.Datamodule.num_classes)])
         ood_class_counts = np.array([len(dood[class_val]) for class_val in range(self.Datamodule.num_classes)])
+        
         in_class_counts[ood_class_counts ==0] = 0 # Change the in-distribution values to only choose the values which are in common between th edifferent datasets 
         # find the INTERSECTION BTWEEN THE IN AND Ood CLASS COUNTS
-
         
 		#- Choose the 3 classes which have the deviation related to the different approach
         return din, dood, in_class_counts, eigvalues
@@ -131,10 +135,16 @@ class AnalysisQuadraticClass1DScoresTypicality(NearestNeighboursQuadraticClass1D
         # obtain the top 3 indices of the in-class counts in order, https://stackoverflow.com/questions/6910641/how-do-i-get-indices-of-n-maximum-values-in-a-numpy-array
         # There could be a situation where there is no overlap between the 2 different groups
         # In that situation I should get the values which correspond to the particular value of interest, I should save all the values for all the different classes for the OOD and ID datasets
+        #import ipdb; ipdb.set_trace()
         idx = (-in_class_counts).argsort()[:3]
+        
         #idx = (-arr).argsort()[:n]
         for k,i in enumerate(idx):
-            average_in_deviations, average_ood_deviations = np.mean(din[i],axis=0), np.mean(dood[i],axis=0)
+            if in_class_counts[i] ==0: # Checks whether there are any data points belonging to the class
+                average_in_deviations, average_ood_deviations = np.zeros((eigvalues[0].shape[0],)), np.zeros((eigvalues[0].shape[0],))
+            else:
+                average_in_deviations, average_ood_deviations = np.mean(din[i],axis=0), np.mean(dood[i],axis=0)
+            
             #table_data = {'Dimension':[], 'OOD-ID Deviation':[], 'Eigvalues':[]}
         
             OOD_ID_Deviation = average_ood_deviations - average_in_deviations

@@ -12,8 +12,8 @@ from Contrastive_uncertainty.experiments.config.trainer_params import trainer_hp
 run_paths = []
 api = wandb.Api()
 
-runs1 = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.dataset": "CIFAR10","config.model_type": "SupCon","config.epochs":300,"$or": [{'state':'finished'}, {'state':'crashed'},{'state':'failed'}]})
-runs2 = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.dataset": "CIFAR100","config.model_type": "SupCon","config.epochs":300,"$or": [{'state':'finished'}, {'state':'crashed'},{'state':'failed'}]})
+#runs1 = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.dataset": "CIFAR10","config.model_type": "SupCon","config.epochs":300,"$or": [{'state':'finished'}, {'state':'crashed'},{'state':'failed'}]})
+#runs2 = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.dataset": "CIFAR100","config.model_type": "SupCon","config.epochs":300,"$or": [{'state':'finished'}, {'state':'crashed'},{'state':'failed'}]})
 runs3 = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.dataset": "Caltech256","config.model_type": "SupCon","config.epochs":300,"$or": [{'state':'finished'}, {'state':'crashed'},{'state':'failed'}]})
 runs4 = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.dataset": "TinyImageNet","config.model_type": "SupCon","config.epochs":300,"$or": [{'state':'finished'}, {'state':'crashed'},{'state':'failed'}]})
 
@@ -40,7 +40,7 @@ runs7 = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines 
 #runs4 = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.model_type": "SupCon","config.dataset": "TinyImageNet","config.epochs":300,"$or": [{'state':'finished'}, {'state':'crashed'},{'state':'failed'}]})
 
 #runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.model_type": "SupCon","config.seed":125,"config.epochs":300,"$or": [{'state':'finished'}, {'state':'crashed'},{'state':'failed'}]})
-collated_runs = [runs1,runs2,runs3,runs4]
+collated_runs = [runs3,runs4]
 
 '''
 #runs1 = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.model_type": "CE","config.dataset": "TinyImageNet","config.epochs":300,"$or": [{'state':'finished'}, {'state':'crashed'},{'state':'failed'}]})

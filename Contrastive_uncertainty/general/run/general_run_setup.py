@@ -94,12 +94,12 @@ def callback_dictionary(Datamodule,config,data_dict):
                 f'Nearest 10 Neighbours Class 1D Scores Typicality {ood_dataset}':NearestNeighboursQuadraticClass1DScoresTypicality(Datamodule,OOD_Datamodule,quick_callback=quick_callback,K=10),
                 # Used to obtain the scores for indivudal classes fpr the 1D Typicality approach
                 f'Nearest 10 Neighbours Analysis Class 1D Scores Typicality {ood_dataset}':AnalysisQuadraticClass1DScoresTypicality(Datamodule,OOD_Datamodule,quick_callback=quick_callback,K=10),
-
+                
+                #f'Nearest 10 Neighbours Analysis Worst Class 1D Scores Typicality {ood_dataset}':AnalysisQuadraticWorstClass1DScoresTypicality(Datamodule,OOD_Datamodule,quick_callback=quick_callback,K=10),
 
                 f'Different K Nearest Neighbours Class 1D Typicality {ood_dataset}':DifferentKNNClass1DTypicality(Datamodule,OOD_Datamodule,quick_callback=quick_callback),
                 f'Different K Nearest Neighbours Quadratic Class 1D Typicality {ood_dataset}':DifferentKNNQuadraticClass1DTypicality(Datamodule,OOD_Datamodule,quick_callback=quick_callback),
                 f'Gram OOD Detection {ood_dataset}': Gram_OOD(Datamodule,OOD_Datamodule,quick_callback=quick_callback)}
-                
                 
                 # Ablation studies
                 #f'Different K Nearest Neighbours Marginal 1D Typicality {ood_dataset}':DifferentKNNMarginal1DTypicality(Datamodule,OOD_Datamodule,quick_callback=quick_callback),
