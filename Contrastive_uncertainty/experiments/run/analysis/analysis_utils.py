@@ -1,3 +1,4 @@
+from importlib.resources import path
 from types import LambdaType
 from numpy.core.defchararray import join, split
 import wandb
@@ -96,6 +97,9 @@ def ood_dataset_string(key, dataset_dict, ID_dataset):
     #print(f'{key} does not have OOD dataset')
     return None 
 
+
+
+# updated version which saves the files in more specific folders
 def generic_saving(desired_key,run_filter):
     desired_key = desired_key.lower()
 
@@ -122,29 +126,37 @@ def generic_saving(desired_key,run_filter):
         ID_dataset = config_list[i]['dataset']
         model_type = config_list[i]['model_type']
         group_name = config_list[i]['group']
-
+        seed_value = str(config_list[i]['seed'])
         summary_list.append(run.summary._json_dict)
         
         #updated path which includes the group of the dataset
         path_list = runs[i].path
         path_list.insert(-1, group_name) # insert the group name in the location one before the last value (rather than the last value which is peculiar)
+        # Additional lines added compared to the previous file
+        path_list.insert(-1,model_type)
+        path_list.insert(-1,ID_dataset)
+        path_list.insert(-1,seed_value)
+        ###################################################
         run_path = '/'.join(path_list)
-
+        
         #run_path = '/'.join(runs[i].path)
         # .name is the human-readable name of the run.dir
         name_list.append(run.name)
         keys = [key for key, value in summary_list[i].items() if desired_key in key.lower()]
         keys = [key for key in keys if 'table' not in key.lower()]
+        
         for key in keys:
             data_dir = summary_list[i][key]['path'] 
             run_dir = root_dir + run_path
 
             total_dir = os.path.join(run_dir, data_dir)
+            
             # Checks if the file is already present
             if os.path.isfile(total_dir):
                 pass
             else:
                 file_data = json.load(run.file(data_dir).download(root=run_dir))
+            
 
 
 # Utils for the latex table
@@ -747,7 +759,8 @@ def post_process_latex_table(latex_table):
 if __name__ =='__main__':
     #desired_key = 'Centroid Distances Average vector_table'
     #desired_key = 'KL Divergence(Total||Class)'
-    desired_key = 'Normalized One Dim Scores Class Quadratic Typicality'
+    #desired_key = 'Normalized One Dim Scores Class Quadratic Typicality'
+    desired_key ='Analysis Normalized One Dim Scores Class Quadratic Typicality KNN'
     #desired_key = 'Different K Normalized One Dim Class Typicality KNN'
     #desired_key = 'Different K Normalized Quadratic One Dim Class Typicality KNN'
     #run_filter={"config.group":"Baselines Repeats"}
@@ -756,5 +769,6 @@ if __name__ =='__main__':
     #run_filter={"config.group":"OOD hierarchy baselines","config.model_type": "SupCon"}
     #run_filter={"config.group":"New Model Testing","config.epochs":300}
     #run_filter={"config.group":"Baselines Repeats","$or": [{"config.model_type":"Moco"}, {"config.model_type": "SupCon"}]}
-    run_filter={"config.group":"Baselines Repeats", "config.model_type": "SupCon","config.dataset": "Dogs"}
+    run_filter={"config.group":"Baselines Repeats", "config.model_type": "SupCon","config.dataset": "CIFAR10"}
+    #generic_saving(desired_key,run_filter)
     generic_saving(desired_key,run_filter)
