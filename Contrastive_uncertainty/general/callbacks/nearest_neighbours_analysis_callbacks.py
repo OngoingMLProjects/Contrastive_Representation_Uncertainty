@@ -115,7 +115,6 @@ class AnalysisQuadraticClass1DScoresTypicality(NearestNeighboursQuadraticClass1D
         din = self.get_thresholds(knn_ID_features, mean, eigvalues,eigvectors, dtrain_1d_mean,dtrain_1d_std)
         dood = self.get_thresholds(knn_OOD_features, mean, eigvalues,eigvectors, dtrain_1d_mean,dtrain_1d_std)    
         
-        
         #in_class_counts = [len(din[class_val]) for class_val in range(self.Datamodule.num_classes)]
         #ood_class_counts = [len(dood[class_val]) for class_val in range(self.Datamodule.num_classes)]
         
@@ -124,8 +123,14 @@ class AnalysisQuadraticClass1DScoresTypicality(NearestNeighboursQuadraticClass1D
 
         in_class_counts = np.array([len(din[class_val]) for class_val in range(self.Datamodule.num_classes)])
         ood_class_counts = np.array([len(dood[class_val]) for class_val in range(self.Datamodule.num_classes)])
-        
+        #import ipdb; ipdb.set_trace()        
         in_class_counts[ood_class_counts ==0] = 0 # Change the in-distribution values to only choose the values which are in common between th edifferent datasets 
+        
+        #practice_counts = np.zeros(10,)
+        #in_class_counts[practice_counts ==0] = 0
+        
+        #import ipdb; ipdb.set_trace()
+        
         # find the INTERSECTION BTWEEN THE IN AND Ood CLASS COUNTS
         
 		#- Choose the 3 classes which have the deviation related to the different approach
@@ -136,11 +141,12 @@ class AnalysisQuadraticClass1DScoresTypicality(NearestNeighboursQuadraticClass1D
         # There could be a situation where there is no overlap between the 2 different groups
         # In that situation I should get the values which correspond to the particular value of interest, I should save all the values for all the different classes for the OOD and ID datasets
         #import ipdb; ipdb.set_trace()
-        idx = (-in_class_counts).argsort()[:3]
-        
+        #idx = (-in_class_counts).argsort()[:3]
+        idx = (-in_class_counts).argsort()[:1]
+        #import ipdb; ipdb.set_trace()
         #idx = (-arr).argsort()[:n]
         for k,i in enumerate(idx):
-            if in_class_counts[i] ==0: # Checks whether there are any data points belonging to the class
+            if in_class_counts[i] == 0: # Checks whether there are any data points belonging to the class
                 average_in_deviations, average_ood_deviations = np.zeros((eigvalues[0].shape[0],)), np.zeros((eigvalues[0].shape[0],))
             else:
                 average_in_deviations, average_ood_deviations = np.mean(din[i],axis=0), np.mean(dood[i],axis=0)

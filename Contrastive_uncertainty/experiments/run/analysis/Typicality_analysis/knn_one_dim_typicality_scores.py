@@ -62,9 +62,17 @@ def one_dim_typicality_scores_plot():
                      if not k.startswith('_')})
                 # .name is the human-readable name of the run.dir
                 name_list.append(run.name)
+                
+                ID_dataset = config_list[i]['dataset']
+                model_type = config_list[i]['model_type']
                 group_name = config_list[i]['group']
+                seed_value = str(config_list[i]['seed'])
+
                 path_list = runs[i].path
                 path_list.insert(-1, group_name) # insert the group name in the location one before the last value (rather than the last value which is peculiar)
+                # path_list.insert(-1,model_type)
+                # path_list.insert(-1,ID_dataset)
+                # path_list.insert(-1,seed_value)
                 run_path = '/'.join(path_list)
                 run_dir = root_dir + run_path
                 #### Look at getting all the files with that particular name to run the simulation with ################
@@ -78,8 +86,7 @@ def one_dim_typicality_scores_plot():
                     OOD_string = ood_dataset_string(key,all_OOD,ID)
                     read_dir = os.path.join(run_dir, data_dir)
                     # Checks if the file is already present
-                    dataset = config_list[i]['dataset']
-                    model_type = config_list[i]['model_type']
+                    
                     with open(read_dir) as f:
                         one_dim_score_json = json.load(f)
                         one_dim_score_data = typicality_vector(one_dim_score_json)
@@ -150,15 +157,23 @@ def one_dim_typicality_scores_class_plot():
                      if not k.startswith('_')})
                 # .name is the human-readable name of the run.dir
                 name_list.append(run.name)
+                ID_dataset = config_list[i]['dataset']
+                model_type = config_list[i]['model_type']
                 group_name = config_list[i]['group']
+                seed_value = str(config_list[i]['seed'])
+
                 path_list = runs[i].path
                 path_list.insert(-1, group_name) # insert the group name in the location one before the last value (rather than the last value which is peculiar)
+                path_list.insert(-1,model_type)
+                path_list.insert(-1,ID_dataset)
+                path_list.insert(-1,seed_value)
                 run_path = '/'.join(path_list)
                 run_dir = root_dir + run_path
                 #### Look at getting all the files with that particular name to run the simulation with ################
                 keys = [key for key, value in summary_list[i].items() if desired_key in key.lower()]
+
                 keys = [key for key in keys if 'table' not in key.lower()]
-                
+                keys = [key for key in keys if 'top 1' in key.lower()]
                 for key in keys:
                     data_dir = summary_list[i][key]['path']
                     
@@ -166,8 +181,7 @@ def one_dim_typicality_scores_class_plot():
                     OOD_string = ood_dataset_string(key,all_OOD,ID)
                     read_dir = os.path.join(run_dir, data_dir)
                     # Checks if the file is already present
-                    dataset = config_list[i]['dataset']
-                    model_type = config_list[i]['model_type']
+                    
                     with open(read_dir) as f:
                         one_dim_score_json = json.load(f)
                         one_dim_score_data = typicality_vector(one_dim_score_json)
@@ -175,14 +189,14 @@ def one_dim_typicality_scores_class_plot():
                         plt.plot(one_dim_score_data[:,0], one_dim_score_data[:,1],label=f'{key}')
                         plt.title(f"1D Typicality deviations-ID:{ID}-OOD-{OOD_string}") 
                         plt.xlabel("Dimension") 
-                        plt.ylabel("ID-OOD Score difference") 
+                        plt.ylabel("OOD-ID Score difference") 
                         #plt.legend(loc="upper right")
                         #plt.show()
-                        folder = f'Scatter_Plots/Typicality_Scores/{model_type}/{ID}/Seed/{seed}'
+                        folder = f'Scatter_Plots/Typicality_Class_Scores/{model_type}/{ID}/Seed/{seed}'
                         
                         if not os.path.exists(folder):
                             os.makedirs(folder)
-                        plt.savefig(f'{folder}/1D Typicality deviations-ID:{ID}-OOD-{OOD_string}.png')
+                        plt.savefig(f'{folder}/1D Typicality Class deviations-ID:{ID}-OOD-{OOD_string}.png')
                         plt.close()
 
 
@@ -192,5 +206,6 @@ def typicality_vector(json_data):
     return data
 
 if __name__ == '__main__':
-    one_dim_typicality_scores_plot()
+    #one_dim_typicality_scores_plot()
+    one_dim_typicality_scores_class_plot()
     #total_kl_clp_plot()

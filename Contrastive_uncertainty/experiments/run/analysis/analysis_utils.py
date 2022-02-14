@@ -295,7 +295,6 @@ def collated_multiple_baseline_post_process_latex_table(df_auroc, df_aupr, df_fp
     latex_table = add_caption(latex_table,caption)
     latex_table = add_label(latex_table,label) 
     latex_table = end_table_info(latex_table)
-
     
     return latex_table
 
@@ -769,6 +768,6 @@ if __name__ =='__main__':
     #run_filter={"config.group":"OOD hierarchy baselines","config.model_type": "SupCon"}
     #run_filter={"config.group":"New Model Testing","config.epochs":300}
     #run_filter={"config.group":"Baselines Repeats","$or": [{"config.model_type":"Moco"}, {"config.model_type": "SupCon"}]}
-    run_filter={"config.group":"Baselines Repeats", "config.model_type": "SupCon","config.dataset": "CIFAR10"}
+    run_filter={"config.group":"Baselines Repeats", "config.model_type": "SupCon","config.dataset": "CIFAR100"}
     #generic_saving(desired_key,run_filter)
     generic_saving(desired_key,run_filter)
