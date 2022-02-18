@@ -768,6 +768,6 @@ if __name__ =='__main__':
     #run_filter={"config.group":"OOD hierarchy baselines","config.model_type": "SupCon"}
     #run_filter={"config.group":"New Model Testing","config.epochs":300}
     #run_filter={"config.group":"Baselines Repeats","$or": [{"config.model_type":"Moco"}, {"config.model_type": "SupCon"}]}
-    run_filter={"config.group":"Baselines Repeats", "config.model_type": "SupCon","config.dataset": "CIFAR100"}
+    run_filter={"config.group":"Baselines Repeats", "config.model_type": "SupCon","config.dataset": "Cub200"}
     #generic_saving(desired_key,run_filter)
     generic_saving(desired_key,run_filter)

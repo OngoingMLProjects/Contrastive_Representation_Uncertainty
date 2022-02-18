@@ -143,6 +143,7 @@ class AnalysisQuadraticClass1DScoresTypicality(NearestNeighboursQuadraticClass1D
         #import ipdb; ipdb.set_trace()
         #idx = (-in_class_counts).argsort()[:3]
         idx = (-in_class_counts).argsort()[:1]
+        
         #import ipdb; ipdb.set_trace()
         #idx = (-arr).argsort()[:n]
         for k,i in enumerate(idx):

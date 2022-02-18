@@ -114,8 +114,8 @@ def one_dim_typicality_scores_class_plot():
     desired_key = 'Analysis Normalized One Dim Scores Class Quadratic Typicality KNN'
     desired_key = desired_key.lower()
 
-    all_ID = ['CIFAR10','CIFAR100']
-    #all_ID = ['TinyImageNet']
+    all_ID = ['CIFAR10','CIFAR100','TinyImageNet','Dogs','Cub200']
+    #all_ID = ['Dogs','Cub200']
     all_OOD = {'CIFAR10':['MNIST','FashionMNIST','KMNIST','CIFAR10','CIFAR100','Caltech256','TinyImageNet'],
     'CIFAR100':['MNIST','FashionMNIST','KMNIST','CIFAR10','CIFAR100','Caltech256','TinyImageNet'],
     'Caltech256':['MNIST','FashionMNIST','KMNIST','CIFAR10','CIFAR100','Caltech256','TinyImageNet'],
@@ -181,23 +181,54 @@ def one_dim_typicality_scores_class_plot():
                     OOD_string = ood_dataset_string(key,all_OOD,ID)
                     read_dir = os.path.join(run_dir, data_dir)
                     # Checks if the file is already present
-                    
+
                     with open(read_dir) as f:
                         one_dim_score_json = json.load(f)
                         one_dim_score_data = typicality_vector(one_dim_score_json)
+                        #import ipdb; ipdb.set_trace()
                         # https://stackoverflow.com/questions/19125722/adding-a-legend-to-pyplot-in-matplotlib-in-the-simplest-manner-possible
-                        plt.plot(one_dim_score_data[:,0], one_dim_score_data[:,1],label=f'{key}')
-                        plt.title(f"1D Typicality deviations-ID:{ID}-OOD-{OOD_string}") 
-                        plt.xlabel("Dimension") 
-                        plt.ylabel("OOD-ID Score difference") 
+                        fig,ax = plt.subplots()
+                        ax.plot(one_dim_score_data[:,0],one_dim_score_data[:,1],label=f'{key}',color="red")
+                        ax.set_xlabel("Dimension")
+                        ax.set_ylabel("OOD-ID Score difference",color='red')
+                        ax2=ax.twinx()
+                        ax2.plot(one_dim_score_data[:,0],np.abs(one_dim_score_data[:,2]),color="blue")
+                        ax2.set_ylabel("Eigenvalue",color="blue",fontsize=14)
+
+                        #ax.title(f"1D Typicality deviations-ID:{ID}-OOD-{OOD_string}") 
+                        #plt.xlabel("Eigenvalue") 
+                        #plt.ylabel("OOD-ID Score difference") 
+                        #plt.xscale('log')
                         #plt.legend(loc="upper right")
                         #plt.show()
                         folder = f'Scatter_Plots/Typicality_Class_Scores/{model_type}/{ID}/Seed/{seed}'
                         
                         if not os.path.exists(folder):
                             os.makedirs(folder)
-                        plt.savefig(f'{folder}/1D Typicality Class deviations-ID:{ID}-OOD-{OOD_string}.png')
+                        plt.savefig(f'{folder}/1D Typicality Class deviations-ID {ID}-OOD {OOD_string}.png')
                         plt.close()
+
+
+                    '''
+                    with open(read_dir) as f:
+                        one_dim_score_json = json.load(f)
+                        one_dim_score_data = typicality_vector(one_dim_score_json)
+                        #import ipdb; ipdb.set_trace()
+                        # https://stackoverflow.com/questions/19125722/adding-a-legend-to-pyplot-in-matplotlib-in-the-simplest-manner-possible
+                        plt.plot(np.abs(one_dim_score_data[:,2]), one_dim_score_data[:,1],label=f'{key}')
+                        plt.title(f"1D Typicality deviations-ID:{ID}-OOD-{OOD_string}") 
+                        plt.xlabel("Eigenvalue") 
+                        plt.ylabel("OOD-ID Score difference") 
+                        plt.xscale('log')
+                        #plt.legend(loc="upper right")
+                        #plt.show()
+                        folder = f'Scatter_Plots/Typicality_Class_Scores/{model_type}/{ID}/Seed/{seed}'
+                        
+                        if not os.path.exists(folder):
+                            os.makedirs(folder)
+                        plt.savefig(f'{folder}/1D Typicality Class deviations-ID {ID}-OOD {OOD_string}.png')
+                        plt.close()
+                    '''
 
 
 def typicality_vector(json_data):
