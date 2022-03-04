@@ -619,7 +619,7 @@ def knn_table_collated_v2(desired_approach = 'Quadratic_typicality', desired_mod
         
 
 # Same as before but also calculates the wilcoxon values to see whether the value is higher than the threshold
-def knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['Softmax','Mahalanobis'], baseline_model_types = ['CE','CE'],dataset_type ='grayscale',t_test='less'):
+def knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['Softmax','Mahalanobis'], baseline_model_types = ['CE','CE'],dataset_type ='grayscale',t_test='less',rounding=3):
     num_repeats = 8
     baselines_dict = {'Mahalanobis':{'AUROC':'Mahalanobis AUROC OOD'.lower(),'AUPR':'Mahalanobis AUPR'.lower(),'FPR':'Mahalanobis FPR'.lower()},
                 
@@ -675,7 +675,8 @@ def knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desir
     for ID_dataset in all_ID: # Go through the different ID dataset                
         #runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.epochs": 300,"config.dataset": f"{ID_dataset}","$or": [{"config.model_type":"SupCon" }]})
         #runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.epochs": 300,"config.dataset": f"{ID_dataset}","$or": [{"config.model_type":"SupCon" }],"$and": [{"config.seed":{"$ne": 26}},{"config.seed":{"$ne": 42}},{"config.seed":{"$ne": 200}},{"config.seed":{"$ne": 100}}]})
-        runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.epochs": 300,"config.dataset": f"{ID_dataset}","$or": [{"config.model_type":"SupCon" }]})
+        #runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.epochs": 300,"config.dataset": f"{ID_dataset}","$or": [{"config.model_type":"SupCon" }]})
+        runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.epochs":300,"config.dataset": f"{ID_dataset}","$or": [{"config.model_type":"CE" }, {"config.model_type":"SupCon"}]})
         # number of OOd datasets for this particular ID dataset
         num_ood = len(dataset_dict[ID_dataset])
         
@@ -794,9 +795,9 @@ def knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desir
         fpr_insignificance_df = insignificance_dataframe(collated_rank_score_fpr,0.05,row_names)
         
         ##########################################################
-        data_array_AUROC = np.round(data_array_AUROC/count_array_AUROC,decimals=3)  
-        data_array_AUPR = np.round(data_array_AUPR/count_array_AUPR,decimals=3)  
-        data_array_FPR = np.round(data_array_FPR/count_array_FPR,decimals=3)
+        data_array_AUROC = np.round(data_array_AUROC/count_array_AUROC,decimals=rounding)  
+        data_array_AUPR = np.round(data_array_AUPR/count_array_AUPR,decimals=rounding)  
+        data_array_FPR = np.round(data_array_FPR/count_array_FPR,decimals=rounding)
         column_names = baseline_approaches + [f'Quadratic {fixed_k} NN']        
         auroc_df = pd.DataFrame(data_array_AUROC,columns = column_names, index=row_names)
         aupr_df = pd.DataFrame(data_array_AUPR,columns = column_names, index=row_names)
@@ -1033,5 +1034,9 @@ if __name__== '__main__':
     #knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['NN Quadratic Single'], baseline_model_types = ['SupCon'],dataset_type ='RGB',t_test='two-sided')
     #knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['NN All Dim Class'], baseline_model_types = ['SupCon'],dataset_type ='RGB',t_test='less')
 
-    knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['NN All Dim Class'], baseline_model_types = ['SupCon'],dataset_type ='RGB',t_test='less')
+    
+    
+    
+    knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['ODIN','Mahalanobis'], baseline_model_types = ['CE','CE'],dataset_type ='RGB',t_test='less',rounding=2)
     #knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['NN Marginal Quadratic','NN Quadratic Single','NN All Dim Class'], baseline_model_types = ['SupCon','SupCon','SupCon'],dataset_type ='RGB',t_test='less')
+    #knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['NN All Dim Class'], baseline_model_types = ['SupCon'],dataset_type ='RGB',t_test='two-sided')

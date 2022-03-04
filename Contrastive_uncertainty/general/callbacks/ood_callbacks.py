@@ -27,11 +27,6 @@ from Contrastive_uncertainty.general.utils.hybrid_utils import OOD_conf_matrix
 from Contrastive_uncertainty.general.callbacks.general_callbacks import quickloading
 from Contrastive_uncertainty.general.utils.pl_metrics import precision_at_k, mean
 
-
-
-
-
-
 class Mahalanobis_OOD(pl.Callback):
     def __init__(self, Datamodule,OOD_Datamodule,
         quick_callback:bool = True):
@@ -79,7 +74,6 @@ class Mahalanobis_OOD(pl.Callback):
             np.copy(features_test),
             np.copy(features_ood),
             np.copy(labels_train))
-
 
     def get_features(self, pl_module, dataloader):
         features, labels = [], []

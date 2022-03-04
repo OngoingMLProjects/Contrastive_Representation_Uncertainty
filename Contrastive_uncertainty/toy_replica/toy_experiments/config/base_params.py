@@ -71,7 +71,8 @@ model_saving = 1, # Used to control how often the model is saved
 #callbacks = ['Nearest 10 Neighbours Class Typicality'],
 #callbacks = ['Nearest 10 Neighbours Class Quadratic 1D Typicality'],
 #callbacks = ['Nearest 10 Neighbours Class 1D Scores Typicality'],
-callbacks = ['Nearest 10 Neighbours Analysis Class 1D Scores Typicality']
+#callbacks = ['Nearest 10 Neighbours Analysis Class 1D Scores Typicality']
+callbacks = ['KL Distance OOD'],
 #callbacks = ['Nearest 10 Neighbours Analysis Worst Class 1D Scores Typicality']
 
 
