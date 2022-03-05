@@ -16,6 +16,8 @@ from decimal import *
 
 from Contrastive_uncertainty.general.datamodules.datamodule_dict import OOD_dict
 
+# global variable to be used to control the rounding of the data
+rounding_value = 3
 # For each ID dataset, it maps the dict to another value
 # FULL dataset dict
 '''
@@ -350,7 +352,11 @@ def collated_multiple_baseline_post_process_latex_table_insignificance(df_auroc,
 
 # pass in the measurements as well as whether the values are insignificant
 def asterix_typicality_values(latex_table_values, latex_table_insignificance):
-    value_strings = re.findall(r'\\textbf{\d\.\d{3}}\s+\\\\\n|\d\.\d{3}\s+\\\\\n',latex_table_values) # Checks whether it has one pattern or another , aim is to get the last value of interest
+    if rounding_value == 2:
+        value_strings = re.findall(r'\\textbf{\d\.\d{2}}\s+\\\\\n|\d\.\d{2}\s+\\\\\n',latex_table_values) # Checks whether it has one pattern or another , aim is to get the last value of interest
+    elif rounding_value ==3:
+        value_strings = re.findall(r'\\textbf{\d\.\d{3}}\s+\\\\\n|\d\.\d{3}\s+\\\\\n',latex_table_values) # Checks whether it has one pattern or another , aim is to get the last value of interest
+    
     insignificance_strings = re.findall('&\s+[^ 0].+\\\\\n',latex_table_insignificance) # Need to place a space between the ^ to show that the string should not be used 
     #print('latex table values', latex_table_values)
     #print('latex_table_insignficance',latex_table_insignificance)
@@ -380,7 +386,11 @@ def asterix_typicality_values(latex_table_values, latex_table_insignificance):
     
 # pass in the measurements as well as whether the values are insignificant, used to two-sided t-test
 def asterix_significant_values(latex_table_values, latex_table_insignificance):
-    value_strings = re.findall(r'&\s+\\textbf{\d\.\d{3}}\s+&|&\s+\\textbf{\d\.\d{3}}\s+\\\\\n',latex_table_values) # Need to use or to prevent getting double bolds in the case of ties
+    if rounding_value == 2:
+        value_strings = re.findall(r'&\s+\\textbf{\d\.\d{2}}\s+&|&\s+\\textbf{\d\.\d{2}}\s+\\\\\n',latex_table_values) # Need to use or to prevent getting double bolds in the case of ties
+    elif rounding_value ==3:
+        value_strings = re.findall(r'&\s+\\textbf{\d\.\d{3}}\s+&|&\s+\\textbf{\d\.\d{3}}\s+\\\\\n',latex_table_values) # Need to use or to prevent getting double bolds in the case of ties
+    
     insignificance_strings = re.findall('&\s+[^ 0].+\\\\\n',latex_table_insignificance) # Need to place a space between the ^ to show that the string should not be used 
     #print('latex table values', latex_table_values)
     #print('latex_table_insignficance',latex_table_insignificance)
@@ -395,7 +405,7 @@ def asterix_significant_values(latex_table_values, latex_table_insignificance):
         first_string = first_string + value_strings[index] #  add the value_strings[index] nacl
 
         # add asterisk and then remove whitespace
-        value_only = re.findall(r'\\textbf{\d\.\d{3}}',value_strings[index])[0]
+        value_only = re.findall(r'\\textbf{\d\.\d{rounding_value}}',value_strings[index])[0]
         
         bold_string = (value_only+'*') if 'False' in insignificance_strings[index] else value_only 
         # check if False is present in the insignificance string, to make it bold
@@ -688,7 +698,10 @@ def bold_max_value(df,latex_table):
         
         max_number = float(max(numbers,key=lambda x:float(x))) #  Need to get the output as a float
         # Need to change into 3 decimal places
-        max_number = format(max_number,'.3f')
+        if rounding_value == 2:
+            max_number = format(max_number,'.2f')
+        elif rounding_value == 3:
+            max_number = format(max_number,'.3f')
         bold_max = r'\textbf{' + max_number + '}'
         #
         #string[index] = string[index].replace(f'{max_number}',f'\textbf{ {max_number} }') # Need to put spaces around otherwise it just shows max number
@@ -706,9 +719,13 @@ def bold_min_value(df,latex_table):
     for index in range(len(string)):
         numbers = re.findall("\d+\.\d+", string[index]) # fnd all the numbers in the substring (gets rid of the &)
         #max_number = max(numbers,key=lambda x:float(x))
-
-        min_number = float(min(numbers,key=lambda x:format(float(x),'.3f'))) #  Need to get the output as a float
-        min_number = format(min_number,'.3f')
+        if rounding_value ==2:
+            min_number = float(min(numbers,key=lambda x:format(float(x),'.2f'))) #  Need to get the output as a float
+            min_number = format(min_number,'.2f')
+        elif rounding_value ==3:
+            min_number = float(min(numbers,key=lambda x:format(float(x),'.3f'))) #  Need to get the output as a float
+            min_number = format(min_number,'.3f')
+            
         bold_min = r'\textbf{' + min_number + '}'
         #min_number = float(min(numbers,key=lambda x:float(x))) #  Need to get the output as a float
         #string[index] = string[index].replace(f'{max_number}',f'\textbf{ {max_number} }') # Need to put spaces around otherwise it just shows max number

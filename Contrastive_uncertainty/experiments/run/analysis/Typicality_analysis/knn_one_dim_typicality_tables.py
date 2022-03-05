@@ -21,11 +21,11 @@ import re
 import copy
 
 from Contrastive_uncertainty.experiments.run.analysis.analysis_utils import add_baseline_names_row, collated_baseline_post_process_latex_table, combine_multiple_tables, dataset_dict, key_dict, ood_dataset_string, post_process_latex_table,full_post_process_latex_table, remove_hline_processing, separate_top_columns, single_baseline_post_process_latex_table, collated_multiple_baseline_post_process_latex_table,combine_multiple_tables, separate_columns, separate_top_columns, update_double_col_table, update_headings_additional,\
-    collated_multiple_baseline_post_process_latex_table_insignificance, separate_ID_datasets
+    collated_multiple_baseline_post_process_latex_table_insignificance, separate_ID_datasets,rounding_value
 
 def knn_vector(json_data):
     data = np.array(json_data['data'])
-    knn_values = np.around(data,decimals=3)
+    knn_values = np.around(data,decimals=rounding_value)
     return knn_values
 
 
@@ -210,7 +210,7 @@ def knn_auroc_table_mean():
                 count_array[data_index,1] += 1
                 row_names[data_index] = f'ID:{ID_dataset}, OOD:{OOD_dataset}' 
         #
-        data_array = np.round(data_array/count_array,decimals=3)    
+        data_array = np.round(data_array/count_array,decimals=rounding_value)    
         column_names = ['Mahalanobis', f'Quadratic {fixed_k} NN',]
         auroc_df = pd.DataFrame(data_array,columns = column_names, index=row_names)
         
@@ -933,7 +933,7 @@ def obtain_knn_value(desired_string,summary,OOD_dataset):
     keys = [key for key, value in summary.items() if desired_string in key.lower()]
     # Need to split the key so that I can remove the datasets where the name is part of another name eg MNIST and KMNIST, or CIFAR10 and CIFAR100
     ood_dataset_specific_key = [key for key in keys if OOD_dataset.lower() in str.split(key.lower())]
-    knn_output = round(summary[ood_dataset_specific_key[0]],3)
+    knn_output = round(summary[ood_dataset_specific_key[0]],rounding_value)
     return knn_output
 
 # General function to obtain the baseline value
@@ -946,7 +946,7 @@ def obtain_baseline(desired_string, summary,OOD_dataset):
     # get the specific mahalanobis keys for the specific OOD dataset
     OOD_dataset_specific_key = [key for key in keys if OOD_dataset.lower() in str.split(key.lower())]
     
-    baseline_output = round(summary[OOD_dataset_specific_key[0]],3)
+    baseline_output = round(summary[OOD_dataset_specific_key[0]],rounding_value)
     
     return baseline_output
 
@@ -1037,6 +1037,6 @@ if __name__== '__main__':
     
     
     
-    knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['ODIN','Mahalanobis'], baseline_model_types = ['CE','CE'],dataset_type ='RGB',t_test='less',rounding=3)
+    knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['ODIN','Mahalanobis'], baseline_model_types = ['CE','CE'],dataset_type ='RGB',t_test='less',rounding=rounding_value)
     #knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['NN Marginal Quadratic','NN Quadratic Single','NN All Dim Class'], baseline_model_types = ['SupCon','SupCon','SupCon'],dataset_type ='RGB',t_test='less')
     #knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['NN All Dim Class'], baseline_model_types = ['SupCon'],dataset_type ='RGB',t_test='two-sided')
