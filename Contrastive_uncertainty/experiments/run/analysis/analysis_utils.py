@@ -615,7 +615,8 @@ def update_headings_additional(latex_table):
 
     heading_key = '\|.+\|' 
     original_headings = re.findall(heading_key, latex_table)[0]
-    updated_headings = 'c'*(columns+1)
+    #updated_headings = 'c'*(columns+1)
+    updated_headings = 'l'*(columns+1)
     latex_table = latex_table.replace(original_headings, updated_headings)
     return latex_table
 
