@@ -1,4 +1,6 @@
+from bdb import set_trace
 from importlib.resources import path
+from socket import IP_DEFAULT_MULTICAST_LOOP, IP_DROP_MEMBERSHIP
 from types import LambdaType
 from numpy.core.defchararray import join, split
 import wandb
@@ -661,7 +663,86 @@ def replace_headings_collated_table(latex_table):
     #updated_headings = '|p{3cm}|' + 'c|'*columns +'}' # obtain the updated headings from the number of columns which have been concatenated
     latex_table = latex_table.replace(original_headings,updated_headings)
     return latex_table
-     
+
+# removes the column from the initial part of the table
+
+# Based on https://www.youtube.com/watch?v=K8L6KVGG-7o
+def remove_column(latex_table):
+    #val = re.search(['\begin{tabular}]',latex_table)
+    
+    #insignificance_strings = re.findall('&\s+[^ 0].+\\\\\n',latex_table_insignificance) # Need to place a space between the ^ to show that the string should not be used 
+    #pattern = re.compile(r'\{.+\}')
+    
+    #pattern = re.compile(r'\{l.+\}')
+    # obtain tabu
+    tabular_string = obtain_tabular_heading(latex_table)
+    num_columns, column_alignment = obtain_type_num_columns(tabular_string)
+    # change number of columns for tabular
+    updated_tabular_string = r'{tabular}{' + column_alignment*(num_columns-1) + '}'
+    latex_table = latex_table.replace(tabular_string, updated_tabular_string)
+    
+    # Lower the values for cmidrule
+    latex_table = lower_cmidrule(latex_table)
+    return latex_table
+    #for i in matches:
+        
+# Used to obtain the headingsi
+def obtain_tabular_heading(latex_table):
+    pattern_string = r'\{tabular\}\{.+\}'
+    tabular_string = obtain_first_occurence(latex_table,pattern_string)
+    return tabular_string
+
+
+def obtain_type_num_columns(tabular_string):
+    '''
+    Input: tabular string with {tabular}{xxxx}
+    return: 
+        num_columns -number of columns,
+        x - what letter x corresponds to 
+    '''
+    # obtain the number of columns
+    pattern_string = r'\{[lc].+\}'
+    column_string = obtain_first_occurence(tabular_string,pattern_string)
+
+    column_string = column_string[1:-1] # remove the first and the last elements to remove the brackets
+    num_columns = len(column_string)
+    column_alignment = column_string[0]
+    return num_columns, column_alignment
+
+def lower_cmidrule(latex_table):
+    ''' 
+    input : latex_table - initial latex table
+    output: latex_table - updated latex table with the cmid values lowered
+    '''
+    #pattern = re.compile(r'\{tabular\}\{.+\}')
+    pattern_string = r'\\cmidrule.+\{.+\}'
+    desired_string = obtain_first_occurence(latex_table,pattern_string)
+    # Get the number for the columns
+    #subpattern_string = r'\{.+\}'
+    subpattern_string = '\d.+\d'
+    digit_substring = obtain_first_occurence(desired_string,subpattern_string)
+    lower_value, upper_value  = int(digit_substring[0]), int(digit_substring[-1])
+    
+    updated_lower_value = lower_value -1 # lower the value by 1 for the lower and the upper value
+    updated_upper_value = upper_value - 1
+
+    updated_desired_string = desired_string.replace(str(lower_value),str(updated_lower_value))
+    updated_desired_string = updated_desired_string.replace(str(upper_value),str(updated_upper_value))
+
+    latex_table = latex_table.replace(desired_string, updated_desired_string)
+    
+    return latex_table
+
+# Obtain first occurence of a pattern in a string
+def obtain_first_occurence(string, pattern_string):
+    pattern = re.compile(pattern_string)
+    matches = pattern.finditer(string)
+    value = next(matches) # get the ifrst item of the iterable
+    output_string = value.group() # Gets the specific string corresponding to the object
+
+    return output_string
+
+
 
 # replace nth entry of sub in a text (txt) and join the different values together using replace (replace) - based from https://stackoverflow.com/questions/35091557/replace-nth-occurrence-of-substring-in-string
 def replace_nth(sub,repl,txt,nth):

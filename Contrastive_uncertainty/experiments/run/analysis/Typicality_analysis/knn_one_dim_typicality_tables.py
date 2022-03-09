@@ -21,7 +21,7 @@ import re
 import copy
 
 from Contrastive_uncertainty.experiments.run.analysis.analysis_utils import add_baseline_names_row, collated_baseline_post_process_latex_table, combine_multiple_tables, dataset_dict, key_dict, ood_dataset_string, post_process_latex_table,full_post_process_latex_table, remove_hline_processing, separate_top_columns, single_baseline_post_process_latex_table, collated_multiple_baseline_post_process_latex_table,combine_multiple_tables, separate_columns, separate_top_columns, update_double_col_table, update_headings_additional,\
-    collated_multiple_baseline_post_process_latex_table_insignificance, separate_ID_datasets,rounding_value
+    collated_multiple_baseline_post_process_latex_table_insignificance, separate_ID_datasets,rounding_value,remove_column
 
 def knn_vector(json_data):
     data = np.array(json_data['data'])
@@ -834,7 +834,11 @@ def knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desir
     combined_table = separate_ID_datasets(combined_table) # Used to add a line between the ID datasets
     
 
+
+    # Additional lines ot make it so that I can remove additional colummns
+    remove_column(combined_table)
     print(combined_table)
+    
     #new_table = re.sub("\s\s+", " ", combined_table)
     #
     '''
