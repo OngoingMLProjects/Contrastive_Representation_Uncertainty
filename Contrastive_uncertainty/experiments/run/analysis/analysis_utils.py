@@ -683,15 +683,25 @@ def remove_column(latex_table):
     
     # Lower the values for cmidrule
     latex_table = lower_cmidrule(latex_table)
+    latex_table = obtain_ID_midrule(latex_table)
+    latex_table = obtain_ID_hline(latex_table)
+    latex_table = remove_additional_ampersans(latex_table)
+    latex_table = fix_svhn(latex_table) #  change SVHN to OOD SVHN
     return latex_table
     #for i in matches:
-        
+
+# Used to get the number of columns directly from the latex table
+def obtain_num_columns(latex_table):
+    tabular_string = obtain_tabular_heading(latex_table)
+    num_columns, _ = obtain_type_num_columns(tabular_string)     
+    return num_columns
+
+
 # Used to obtain the headingsi
 def obtain_tabular_heading(latex_table):
     pattern_string = r'\{tabular\}\{.+\}'
     tabular_string = obtain_first_occurence(latex_table,pattern_string)
     return tabular_string
-
 
 def obtain_type_num_columns(tabular_string):
     '''
@@ -730,9 +740,123 @@ def lower_cmidrule(latex_table):
     updated_desired_string = updated_desired_string.replace(str(upper_value),str(updated_upper_value))
 
     latex_table = latex_table.replace(desired_string, updated_desired_string)
+ 
+    return latex_table
+
+def obtain_ID_midrule(latex_table):
+    #pattern_string =  r'cmidrule.+\s.+[&]'
+    #Based on  https://stackoverflow.com/questions/7124778/how-to-match-anything-up-until-this-sequence-of-characters-in-a-regular-expres
+    pattern_string =  r'cmidrule.+\s.+?&'
+    desired_string = obtain_first_occurence(latex_table,pattern_string)
+
+    # gets the digit
+    subpattern_string = '\d.+\d'    
+    digit_substring = obtain_first_occurence(desired_string,subpattern_string)
+    lower_value, upper_value  = int(digit_substring[0]), int(digit_substring[-1])
+    
+    
+    ID_dataset_pattern_string = r'\n.+?\s'
+    ID_dataset = obtain_first_occurence(desired_string,ID_dataset_pattern_string) # Gets the ID dataset including \n in front and space at the end
+    processed_ID_dataset = ID_dataset[2:-1] # removes the \n and space at the end 
+    # obtain the output related to the particular area of interest
+            
+    #updated_string = r'\n\multicolumn{' +f'{upper_value}' +r'}{L}{ID:'+ processed_ID_dataset+ r'} \\ \n\midrule'
+
+    # Need to use r' ' when using \ as a string literal however when it is a new line, need to use the other function of intereset
+    updated_string = '\n'+r'\multicolumn{' +f'{upper_value}' +r'}{L}{ID:'+ processed_ID_dataset+ r'} \\'+ '\n'#+r'\midrule' + '\n'
+
+    # Removing the ID dataset string
+    removal_ID_dataset_pattern_string = r'\n.+' # includes the & with the Id dataset name 
+    removing_ID_dataset = obtain_first_occurence(desired_string,removal_ID_dataset_pattern_string)
+    updated_desired_string = desired_string.replace(removing_ID_dataset,updated_string)
+    latex_table = replace_nth(desired_string, updated_desired_string,latex_table, 1)
+    return latex_table
+
+# obtain the ID dataset for the situation wehre there is hline present
+def obtain_ID_hline(latex_table):
+    #Based on  https://stackoverflow.com/questions/7124778/how-to-match-anything-up-until-this-sequence-of-characters-in-a-regular-expres
+    
+    pattern_string =  r'hline.+?&'
+    desired_strings = re.findall(pattern_string,latex_table) # finds all hline 'dataset' &
+    ID_pattern_string = r'(CIFAR100|CIFAR10|Caltech256|TinyImageNet)'
+    num_columns = obtain_num_columns(latex_table)
+    for desired_string in desired_strings:
+        ID_dataset = obtain_first_occurence(desired_string,ID_pattern_string)
+        updated_desired_string = 'hline'+'\n'+r'\multicolumn{' +f'{num_columns}' +r'}{L}{ID:'+ ID_dataset+ r'} \\'+ '\n'
+        latex_table = replace_nth(desired_string, updated_desired_string,latex_table, 1)
     
     return latex_table
 
+def remove_additional_ampersans(latex_table):
+    
+    #pattern_string =  r'\\\s+?&'
+    pattern_string =  r'\\\s+?&'
+    desired_strings = re.findall(pattern_string,latex_table) # finds all hline 'dataset' &
+    for desired_string in desired_strings:
+        updated_desired_string = desired_string[:-1] + 'OOD:' # removes the ampersan    
+        latex_table = replace_nth(desired_string, updated_desired_string,latex_table, 1)
+    
+    return latex_table
+    
+# post hoc hack to add OOD before svhn
+def fix_svhn(latex_table):
+    #pattern_string =  r'\\\s+(SVHN)'
+    #pattern_string =  '\n\s.+'
+    #pattern_string =  '\n\s+?(SVHN)'#+(SVHN)'
+    pattern_string =  r'SVHN'
+    
+
+    # Look at using a recurstive string to continously add the different pats
+    '''
+    split_string = '\hline'
+    latex_table_splits = latex_table.split(split_string)
+    recursive_string = '' # initialise empty string
+    for index in range(len(latex_table_splits)):
+        if index == 0:
+            recursive_string = recursive_string +latex_table_splits[index] + '\n'+r'\toprule'
+        elif index == 1:
+            recursive_string = recursive_string +latex_table_splits[index] + '\n'+ r'\midrule'
+        elif index == len(latex_table_splits)-1:
+            recursive_string = recursive_string + '\n'+  r'\bottomrule' +latex_table_splits[index] 
+        else:
+            recursive_string = recursive_string + latex_table_splits[index]
+
+    '''
+    
+    desired_strings = re.findall(pattern_string,latex_table) # finds all hline 'dataset' &
+    import ipdb; ipdb.set_trace()
+    for desired_string in desired_strings:
+        updated_desired_string = r'\\' +'\n' +'OOD: SVHN'
+        #updated_desired_string = r'OOD: SVHN' 
+        latex_table = replace_nth(desired_string, updated_desired_string,latex_table, 1) 
+    import ipdb; ipdb.set_trace()
+    return latex_table
+    
+    #desired_string = obtain_first_occurence(latex_table,pattern_string)
+    #latex_table = replace_nth(desired_string, updated_desired_string,latex_table, 1)
+
+    
+    
+    
+    
+    '''
+    desired_string = obtain_first_occurence(latex_table,pattern_string)
+
+    # Used to get a specific group
+    ID_pattern_string = r'(CIFAR100|CIFAR10|Caltech256|TinyImageNet)' # Used to get all the different ID dataset, CIFAR100 placed befrore CIFAR10 to prevent getting CIFAR10 before CIFRA1
+    ID_dataset = obtain_first_occurence(desired_string,ID_pattern_string)
+    
+    # get the number of columns present
+    num_columns = obtain_num_columns(latex_table)
+    updated_desired_string = 'hline'+'\n'+r'\multicolumn{' +f'{num_columns}' +r'}{L}{ID:'+ ID_dataset+ r'} \\'+ '\n'
+
+    latex_table = replace_nth(desired_string, updated_desired_string,latex_table, 1)
+
+    
+    import ipdb; ipdb.set_trace()
+    '''
+
+    
 # Obtain first occurence of a pattern in a string
 def obtain_first_occurence(string, pattern_string):
     pattern = re.compile(pattern_string)
@@ -741,7 +865,6 @@ def obtain_first_occurence(string, pattern_string):
     output_string = value.group() # Gets the specific string corresponding to the object
 
     return output_string
-
 
 
 # replace nth entry of sub in a text (txt) and join the different values together using replace (replace) - based from https://stackoverflow.com/questions/35091557/replace-nth-occurrence-of-substring-in-string

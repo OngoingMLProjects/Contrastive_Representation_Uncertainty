@@ -837,6 +837,7 @@ def knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desir
 
     # Additional lines ot make it so that I can remove additional colummns
     remove_column(combined_table)
+    
     print(combined_table)
     
     #new_table = re.sub("\s\s+", " ", combined_table)
@@ -1023,7 +1024,7 @@ if __name__== '__main__':
     #knn_table_collated_v2(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['Mahalanobis'], baseline_model_types = ['SupCon'],dataset_type ='RGB')
     
     
-    
+
     #knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['Softmax','Mahalanobis'], baseline_model_types = ['CE','CE'],dataset_type ='RGB',t_test='less')
     #knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desired_model_type = 'CE', baseline_approaches = ['Mahalanobis'], baseline_model_types = ['CE'],dataset_type ='RGB',t_test='two-sided')
     #knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['Mahalanobis'], baseline_model_types = ['SupCon'],dataset_type ='RGB',t_test='two-sided')
