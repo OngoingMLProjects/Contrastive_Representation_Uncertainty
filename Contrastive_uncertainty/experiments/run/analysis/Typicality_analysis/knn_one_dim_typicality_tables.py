@@ -833,10 +833,8 @@ def knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desir
     combined_table = update_double_col_table(combined_table)
     combined_table = separate_ID_datasets(combined_table) # Used to add a line between the ID datasets
     
-
-
     # Additional lines ot make it so that I can remove additional colummns
-    remove_column(combined_table)
+    combined_table = remove_column(combined_table)
     
     print(combined_table)
     
@@ -1041,7 +1039,8 @@ if __name__== '__main__':
 
     
     
+    knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['Softmax','ODIN','Mahalanobis'], baseline_model_types = ['CE','CE','CE'],dataset_type ='RGB',t_test='less',rounding=rounding_value)
     
-    knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['ODIN','Mahalanobis'], baseline_model_types = ['CE','CE'],dataset_type ='RGB',t_test='less',rounding=rounding_value)
+    #knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['ODIN','Mahalanobis'], baseline_model_types = ['CE','CE'],dataset_type ='RGB',t_test='less',rounding=rounding_value)
     #knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['NN Marginal Quadratic','NN Quadratic Single','NN All Dim Class'], baseline_model_types = ['SupCon','SupCon','SupCon'],dataset_type ='RGB',t_test='less')
     #knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['NN All Dim Class'], baseline_model_types = ['SupCon'],dataset_type ='RGB',t_test='two-sided')

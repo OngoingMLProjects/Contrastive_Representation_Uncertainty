@@ -19,7 +19,7 @@ from decimal import *
 from Contrastive_uncertainty.general.datamodules.datamodule_dict import OOD_dict
 
 # global variable to be used to control the rounding of the data
-rounding_value = 3
+rounding_value = 2
 # For each ID dataset, it maps the dict to another value
 # FULL dataset dict
 '''
@@ -517,7 +517,6 @@ def separate_columns(latex_table):
     desired_ID_key = '\w+\:\w+\,'
     ID_string = re.findall(desired_ID_key,latex_table) # Obtains all the ID datasets
 
-
     updated_string = []
     current_ID = None
     previous_ID = None
@@ -687,6 +686,7 @@ def remove_column(latex_table):
     latex_table = obtain_ID_hline(latex_table)
     latex_table = remove_additional_ampersans(latex_table)
     latex_table = fix_svhn(latex_table) #  change SVHN to OOD SVHN
+    latex_table = replace_ID_OOD_Dataset(latex_table)
     return latex_table
     #for i in matches:
 
@@ -796,6 +796,14 @@ def remove_additional_ampersans(latex_table):
         updated_desired_string = desired_string[:-1] + 'OOD:' # removes the ampersan    
         latex_table = replace_nth(desired_string, updated_desired_string,latex_table, 1)
     
+    # Remove any occurence of 2 ampersans in a row
+    #pattern_string = r'&\s+&'
+    pattern_string = '&\s+&'
+    desired_string = obtain_first_occurence(latex_table,pattern_string)
+    updated_desired_string = '&'
+    latex_table = replace_nth(desired_string,updated_desired_string,latex_table, 1)
+    
+
     return latex_table
     
 # post hoc hack to add OOD before svhn
@@ -805,56 +813,27 @@ def fix_svhn(latex_table):
     #pattern_string =  '\n\s+?(SVHN)'#+(SVHN)'
     pattern_string =  r'SVHN'
     
+    #pattern_string = r'n\s+SVHN'# This did not work for some reason
 
-    # Look at using a recurstive string to continously add the different pats
-    '''
-    split_string = '\hline'
-    latex_table_splits = latex_table.split(split_string)
-    recursive_string = '' # initialise empty string
-    for index in range(len(latex_table_splits)):
-        if index == 0:
-            recursive_string = recursive_string +latex_table_splits[index] + '\n'+r'\toprule'
-        elif index == 1:
-            recursive_string = recursive_string +latex_table_splits[index] + '\n'+ r'\midrule'
-        elif index == len(latex_table_splits)-1:
-            recursive_string = recursive_string + '\n'+  r'\bottomrule' +latex_table_splits[index] 
-        else:
-            recursive_string = recursive_string + latex_table_splits[index]
-
-    '''
-    
+    pattern_string = r'\s+SVHN'
     desired_strings = re.findall(pattern_string,latex_table) # finds all hline 'dataset' &
-    import ipdb; ipdb.set_trace()
+    
     for desired_string in desired_strings:
-        updated_desired_string = r'\\' +'\n' +'OOD: SVHN'
+        updated_desired_string =  '\n ' +'OOD: SVHN'
         #updated_desired_string = r'OOD: SVHN' 
         latex_table = replace_nth(desired_string, updated_desired_string,latex_table, 1) 
-    import ipdb; ipdb.set_trace()
+    #import ipdb; ipdb.set_trace()
     return latex_table
-    
-    #desired_string = obtain_first_occurence(latex_table,pattern_string)
-    #latex_table = replace_nth(desired_string, updated_desired_string,latex_table, 1)
 
-    
-    
-    
-    
-    '''
+# Replace ID & OOD with dataset
+def replace_ID_OOD_Dataset(latex_table):
+    pattern_string =  r'ID\s+&\s+OOD'
     desired_string = obtain_first_occurence(latex_table,pattern_string)
+    updated_string = 'Dataset' 
+    latex_table = replace_nth(desired_string,updated_string,latex_table,1)
+    return latex_table
 
-    # Used to get a specific group
-    ID_pattern_string = r'(CIFAR100|CIFAR10|Caltech256|TinyImageNet)' # Used to get all the different ID dataset, CIFAR100 placed befrore CIFAR10 to prevent getting CIFAR10 before CIFRA1
-    ID_dataset = obtain_first_occurence(desired_string,ID_pattern_string)
-    
-    # get the number of columns present
-    num_columns = obtain_num_columns(latex_table)
-    updated_desired_string = 'hline'+'\n'+r'\multicolumn{' +f'{num_columns}' +r'}{L}{ID:'+ ID_dataset+ r'} \\'+ '\n'
 
-    latex_table = replace_nth(desired_string, updated_desired_string,latex_table, 1)
-
-    
-    import ipdb; ipdb.set_trace()
-    '''
 
     
 # Obtain first occurence of a pattern in a string
