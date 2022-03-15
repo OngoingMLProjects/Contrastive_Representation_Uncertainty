@@ -339,9 +339,13 @@ def collated_multiple_baseline_post_process_latex_table_insignificance(df_auroc,
     latex_table_aupr = join_multiple_columns(latex_table_aupr,'AUPR')
     latex_table_fpr = join_multiple_columns(latex_table_fpr,'FPR')
 
+    
     latex_table = join_different_columns(latex_table_auroc,latex_table_aupr) # joins the auroc and aupr table together
     latex_table = join_different_columns(latex_table, latex_table_fpr) # joins the auroc+aupr table with the fpr table
+    
+    #latex_table = join_different_columns(latex_table_auroc,latex_table_fpr) # joins the auroc and aupr table together
     latex_table = replace_headings_collated_table(latex_table) # replaces the heading to take into account the collated readings
+    
     latex_table = post_process_latex_table(latex_table)
     latex_table = initial_table_info(latex_table)
     latex_table = add_caption(latex_table,caption)
@@ -432,14 +436,16 @@ def combine_multiple_tables(latex_tables,caption,label): # Several latex tables
     # Add caption
     # Add label
     # Add table info
-
+    pattern_string = r'\s{Datasets}.+line\s'
+    desired_string = obtain_first_occurence(latex_tables[0],pattern_string)
     combined_table=''
     for i,latex_table in enumerate(latex_tables):
         if i ==0:
             latex_table =latex_table.split("\n\\end{tabular}")[0]  # Get the first section before end tabular
             combined_table = combined_table+latex_table # build the string
         else:
-            latex_table = latex_table.split("\n{Datasets} & AUROC & AUPR & FPR \\\\ \\hline\n")[1] # split the beginning and get second half 
+            latex_table = latex_table.split(desired_string)[1]
+            #latex_table = latex_table.split("\n{Datasets} & AUROC & AUPR & FPR \\\\ \\hline\n")[1] # split the beginning and get second half 
             latex_table = latex_table.split("\n\\end{tabular}")[0] #  split at the end and get the first part
             combined_table = combined_table + latex_table
     
@@ -563,10 +569,17 @@ def add_baseline_names_row(latex_table,baselines):
     baseline_names = ''
     for i in range(len(baselines)):
         baseline_names = baseline_names + baselines[i] + '/'
+    pattern_string = r'ID.+line\s'
+    split_string = obtain_first_occurence(latex_table,pattern_string) # More generic way of obtaining the split string
+    #split_string = "ID & OOD & AUROC & AUPR & FPR \\\\ \\hline\n"
 
-    split_string = "ID & OOD & AUROC & AUPR & FPR \\\\ \\hline\n"
+    num_metrics = obtain_num_metrics(latex_table)
+    
     latex_table_splits = latex_table.split(split_string)
-    additional_string = r'&   & \multicolumn{3}{c}' + '{' + f'{baseline_names}1D Typicality'+ r'} \\' + '\n\cmidrule(lr){3-5}'
+    #additional_string = r'&   & \multicolumn{3}{c}' + '{' + f'{baseline_names}1D Typicality'+ r'} \\' + '\n\cmidrule(lr){3-5}'
+    
+    additional_string = r'&   & \multicolumn{' f'{num_metrics}' +'}' +r'{c}{' + f'{baseline_names}1D Typicality'+ r'} \\' + '\n\cmidrule(lr){3-' f'{2+num_metrics}' +'}'
+    
     #additional_string = r'&   & \multicolumn{3}{c}{MSP/ Mahalanobis/ 1D Typicality} \\' + '\n\cmidrule(lr){3-5}'
     latex_table = latex_table_splits[0] + split_string + additional_string + latex_table_splits[1]        
     return latex_table
@@ -589,11 +602,23 @@ def add_model_names_row(latex_table,baseline_models, desired_model):
     for i in range(len(baseline_models)):
         baseline_names = baseline_names + baseline_models[i] + '/'
 
-    split_string = "ID & OOD & AUROC & AUPR & FPR \\\\ \\hline\n"
+    pattern_string = r'ID.+line\s'
+    
+    split_string = obtain_first_occurence(latex_table,pattern_string) # More generic way of obtaining the split string
+    #split_string = "ID & OOD & AUROC & AUPR & FPR \\\\ \\hline\n"
     latex_table_splits = latex_table.split(split_string)
-    additional_string = r'&   & \multicolumn{3}{c}' + '{' + f'{baseline_names}{desired_model}'+ r'} \\' + '\n\cmidrule(lr){3-5}'
+    
+    num_metrics = obtain_num_metrics(latex_table)
+
+    #additional_string = r'&   & \multicolumn{3}{c}' + '{' + f'{baseline_names}{desired_model}'+ r'} \\' + '\n\cmidrule(lr){3-5}'
+
+    additional_string = r'&   & \multicolumn{' f'{num_metrics}' +r'{c}{' + f'{baseline_names}{desired_model}'+ r'} \\' + '\n\cmidrule(lr){2-' f'{2+num_metrics}' +'}'
+
+
     #additional_string = r'&   & \multicolumn{3}{c}{MSP/ Mahalanobis/ 1D Typicality} \\' + '\n\cmidrule(lr){3-5}'
+    
     latex_table = latex_table_splits[0] + split_string + additional_string + latex_table_splits[1]        
+    
     return latex_table
     
     # perform regex to get the first column of interest
@@ -695,6 +720,12 @@ def obtain_num_columns(latex_table):
     tabular_string = obtain_tabular_heading(latex_table)
     num_columns, _ = obtain_type_num_columns(tabular_string)     
     return num_columns
+# Used to calculate the number of metrics present
+def obtain_num_metrics(latex_table): 
+    pattern_string = r'(AUROC|AUPR|FPR).+line'
+    desired_string=obtain_first_occurence(latex_table,pattern_string)
+    num_metrics = desired_string.count('&') +1 # Need to add one as it counts the number of & present which does not take into account t
+    return num_metrics
 
 
 # Used to obtain the headingsi
@@ -702,6 +733,9 @@ def obtain_tabular_heading(latex_table):
     pattern_string = r'\{tabular\}\{.+\}'
     tabular_string = obtain_first_occurence(latex_table,pattern_string)
     return tabular_string
+
+#def obtain_num_metrics(latex_table):
+
 
 def obtain_type_num_columns(tabular_string):
     '''
@@ -822,7 +856,6 @@ def fix_svhn(latex_table):
         updated_desired_string =  '\n ' +'OOD: SVHN'
         #updated_desired_string = r'OOD: SVHN' 
         latex_table = replace_nth(desired_string, updated_desired_string,latex_table, 1) 
-    #import ipdb; ipdb.set_trace()
     return latex_table
 
 # Replace ID & OOD with dataset
