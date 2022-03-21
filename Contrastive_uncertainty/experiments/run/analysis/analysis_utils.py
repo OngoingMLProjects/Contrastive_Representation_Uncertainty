@@ -1,6 +1,7 @@
 from bdb import set_trace
 from importlib.resources import path
 from socket import IP_DEFAULT_MULTICAST_LOOP, IP_DROP_MEMBERSHIP
+from turtle import update
 from types import LambdaType
 from numpy.core.defchararray import join, split
 import wandb
@@ -19,7 +20,7 @@ from decimal import *
 from Contrastive_uncertainty.general.datamodules.datamodule_dict import OOD_dict
 
 # global variable to be used to control the rounding of the data
-rounding_value = 2
+rounding_value = 3
 # For each ID dataset, it maps the dict to another value
 # FULL dataset dict
 '''
@@ -340,10 +341,13 @@ def collated_multiple_baseline_post_process_latex_table_insignificance(df_auroc,
     latex_table_fpr = join_multiple_columns(latex_table_fpr,'FPR')
 
     
+    '''
     latex_table = join_different_columns(latex_table_auroc,latex_table_aupr) # joins the auroc and aupr table together
     latex_table = join_different_columns(latex_table, latex_table_fpr) # joins the auroc+aupr table with the fpr table
+    '''
     
-    #latex_table = join_different_columns(latex_table_auroc,latex_table_fpr) # joins the auroc and aupr table together
+    latex_table = join_different_columns(latex_table_auroc,latex_table_fpr) # joins the auroc and aupr table together
+    
     latex_table = replace_headings_collated_table(latex_table) # replaces the heading to take into account the collated readings
     
     latex_table = post_process_latex_table(latex_table)
@@ -625,6 +629,22 @@ def add_model_names_row(latex_table,baseline_models, desired_model):
     # append the regex column with the column of interest to get the data
 # Remove each of the different hlines
 
+# Make a line which can be used to separate the different metrics of the data
+def line_columns(latex_table):
+    #num_metrics = obtain_num_metrics(latex_table)
+
+    pattern_string = '{(l|c)+}' # used to take into accoun the situation where there are different values present 
+    desired_string= obtain_first_occurence(latex_table,pattern_string)
+    columns_only = desired_string[1:-1] # remove the brackets 
+    updated_desired_string = '| '.join(columns_only[i:i + 1] for i in range(0, len(columns_only)))
+    updated_desired_string = '{' + updated_desired_string + '}'
+    latex_table = latex_table.replace(desired_string, updated_desired_string)
+    return latex_table
+
+    
+
+
+
 def remove_hline_processing(latex_table):
     split_string = '\hline'
     latex_table_splits = latex_table.split(split_string)
@@ -712,6 +732,7 @@ def remove_column(latex_table):
     latex_table = remove_additional_ampersans(latex_table)
     latex_table = fix_svhn(latex_table) #  change SVHN to OOD SVHN
     latex_table = replace_ID_OOD_Dataset(latex_table)
+    latex_table = line_columns(latex_table)
     return latex_table
     #for i in matches:
 
@@ -722,7 +743,8 @@ def obtain_num_columns(latex_table):
     return num_columns
 # Used to calculate the number of metrics present
 def obtain_num_metrics(latex_table): 
-    pattern_string = r'(AUROC|AUPR|FPR).+line'
+    #pattern_string = r'(AUROC|AUPR|FPR).+line'
+    pattern_string = '(AUROC|AUPR|FPR).+(line|\n)' # used to take into accoun the situation where there are different values present 
     desired_string=obtain_first_occurence(latex_table,pattern_string)
     num_metrics = desired_string.count('&') +1 # Need to add one as it counts the number of & present which does not take into account t
     return num_metrics
@@ -791,7 +813,7 @@ def obtain_ID_midrule(latex_table):
     
     ID_dataset_pattern_string = r'\n.+?\s'
     ID_dataset = obtain_first_occurence(desired_string,ID_dataset_pattern_string) # Gets the ID dataset including \n in front and space at the end
-    processed_ID_dataset = ID_dataset[2:-1] # removes the \n and space at the end 
+    processed_ID_dataset = ID_dataset[1:-1] # removes the \n and space at the end 
     # obtain the output related to the particular area of interest
             
     #updated_string = r'\n\multicolumn{' +f'{upper_value}' +r'}{L}{ID:'+ processed_ID_dataset+ r'} \\ \n\midrule'
