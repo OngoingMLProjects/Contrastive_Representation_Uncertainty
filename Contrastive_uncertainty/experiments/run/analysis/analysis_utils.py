@@ -1,6 +1,10 @@
 from bdb import set_trace
+from dataclasses import replace
+from distutils.log import error
 from importlib.resources import path
 from socket import IP_DEFAULT_MULTICAST_LOOP, IP_DROP_MEMBERSHIP
+from tempfile import TemporaryFile
+from tkinter import E
 from turtle import update
 from types import LambdaType
 from numpy.core.defchararray import join, split
@@ -631,19 +635,54 @@ def add_model_names_row(latex_table,baseline_models, desired_model):
 
 # Make a line which can be used to separate the different metrics of the data
 def line_columns(latex_table):
-    #num_metrics = obtain_num_metrics(latex_table)
+    num_metrics = obtain_num_metrics(latex_table)
 
     pattern_string = '{(l|c)+}' # used to take into accoun the situation where there are different values present 
     desired_string= obtain_first_occurence(latex_table,pattern_string)
+    updated_string = copy.deepcopy(desired_string)
+    for i, value in enumerate(range(num_metrics,0,-1)):
+        if value == 1:
+            pass
+        else:
+            updated_string = updated_string[:-value] + '|' + updated_string[-value:]
+
+    latex_table = latex_table.replace(desired_string, updated_string)
+    '''
     columns_only = desired_string[1:-1] # remove the brackets 
     updated_desired_string = '| '.join(columns_only[i:i + 1] for i in range(0, len(columns_only)))
     updated_desired_string = '{' + updated_desired_string + '}'
     latex_table = latex_table.replace(desired_string, updated_desired_string)
     return latex_table
+    '''
 
+    return latex_table
+
+   
     
+def bold_titles(latex_table):
+    pattern_strings = ['Dataset','AUROC','AUPR','FPR','Softmax','ODIN','Mahalanobis','1D Typicality', 'ID:CIFAR10','ID:CIFAR100','ID:Caltech256','ID:TinyImageNet']
+    for pattern_string in pattern_strings:
+        try:
+            desired_string = obtain_first_occurence(latex_table,pattern_string)
+            updated_desired_string = r'\textbf{' +desired_string + '}'    
+            # Use replace nth
+            latex_table = replace_nth(desired_string,updated_desired_string,latex_table,1)
+            #latex_table = latex_table.replace(desired_string, updated_desired_string)
+        except:
+            error
+    return latex_table
+    '''
+    pattern_string = '(Dataset|AUROC|AUPR|FPR)'
 
 
+    desired_strings = re.findall(pattern_string,latex_table)
+    import ipdb; ipdb; ipdb.set_trace()
+    for desired_string in desired_strings:
+        updated_desired_string = r'\textbf{' +desired_string + '}'
+        latex_table = latex_table.replace(desired_string, updated_desired_string)
+
+    return latex_table
+    '''
 
 def remove_hline_processing(latex_table):
     split_string = '\hline'
@@ -733,6 +772,7 @@ def remove_column(latex_table):
     latex_table = fix_svhn(latex_table) #  change SVHN to OOD SVHN
     latex_table = replace_ID_OOD_Dataset(latex_table)
     latex_table = line_columns(latex_table)
+    latex_table = bold_titles(latex_table)
     return latex_table
     #for i in matches:
 
