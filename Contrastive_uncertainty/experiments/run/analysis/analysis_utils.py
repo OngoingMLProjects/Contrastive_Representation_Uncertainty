@@ -412,12 +412,13 @@ def asterix_significant_values(latex_table_values, latex_table_insignificance):
     concatenated_list = []
     # Recursive approach to prevent replacing values which appear multiple times
     recursive_string = copy.deepcopy(latex_table_values)
+    import ipdb; ipdb.set_trace()
     for index in range(len(value_strings)):
         # Break string into first part and second part (without value_strings[index])
         first_string, recursive_string = recursive_string.split(value_strings[index],1)
         # growing string
         first_string = first_string + value_strings[index] #  add the value_strings[index] nacl
-
+        import ipdb; ipdb.set_trace()
         # add asterisk and then remove whitespace
         value_only = re.findall(r'\\textbf{\d\.\d{rounding_value}}',value_strings[index])[0]
         
@@ -660,7 +661,8 @@ def line_columns(latex_table):
    
     
 def bold_titles(latex_table):
-    pattern_strings = ['Dataset','AUROC','AUPR','FPR','Softmax','ODIN','Mahalanobis','1D Typicality', 'ID:CIFAR10','ID:CIFAR100','ID:Caltech256','ID:TinyImageNet']
+    pattern_strings = ['Dataset','AUROC','AUPR','FPR','Softmax','ODIN','Mahalanobis','1D Typicality','1D Marginal Typicality','1D Single Typicality','Typicality All Dim', 'ID: CIFAR10','ID: CIFAR100','ID: Caltech256','ID: TinyImageNet']
+
     for pattern_string in pattern_strings:
         try:
             desired_string = obtain_first_occurence(latex_table,pattern_string)
@@ -859,7 +861,7 @@ def obtain_ID_midrule(latex_table):
     #updated_string = r'\n\multicolumn{' +f'{upper_value}' +r'}{L}{ID:'+ processed_ID_dataset+ r'} \\ \n\midrule'
 
     # Need to use r' ' when using \ as a string literal however when it is a new line, need to use the other function of intereset
-    updated_string = '\n'+r'\multicolumn{' +f'{upper_value}' +r'}{L}{ID:'+ processed_ID_dataset+ r'} \\'+ '\n'#+r'\midrule' + '\n'
+    updated_string = '\n'+r'\multicolumn{' +f'{upper_value}' +r'}{L}{ID: '+ processed_ID_dataset+ r'} \\'+ '\n'#+r'\midrule' + '\n'
 
     # Removing the ID dataset string
     removal_ID_dataset_pattern_string = r'\n.+' # includes the & with the Id dataset name 
@@ -878,7 +880,7 @@ def obtain_ID_hline(latex_table):
     num_columns = obtain_num_columns(latex_table)
     for desired_string in desired_strings:
         ID_dataset = obtain_first_occurence(desired_string,ID_pattern_string)
-        updated_desired_string = 'hline'+'\n'+r'\multicolumn{' +f'{num_columns}' +r'}{L}{ID:'+ ID_dataset+ r'} \\'+ '\n'
+        updated_desired_string = 'hline'+'\n'+r'\multicolumn{' +f'{num_columns}' +r'}{L}{ID: '+ ID_dataset+ r'} \\'+ '\n'
         latex_table = replace_nth(desired_string, updated_desired_string,latex_table, 1)
     
     return latex_table

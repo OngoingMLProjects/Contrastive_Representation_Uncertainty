@@ -629,13 +629,14 @@ def knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desir
 
                 'KDE':{'AUROC':'KDE AUROC OOD'.lower(),'AUPR':'KDE AUPR OOD'.lower(),'FPR':'KDE FPR OOD'.lower()},
 
-                'NN Marginal Quadratic':{'AUROC':'Normalized One Dim Marginal Quadratic Typicality KNN - 10 OOD -'.lower(),'AUPR':'Normalized One Dim Marginal Quadratic Typicality KNN - 10 AUPR OOD -'.lower(),'FPR':'Normalized One Dim Marginal Quadratic Typicality KNN - 10 FPR OOD -'.lower()},
+                '1D Marginal Typicality':{'AUROC':'Normalized One Dim Marginal Quadratic Typicality KNN - 10 OOD -'.lower(),'AUPR':'Normalized One Dim Marginal Quadratic Typicality KNN - 10 AUPR OOD -'.lower(),'FPR':'Normalized One Dim Marginal Quadratic Typicality KNN - 10 FPR OOD -'.lower()},
 
-                'NN Quadratic Single':{'AUROC':'Normalized One Dim Class Quadratic Typicality KNN - 1 OOD -'.lower(),'AUPR':'Normalized One Dim Class Quadratic Typicality KNN - 1 AUPR OOD -'.lower(),'FPR':'Normalized One Dim Class Quadratic Typicality KNN - 1 FPR OOD -'.lower()},
+                '1D Single Typicality':{'AUROC':'Normalized One Dim Class Quadratic Typicality KNN - 1 OOD -'.lower(),'AUPR':'Normalized One Dim Class Quadratic Typicality KNN - 1 AUPR OOD -'.lower(),'FPR':'Normalized One Dim Class Quadratic Typicality KNN - 1 FPR OOD -'.lower()},
 
-                'NN All Dim Class':{'AUROC':'Normalized All Dim Class Typicality KNN - 10 OOD -'.lower(),'AUPR':'Normalized All Dim Class Typicality KNN - 10 AUPR OOD -'.lower(),'FPR':'Normalized All Dim Class Typicality KNN - 10 FPR OOD -'.lower()},
+                'Typicality All Dim':{'AUROC':'Normalized All Dim Class Typicality KNN - 10 OOD -'.lower(),'AUPR':'Normalized All Dim Class Typicality KNN - 10 AUPR OOD -'.lower(),'FPR':'Normalized All Dim Class Typicality KNN - 10 FPR OOD -'.lower()},
 
                 }
+
 
     assert len(baseline_approaches) == len(baseline_model_types), 'number of baseline approaches do not match number of baseline models'
     num_baselines = len(baseline_approaches)
@@ -1039,8 +1040,13 @@ if __name__== '__main__':
 
     
     
-    knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['Softmax','ODIN','Mahalanobis'], baseline_model_types = ['CE','CE','CE'],dataset_type ='RGB',t_test='less',rounding=rounding_value)
-    
+     
     #knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['ODIN','Mahalanobis'], baseline_model_types = ['CE','CE'],dataset_type ='RGB',t_test='less',rounding=rounding_value)
     #knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['NN Marginal Quadratic','NN Quadratic Single','NN All Dim Class'], baseline_model_types = ['SupCon','SupCon','SupCon'],dataset_type ='RGB',t_test='less')
     #knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['NN All Dim Class'], baseline_model_types = ['SupCon'],dataset_type ='RGB',t_test='two-sided')
+
+    #knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['Typicality All Dim'], baseline_model_types = ['SupCon'],dataset_type ='RGB',t_test='two-sided')
+    knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['Typicality All Dim'], baseline_model_types = ['SupCon'],dataset_type ='RGB',t_test='less')
+    #knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['1D Marginal Typicality','1D Single Typicality'], baseline_model_types = ['SupCon','SupCon'],dataset_type ='RGB',t_test='less')
+    #knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['Softmax','ODIN','Mahalanobis'], baseline_model_types = ['CE','CE','CE'],dataset_type ='RGB',t_test='less',rounding=rounding_value)
+   
