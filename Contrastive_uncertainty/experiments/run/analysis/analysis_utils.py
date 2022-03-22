@@ -412,15 +412,17 @@ def asterix_significant_values(latex_table_values, latex_table_insignificance):
     concatenated_list = []
     # Recursive approach to prevent replacing values which appear multiple times
     recursive_string = copy.deepcopy(latex_table_values)
-    import ipdb; ipdb.set_trace()
     for index in range(len(value_strings)):
         # Break string into first part and second part (without value_strings[index])
         first_string, recursive_string = recursive_string.split(value_strings[index],1)
         # growing string
         first_string = first_string + value_strings[index] #  add the value_strings[index] nacl
-        import ipdb; ipdb.set_trace()
         # add asterisk and then remove whitespace
-        value_only = re.findall(r'\\textbf{\d\.\d{rounding_value}}',value_strings[index])[0]
+        if rounding_value == 2:
+            value_only = re.findall(r'\\textbf{\d\.\d{2}}',value_strings[index])[0]
+        elif rounding_value ==3:
+            value_only = re.findall(r'\\textbf{\d\.\d{3}}',value_strings[index])[0]
+        #value_only = re.findall(r'\\textbf{\d\.\d{rounding_value}}',value_strings[index])[0]
         
         bold_string = (value_only+'*') if 'False' in insignificance_strings[index] else value_only 
         # check if False is present in the insignificance string, to make it bold
@@ -432,9 +434,7 @@ def asterix_significant_values(latex_table_values, latex_table_insignificance):
     # at the end of the list(add on the remaining of the recursive string)
     concatenated_list.append(recursive_string)
     latex_table = ''.join(concatenated_list)
-    return latex_table
-
-    
+    return latex_table    
 
 # Used to combine tables from different datasets together
 def combine_multiple_tables(latex_tables,caption,label): # Several latex tables
