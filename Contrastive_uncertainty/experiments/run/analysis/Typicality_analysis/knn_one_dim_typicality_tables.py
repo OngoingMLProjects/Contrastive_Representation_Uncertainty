@@ -1,5 +1,6 @@
 # Code for making tables for the ID and OOD datasets
 
+from timeit import repeat
 from numpy.core.defchararray import count
 from pandas.core import base
 from torch.utils import data
@@ -996,12 +997,14 @@ def update_metric_list(metric_list,data_index,metric_function, metric_string, me
 # Used to calculate the metric when using a numpy array instead of a list
 def update_metric_array(metric_array,baseline_index,data_index,metric_function, metric_string, metric_model_type,run_model_type, summary, OOD_dataset,run_seed):
     #print('metric model type:',metric_model_type)
-    seeds = [25,50,75,100,125,150,175,200]
-    #seeds = [25,50,125,150,175,200]
+    #seeds = [25,50,75,100,125,150,175,200]
+    seeds = [25,50,125,150,175,200]
+    #seeds = [25,50,125]
     if metric_model_type == run_model_type and run_seed in seeds:
         metric_value = metric_function(metric_string,summary,OOD_dataset) # calculates the value
         repeat_index = seeds.index(run_seed)
-        
+        #print('repeat index',repeat_index)
+        #import ipdb; ipdb.set_trace()
         metric_array[baseline_index,data_index,repeat_index] = metric_value
         return metric_array
     else:
