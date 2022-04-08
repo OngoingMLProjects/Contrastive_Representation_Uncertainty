@@ -83,16 +83,16 @@ class MetricLogger(pl.Callback):
 
         super().__init__()
         self.metric_names = metric_names # Nawid - names of the metrics to compute
-        
-
         self.datamodule = datamodule
         
-        self.dataloader = self.datamodule.val_dataloader()
+        #self.dataloader = self.datamodule.val_dataloader()
+        self.dataloader = self.datamodule.test_dataloader()
         # Separate the val loader into two separate parts
         
-        if len(self.dataloader)> 1:
-            _, self.dataloader = self.dataloader
-        #
+        if isinstance(self.datamodule, list): # Checks if it is a list for the case of the val dataloader 
+            if len(self.dataloader)> 1:
+                _, self.dataloader = self.dataloader
+
         self.evaltypes = evaltypes
         self.quick_callback = quick_callback
         
@@ -102,13 +102,8 @@ class MetricLogger(pl.Callback):
         self.requires        = list(set([x for y in self.requires for x in y]))
 
     def compute_standard(self, trainer, pl_module):
-
-        
-        
-
         evaltypes = copy.deepcopy(self.evaltypes)
         n_classes = self.datamodule.num_classes
-
         pl_module.to(pl_module.device).eval()
 
         ###
@@ -299,6 +294,7 @@ class MetricLogger(pl.Callback):
                 #wandb.log({eval_metric:numeric_metrics[evaltype][eval_metric]})
                 #print('parent metric',parent_metric)
 
+    '''
     def on_validation_epoch_end(self,trainer,pl_module):
         self.metric_initialise(trainer,pl_module)
         self.evaluate_data(trainer,pl_module)
@@ -306,10 +302,16 @@ class MetricLogger(pl.Callback):
     def on_test_epoch_end(self,trainer,pl_module):
         self.metric_initialise(trainer,pl_module)
         self.evaluate_data(trainer,pl_module)
-    '''
-
+    
+'''
 evaluation_metrics =['e_recall@1', 'e_recall@2', 'e_recall@4', 'nmi', 'f1', 'mAP_1000', 'mAP_lim', 'mAP_c', \
                         'dists@intra', 'dists@inter', 'dists@intra_over_inter', 'rho_spectrum@0', \
                         'rho_spectrum@-1', 'rho_spectrum@1', 'rho_spectrum@2', 'rho_spectrum@10','uniformity']
+'''
+
+evaluation_metrics =['rho_spectrum@0', \
+                        'rho_spectrum@-1', 'rho_spectrum@1', 'rho_spectrum@2', 'rho_spectrum@10']
+
+
 
 evaltypes = ['discriminative']

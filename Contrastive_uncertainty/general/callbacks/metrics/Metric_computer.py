@@ -70,7 +70,10 @@ class MetricComputer():
         evaltypes = copy.deepcopy(evaltypes)
 
         n_classes = opt['n_classes']
-        _ = model.online_encoder.to(self.pars['device']).eval()
+        #_ = model.online_encoder.to(self.pars['device']).eval()
+        
+        _ = model.encoder.to(self.pars['device']).eval()
+        
 
         ###
         feature_colls  = {key:[] for key in evaltypes}
