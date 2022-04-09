@@ -113,7 +113,6 @@ for run_set in collated_runs:
         run_path = '/'.join(run_set[i].path)
         run_paths.append(run_path)
 
-
 #run_paths = ['nerdk312/practice/lxry3nuz']
 #run_paths = ['nerdk312/evaluation/8uj964u5']
 evaluate(run_paths, trainer_hparams)
