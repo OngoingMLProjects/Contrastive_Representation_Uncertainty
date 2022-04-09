@@ -5,7 +5,7 @@ trainer_hparams = dict(
 # Miscellaneous arguments
 seed = 26,
 epochs = 0,
-bsz = 16,#128, #32,#64,
+bsz = 128, #32,#64,
 #OOD_dataset = ['MNIST', 'FashionMNIST', 'KMNIST'],
 OOD_dataset = ['MNIST', 'FashionMNIST', 'KMNIST','Caltech256','CIFAR10','CIFAR100','TinyImageNet','SVHN','STL10','Caltech101', 'Cub200','Dogs'],
 #OOD_dataset = ['Caltech256','CIFAR10','CIFAR100','TinyImageNet'],
@@ -43,7 +43,8 @@ val_check = 1,  # evaluation, Moco_training
 #callbacks = ['Feature Entropy'],
 #callbacks = ['Mahalanobis Distance'],
 #callbacks = ['KDE'],
-callbacks = ['Metrics'],
+#callbacks = ['Metrics'],
+callbacks = =['KL Distance OOD'],
 #callbacks = ['Nearest 10 Neighbours Class Quadratic 1D Typicality'],
 #callbacks = ['Nearest 10 Neighbours Class 1D Typicality','Nearest 10 Neighbours Class Quadratic 1D Typicality','Mahalanobis Distance'],
 #callbacks = ['Nearest','Class Mahalanobis','Mahalanobis Distance'],
