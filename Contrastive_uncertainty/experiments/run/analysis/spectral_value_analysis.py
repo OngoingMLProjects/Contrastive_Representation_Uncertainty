@@ -54,6 +54,7 @@ def obtain_spectral_values():
     
 
     #runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"OOD hierarchy baselines",'config.seed':42,'config.epochs':300,'config.dataset':dataset})
+    
     runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats", 'config.seed':42,"config.dataset": "TinyImageNet","config.epochs":300})
     parameter1 = 'rho_spectrum@1'
     summary_list, config_list = [], []

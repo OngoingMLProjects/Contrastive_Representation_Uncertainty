@@ -37,8 +37,9 @@ def general_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', d
             'CIFAR10':['SVHN', 'CIFAR100','MNIST','FashionMNIST','KMNIST'],
             'CIFAR100':['SVHN', 'CIFAR10','MNIST','FashionMNIST','KMNIST'],
             'TinyImageNet':['SVHN', 'CIFAR10','CIFAR100','MNIST','FashionMNIST','KMNIST'],
+            'Caltech256':['SVHN','CIFAR10','CIFAR100','MNIST','FashionMNIST','KMNIST'],
             #'TinyImageNet':['SVHN', 'CIFAR10','CIFAR100','Caltech256','MNIST','FashionMNIST','KMNIST'],
-            'Caltech256':['SVHN','CIFAR10','CIFAR100','TinyImageNet','MNIST','FashionMNIST','KMNIST'],
+            #'Caltech256':['SVHN','CIFAR10','CIFAR100','TinyImageNet','MNIST','FashionMNIST','KMNIST'],
 
             'Caltech101':['STL10', 'CelebA','WIDERFace','SVHN', 'CIFAR10','CIFAR100', 'VOC', 'Places365', 'MNIST', 'FashionMNIST', 'KMNIST', 'EMNIST'],
             #'Caltech256':['STL10', 'CelebA','WIDERFace','SVHN','Caltech101', 'CIFAR10','CIFAR100', 'VOC', 'Places365', 'MNIST', 'FashionMNIST', 'KMNIST', 'EMNIST'],
@@ -88,7 +89,8 @@ def general_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', d
     # https://github.com/wandb/client/blob/v0.10.31/wandb/apis/public.py
     all_latex_tables = []
     #all_ID = ['MNIST','FashionMNIST','KMNIST'] if dataset_type =='grayscale' else ['CIFAR10','CIFAR100','MNIST','FashionMNIST','KMNIST']
-    all_ID = ['MNIST','FashionMNIST','KMNIST'] if dataset_type =='grayscale' else ['CIFAR10','CIFAR100','TinyImageNet','MNIST','FashionMNIST','KMNIST'] 
+    #all_ID = ['MNIST','FashionMNIST','KMNIST'] if dataset_type =='grayscale' else ['CIFAR10','CIFAR100','TinyImageNet','MNIST','FashionMNIST','KMNIST']
+    all_ID = ['MNIST','FashionMNIST','KMNIST'] if dataset_type =='grayscale' else ['CIFAR10','CIFAR100','TinyImageNet','Caltech256','MNIST','FashionMNIST','KMNIST'] 
     #all_ID = ['MNIST','FashionMNIST','KMNIST', 'CIFAR10','CIFAR100','Caltech101','Caltech256','TinyImageNet','Cub200','Dogs']
     #all_ID = ['MNIST','FashionMNIST','KMNIST']
     for ID_dataset in all_ID: # Go through the different ID dataset                
@@ -274,6 +276,6 @@ def process_dataset_dict(dataset_dict):
 
 
 if __name__== '__main__':
-    general_table_collated_wilcoxon(desired_approach = 'KDE', desired_model_type = 'SupCon', baseline_approaches = ['KDE','KDE'], baseline_model_types = ['CE','Moco'],dataset_type ='rgb',t_test='less')
-    #general_table_collated_wilcoxon(desired_approach = 'Mahalanobis', desired_model_type = 'SupCon', baseline_approaches = ['Mahalanobis','Mahalanobis'], baseline_model_types = ['CE','Moco'],dataset_type ='rgb',t_test='less')
+    #general_table_collated_wilcoxon(desired_approach = 'KDE', desired_model_type = 'SupCon', baseline_approaches = ['KDE','KDE'], baseline_model_types = ['CE','Moco'],dataset_type ='rgb',t_test='less')
+    general_table_collated_wilcoxon(desired_approach = 'Mahalanobis', desired_model_type = 'SupCon', baseline_approaches = ['Mahalanobis','Mahalanobis'], baseline_model_types = ['CE','Moco'],dataset_type ='rgb',t_test='less')
 
