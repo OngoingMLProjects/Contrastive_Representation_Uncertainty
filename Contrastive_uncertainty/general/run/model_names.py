@@ -6,4 +6,5 @@ model_names_dict = dict(
     Centroid_VicReg = 'Centroid_VicReg',
 
     OE ='OE'   # Outlier exposure
+    CEEnsemble = 'CEEnsemble'
     )

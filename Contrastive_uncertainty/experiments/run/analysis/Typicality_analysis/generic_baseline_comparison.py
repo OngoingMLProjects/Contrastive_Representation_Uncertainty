@@ -22,7 +22,7 @@ import re
 import copy
 
 from Contrastive_uncertainty.experiments.run.analysis.analysis_utils import add_baseline_names_row, collated_baseline_post_process_latex_table, combine_multiple_tables, dataset_dict, key_dict, ood_dataset_string, post_process_latex_table,full_post_process_latex_table, remove_hline_processing, separate_top_columns, single_baseline_post_process_latex_table, collated_multiple_baseline_post_process_latex_table,combine_multiple_tables, separate_columns, separate_top_columns, update_double_col_table, update_headings_additional,\
-    collated_multiple_baseline_post_process_latex_table_insignificance, separate_ID_datasets, add_model_names_row
+    collated_multiple_baseline_post_process_latex_table_insignificance,collated_multiple_baseline_post_process_latex_table_baseline, separate_ID_datasets, add_model_names_row
 
 from Contrastive_uncertainty.experiments.run.analysis.Typicality_analysis.knn_one_dim_typicality_tables import obtain_baseline, insignificance_dataframe, update_metric_and_count, update_metric_array
 
@@ -90,7 +90,7 @@ def general_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', d
     all_latex_tables = []
     #all_ID = ['MNIST','FashionMNIST','KMNIST'] if dataset_type =='grayscale' else ['CIFAR10','CIFAR100','MNIST','FashionMNIST','KMNIST']
     #all_ID = ['MNIST','FashionMNIST','KMNIST'] if dataset_type =='grayscale' else ['CIFAR10','CIFAR100','TinyImageNet','MNIST','FashionMNIST','KMNIST']
-    all_ID = ['MNIST','FashionMNIST','KMNIST'] if dataset_type =='grayscale' else ['CIFAR10','CIFAR100','TinyImageNet','Caltech256','MNIST','FashionMNIST','KMNIST'] 
+    all_ID = ['MNIST','FashionMNIST','KMNIST'] if dataset_type =='grayscale' else ['CIFAR10','CIFAR100','Caltech256','TinyImageNet','MNIST','FashionMNIST','KMNIST'] 
     #all_ID = ['MNIST','FashionMNIST','KMNIST', 'CIFAR10','CIFAR100','Caltech101','Caltech256','TinyImageNet','Cub200','Dogs']
     #all_ID = ['MNIST','FashionMNIST','KMNIST']
     for ID_dataset in all_ID: # Go through the different ID dataset                
@@ -222,7 +222,8 @@ def general_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', d
         #caption = ID_dataset + ' Dataset'+ f' with {desired_approach.replace("_"," ")} {desired_model_type} vs {baseline_approach.replace("_"," ")} {baseline_model_type} Baseline'  # replace Underscore with spaces for the caption
         #label = f'tab:{ID_dataset}_Dataset_{desired_approach}_{desired_model_type}_{baseline_approach}_{baseline_model_type}'
         #latex_table = single_baseline_post_process_latex_table(auroc_df, caption, label,value)
-        latex_table = collated_multiple_baseline_post_process_latex_table_insignificance(auroc_df,aupr_df, fpr_df,auroc_insignificance_df,aupr_insignificance_df, fpr_insignificance_df,t_test,caption, label)
+        #latex_table = collated_multiple_baseline_post_process_latex_table_insignificance(auroc_df,aupr_df, fpr_df,auroc_insignificance_df,aupr_insignificance_df, fpr_insignificance_df,t_test,caption, label)
+        latex_table = collated_multiple_baseline_post_process_latex_table_baseline(auroc_df,aupr_df, fpr_df,caption, label)
         #latex_table =  collated_multiple_baseline_post_process_latex_table(auroc_df,aupr_df, fpr_df,caption, label)
         #latex_table = full_post_process_latex_table(auroc_df, caption, label,value='max')
         

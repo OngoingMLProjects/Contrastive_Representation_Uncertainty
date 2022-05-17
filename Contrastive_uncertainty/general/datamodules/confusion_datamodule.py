@@ -1,4 +1,5 @@
 from typing import List
+from Contrastive_uncertainty.general.datamodules.tinyimagenet_datamodule import TinyImageNetDataModule
 from pytorch_lightning.core import datamodule
 from Contrastive_uncertainty.general.train.train_general import train
 from pytorch_lightning.utilities import seed
@@ -25,6 +26,7 @@ from math import ceil, floor
 from Contrastive_uncertainty.general.datamodules.datamodule_transforms import CustomTensorDataset,dataset_with_indices, dataset_with_indices_SVHN
 
 from Contrastive_uncertainty.general.datamodules.mnist_datamodule import MNISTDataModule
+from Contrastive_uncertainty.general.datamodules.tinyimagenet_datamodule import TinyImageNetDataModule
 from Contrastive_uncertainty.general.datamodules.fashionmnist_datamodule import FashionMNISTDataModule
 
 class ConfusionDatamodule(LightningDataModule):
@@ -34,7 +36,9 @@ class ConfusionDatamodule(LightningDataModule):
         self.batch_size = batch_size
         self.ID_Datamodule = ID_Datamodule
         # Remove the coarse labels
+        '''
         self.ID_Datamodule.DATASET_with_indices = dataset_with_indices(ID_Datamodule.DATASET)
+        '''
         self.ID_Datamodule.setup()
         # Train and test transforms are defined in the datamodule dict 
         train_transforms = self.ID_Datamodule.train_transforms
@@ -44,10 +48,12 @@ class ConfusionDatamodule(LightningDataModule):
         self.OOD_Datamodule = OOD_Datamodule
 
         # Hack to make SVHN dataset work for the task
+        '''
         if self.OOD_Datamodule.name =='svhn':
             self.OOD_Datamodule.DATASET_with_indices = dataset_with_indices_SVHN(OOD_Datamodule.DATASET)
         else:
             self.OOD_Datamodule.DATASET_with_indices = dataset_with_indices(OOD_Datamodule.DATASET)
+        '''
         self.OOD_Datamodule.train_transforms = train_transforms
         self.OOD_Datamodule.test_transforms = test_transforms
         # Resets the OOD datamodules with the specific transforms of interest required
@@ -208,8 +214,6 @@ class ConfusionDatamodule(LightningDataModule):
         
         return data
 
-
-
     def train_dataloader(self):
         '''returns training dataloader'''
         train_loader = DataLoader(self.train_dataset, batch_size=self.batch_size, shuffle=True, drop_last = True,num_workers = 8)
@@ -241,7 +245,12 @@ class ConfusionDatamodule(LightningDataModule):
         return ood_loader
     
 
+
+
+
+
 '''
+ID_datamodule = TinyImageNetDataModule()
 ID_datamodule = MNISTDataModule()
 OOD_datamodule = FashionMNISTDataModule()
 

@@ -21,6 +21,7 @@ from Contrastive_uncertainty.general.callbacks.gradcam.pytorch_grad_cam.cam_visu
 from Contrastive_uncertainty.general.callbacks.total_centroid_similarity_callback import Total_Centroid_KL, Class_Centroid_Radii_Overlap
 from Contrastive_uncertainty.general.callbacks.feature_entropy_callback import Feature_Entropy
 from Contrastive_uncertainty.general.callbacks.kl_distance_callbacks import KLDistanceOOD
+from Contrastive_uncertainty.general.callbacks.confusion_log_probability_callback import ConfusionLogProbability
 
 def train_run_name(model_name, config, group=None):
     run_name = 'Train_' + model_name + '_DS:'+str(config['dataset']) +'_Epochs:'+ str(config['epochs']) + '_seed:' +str(config['seed'])  
@@ -99,6 +100,7 @@ def callback_dictionary(Datamodule,config,data_dict):
                 #f'Nearest 10 Neighbours Analysis Worst Class 1D Scores Typicality {ood_dataset}':AnalysisQuadraticWorstClass1DScoresTypicality(Datamodule,OOD_Datamodule,quick_callback=quick_callback,K=10),
 
                 f'KL Distance OOD {ood_dataset}': KLDistanceOOD(Datamodule,OOD_Datamodule,quick_callback=quick_callback),
+                f'Confusion Log Probability': ConfusionLogProbability(Datamodule,quick_callback),
 
                 f'Different K Nearest Neighbours Class 1D Typicality {ood_dataset}':DifferentKNNClass1DTypicality(Datamodule,OOD_Datamodule,quick_callback=quick_callback),
                 f'Different K Nearest Neighbours Quadratic Class 1D Typicality {ood_dataset}':DifferentKNNQuadraticClass1DTypicality(Datamodule,OOD_Datamodule,quick_callback=quick_callback),

@@ -27,8 +27,8 @@ def obtain_spectral_values():
     parameter1 = 'rho_spectrum@1: instance: fine'
     parameter2 = 'rho_spectrum@2: instance: fine'
     #data_array = np.empty((5,3))
-    #data_array = np.empty((6,3))
-    data_array = np.empty((7,3))
+    data_array = np.empty((6,3))
+    #data_array = np.empty((7,3))
     data_array[:] = np.nan
     for dataset in key_dict['dataset'].keys():
     
@@ -56,7 +56,7 @@ def obtain_spectral_values():
 
     #runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"OOD hierarchy baselines",'config.seed':42,'config.epochs':300,'config.dataset':dataset})
     additional_key_dict = {'model_type':{'CE':0, 'Moco':1, 'SupCon':2},
-                'dataset': {'Caltech256':5,'TinyImageNet':6}}    
+                'dataset': {'TinyImageNet':5}}    
     parameter1 = 'rho_spectrum@1'
     for dataset in additional_key_dict['dataset'].keys():
         runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats", 'config.seed':42,"config.dataset": dataset,"config.epochs":300})

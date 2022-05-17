@@ -308,12 +308,66 @@ def collated_multiple_baseline_post_process_latex_table(df_auroc, df_aupr, df_fp
     return latex_table
 
 
+# places a asterix if the approaches are better than the baseline
+def asterix_surpass_baseline(latex_table,condition):
+    
+    desired_key = r'&.+\d.+\\' # get the sequence 
+    string = re.findall(desired_key,latex_table)
+    initial_string = copy.deepcopy(string)
+    for index in range(len(string)):
+        numbers = re.findall("\d+\.\d+", string[index]) # fnd all the numbers in the substring (gets rid of the &)
+        for i, number in enumerate(numbers):
+            if condition == 'greater':
+                if float(number)> float(numbers[0]):
+                    numbers[i] = number+'*' # update the values
+            elif condition =='less':
+                if float(number) < float(numbers[0]):
+                    numbers[i] = number+'*' # update the values
+
+            string[index] = string[index].replace(number,numbers[i])
+        latex_table = latex_table.replace(f'{initial_string[index]}',f'{string[index]}')    
+    return latex_table
 
 
+# Utils for the situation where I calculat the diffeent tables and check if the different approaches are better than the baseline
+def collated_multiple_baseline_post_process_latex_table_baseline(df_auroc, df_aupr, df_fpr,caption,label):
+    latex_table_auroc = df_auroc.to_latex()
+    latex_table_auroc = replace_headings(df_auroc,latex_table_auroc)
+    latex_table_auroc = bold_max_value(df_auroc,latex_table_auroc)
+    latex_table_auroc = asterix_surpass_baseline(latex_table_auroc,'greater')
+
+    latex_table_aupr = df_aupr.to_latex()
+    latex_table_aupr = replace_headings(df_aupr,latex_table_aupr)
+    latex_table_aupr = bold_max_value(df_aupr,latex_table_aupr)
+    latex_table_aupr = asterix_surpass_baseline(latex_table_aupr,'greater')
+
+    latex_table_fpr = df_fpr.to_latex()
+    latex_table_fpr = replace_headings(df_fpr,latex_table_fpr)
+    latex_table_fpr = bold_min_value(df_fpr,latex_table_fpr)
+    latex_table_fpr = asterix_surpass_baseline(latex_table_fpr,'less')
+
+
+    # used to get the pattern of &, then empy space, then any character, empty space,  then & then empty space
+    latex_table_auroc = join_multiple_columns(latex_table_auroc,'AUROC')
+    latex_table_aupr = join_multiple_columns(latex_table_aupr,'AUPR')
+    latex_table_fpr = join_multiple_columns(latex_table_fpr,'FPR')
+
+    latex_table = join_different_columns(latex_table_auroc,latex_table_aupr) # joins the auroc and aupr table together
+    latex_table = join_different_columns(latex_table, latex_table_fpr) # joins the auroc+aupr table with the fpr table
+    
+    latex_table = replace_headings_collated_table(latex_table) # replaces the heading to take into account the collated readings
+    
+    latex_table = post_process_latex_table(latex_table)
+    latex_table = initial_table_info(latex_table)
+    latex_table = add_caption(latex_table,caption)
+    latex_table = add_label(latex_table,label) 
+    latex_table = end_table_info(latex_table)
+
+    return latex_table
+    
 
 # Utils for the latex table, same as before but also takes into accountthe p values- Compares between a single baseline and several metrics AUROC, AUPR and FPR
 def collated_multiple_baseline_post_process_latex_table_insignificance(df_auroc, df_aupr, df_fpr,df_auroc_insignificance, df_aupr_insignificance, df_fpr_insignificance,t_test, caption,label):
-    
     latex_table_auroc = df_auroc.to_latex()
     latex_table_auroc = replace_headings(df_auroc,latex_table_auroc)
     latex_table_auroc = bold_max_value(df_auroc,latex_table_auroc)
@@ -350,8 +404,7 @@ def collated_multiple_baseline_post_process_latex_table_insignificance(df_auroc,
     latex_table = join_different_columns(latex_table, latex_table_fpr) # joins the auroc+aupr table with the fpr table
     '''
     
-    latex_table = join_different_columns(latex_table_auroc,latex_table_fpr) # joins the auroc and aupr table together
-    
+    latex_table = join_different_columns(latex_table_auroc,latex_table_fpr) # joins the auroc and aupr table together    
     latex_table = replace_headings_collated_table(latex_table) # replaces the heading to take into account the collated readings
     
     latex_table = post_process_latex_table(latex_table)
@@ -360,7 +413,6 @@ def collated_multiple_baseline_post_process_latex_table_insignificance(df_auroc,
     latex_table = add_label(latex_table,label) 
     latex_table = end_table_info(latex_table)
 
-    
     return latex_table
 
 
@@ -588,7 +640,6 @@ def add_baseline_names_row(latex_table,baselines):
     #additional_string = r'&   & \multicolumn{3}{c}' + '{' + f'{baseline_names}1D Typicality'+ r'} \\' + '\n\cmidrule(lr){3-5}'
     
     additional_string = r'&   & \multicolumn{' f'{num_metrics}' +'}' +r'{c}{' + f'{baseline_names}1D Typicality'+ r'} \\' + '\n\cmidrule(lr){3-' f'{2+num_metrics}' +'}'
-    
     #additional_string = r'&   & \multicolumn{3}{c}{MSP/ Mahalanobis/ 1D Typicality} \\' + '\n\cmidrule(lr){3-5}'
     latex_table = latex_table_splits[0] + split_string + additional_string + latex_table_splits[1]        
     return latex_table
@@ -621,8 +672,7 @@ def add_model_names_row(latex_table,baseline_models, desired_model):
 
     #additional_string = r'&   & \multicolumn{3}{c}' + '{' + f'{baseline_names}{desired_model}'+ r'} \\' + '\n\cmidrule(lr){3-5}'
 
-    additional_string = r'&   & \multicolumn{' f'{num_metrics}' +r'{c}{' + f'{baseline_names}{desired_model}'+ r'} \\' + '\n\cmidrule(lr){2-' f'{2+num_metrics}' +'}'
-
+    additional_string = r'&   & \multicolumn{' f'{num_metrics}' +r'}{c}{' + f'{baseline_names}{desired_model}'+ r'} \\' + '\n\cmidrule(lr){2-' f'{2+num_metrics}' +'}'
 
     #additional_string = r'&   & \multicolumn{3}{c}{MSP/ Mahalanobis/ 1D Typicality} \\' + '\n\cmidrule(lr){3-5}'
     
@@ -655,10 +705,7 @@ def line_columns(latex_table):
     latex_table = latex_table.replace(desired_string, updated_desired_string)
     return latex_table
     '''
-
     return latex_table
-
-   
     
 def bold_titles(latex_table):
     pattern_strings = ['Dataset','AUROC','AUPR','FPR','Softmax','ODIN','Mahalanobis','1D Typicality','1D Marginal Typicality','1D Single Typicality','Typicality All Dim', 'ID: CIFAR10','ID: CIFAR100','ID: Caltech256','ID: TinyImageNet']
