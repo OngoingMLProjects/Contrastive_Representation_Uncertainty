@@ -5,6 +5,6 @@ model_names_dict = dict(
     CE ='CE',
     Centroid_VicReg = 'Centroid_VicReg',
 
-    OE ='OE'   # Outlier exposure
-    CEEnsemble = 'CEEnsemble'
+    OE ='OE',   # Outlier exposure
+    CEEnsemble = 'CEEnsemble',
     )
