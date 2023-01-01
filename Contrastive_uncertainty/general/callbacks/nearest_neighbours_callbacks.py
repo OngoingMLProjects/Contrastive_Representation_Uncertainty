@@ -665,7 +665,6 @@ class NearestNeighboursQuadraticClass1DScoresTypicality(NearestNeighboursQuadrat
             
             ddata = [np.matmul(eigvectors[class_num].T,(fdata_batch - means[class_num]).T)**2/(eigvalues[class_num] + perturbations[class_num]) for class_num in range(len(means))] 
             #ddata = [np.matmul(eigvectors[class_num].T,(fdata_batch - means[class_num]).T)**2/(eigvalues[class_num] + (np.sign(eigvalues[class_num])*1e-10)) for class_num in range(len(means))] # Calculate the 1D scores for all the different classes 
-            #
             # obtain the normalised the scores for the different classes
             ddata_deviation = [ddata[class_num] - dtrain_1d_mean[class_num]/(dtrain_1d_std[class_num]  +1e-10) for class_num in range(len(means))] # shape (dim, batch)
             

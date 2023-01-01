@@ -46,26 +46,23 @@ dataset_dict = {'MNIST':['FashionMNIST','KMNIST','EMNIST'],
 dataset_dict = {'MNIST':['FashionMNIST','KMNIST'],
             'FashionMNIST':['MNIST','KMNIST'],
             'KMNIST':['MNIST','FashionMNIST'],
-            
             'CIFAR10':['SVHN', 'CIFAR100','TinyImageNet','MNIST','FashionMNIST','KMNIST'],
             'CIFAR100':['SVHN', 'CIFAR10','TinyImageNet','MNIST','FashionMNIST','KMNIST'],
             'TinyImageNet':['SVHN', 'CIFAR10','CIFAR100','Caltech256','MNIST','FashionMNIST','KMNIST'],
             'Caltech256':['SVHN','CIFAR10','CIFAR100','TinyImageNet','MNIST','FashionMNIST','KMNIST'],
-            '''
+            
 
 
-            'CIFAR10':['SVHN', 'CIFAR100','Caltech256','TinyImageNet','MNIST','FashionMNIST','KMNIST'],
-            'CIFAR100':['SVHN', 'CIFAR10','Caltech256','TinyImageNet','MNIST','FashionMNIST','KMNIST'],
-            'TinyImageNet':['SVHN', 'CIFAR10','CIFAR100','Caltech256','MNIST','FashionMNIST','KMNIST'],
-            'Caltech256':['SVHN','CIFAR10','CIFAR100','TinyImageNet','MNIST','FashionMNIST','KMNIST'],
-            '''
+            #'CIFAR10':['SVHN', 'CIFAR100','Caltech256','TinyImageNet','MNIST','FashionMNIST','KMNIST'],
+            #'CIFAR100':['SVHN', 'CIFAR10','Caltech256','TinyImageNet','MNIST','FashionMNIST','KMNIST'],
+            #'TinyImageNet':['SVHN', 'CIFAR10','CIFAR100','Caltech256','MNIST','FashionMNIST','KMNIST'],
+            #'Caltech256':['SVHN','CIFAR10','CIFAR100','TinyImageNet','MNIST','FashionMNIST','KMNIST'],
+            
             
             # 'CIFAR10':['STL10','SVHN', 'CIFAR100','Caltech256','TinyImageNet'],
             # 'CIFAR100':['STL10','SVHN', 'CIFAR10','Caltech256','TinyImageNet'],
             # 'TinyImageNet':['STL10', 'SVHN', 'CIFAR10','CIFAR100','Caltech256'],
             # 'Caltech256':['STL10','SVHN','CIFAR10','CIFAR100','TinyImageNet'],
-            
-
             'Caltech101':['STL10', 'CelebA','WIDERFace','SVHN', 'CIFAR10','CIFAR100', 'VOC', 'Places365', 'MNIST', 'FashionMNIST', 'KMNIST', 'EMNIST'],
             #'Caltech256':['STL10', 'CelebA','WIDERFace','SVHN','Caltech101', 'CIFAR10','CIFAR100', 'VOC', 'Places365', 'MNIST', 'FashionMNIST', 'KMNIST', 'EMNIST'],
             'Cub200':['STL10', 'CelebA','WIDERFace','SVHN','Caltech101', 'Caltech256','CIFAR10','CIFAR100', 'VOC', 'Places365','TinyImageNet','Dogs', 'MNIST', 'FashionMNIST', 'KMNIST', 'EMNIST'],
@@ -153,10 +150,11 @@ def generic_saving(desired_key,run_filter):
         name_list.append(run.name)
         keys = [key for key, value in summary_list[i].items() if desired_key in key.lower()]
         keys = [key for key in keys if 'table' not in key.lower()]
-        
+        print(keys)
         for key in keys:
             data_dir = summary_list[i][key]['path'] 
             run_dir = root_dir + run_path
+            
 
             total_dir = os.path.join(run_dir, data_dir)
             
@@ -1104,7 +1102,8 @@ if __name__ =='__main__':
     #desired_key = 'Centroid Distances Average vector_table'
     #desired_key = 'KL Divergence(Total||Class)'
     #desired_key = 'Normalized One Dim Scores Class Quadratic Typicality'
-    desired_key ='Analysis Normalized One Dim Scores Class Quadratic Typicality KNN'
+    #desired_key ='Analysis Normalized One Dim Scores Class Quadratic Typicality KNN'
+    desired_key = 'Different K Normalized Quadratic One Dim Class Typicality KNN'
     #desired_key = 'Different K Normalized One Dim Class Typicality KNN'
     #desired_key = 'Different K Normalized Quadratic One Dim Class Typicality KNN'
     #run_filter={"config.group":"Baselines Repeats"}
@@ -1113,6 +1112,9 @@ if __name__ =='__main__':
     #run_filter={"config.group":"OOD hierarchy baselines","config.model_type": "SupCon"}
     #run_filter={"config.group":"New Model Testing","config.epochs":300}
     #run_filter={"config.group":"Baselines Repeats","$or": [{"config.model_type":"Moco"}, {"config.model_type": "SupCon"}]}
-    run_filter={"config.group":"Baselines Repeats", "config.model_type": "SupCon","config.dataset": "Cub200"}
+    #run_filter={"config.group":"Baselines Repeats", "config.model_type": "SupCon","config.dataset": "Cub200"}
+    run_filter={"config.group":"Baselines Repeats", "config.model_type": "SupCon"}
+    #run_filter={"config.group":"OOD hierarchy baselines", "config.model_type": "SupCon"}
+    
     #generic_saving(desired_key,run_filter)
     generic_saving(desired_key,run_filter)
