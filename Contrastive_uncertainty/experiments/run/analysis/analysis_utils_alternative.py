@@ -117,23 +117,38 @@ def generic_saving(desired_key,run_filter):
 
         ID_dataset = config_list[i]['dataset']
         model_type = config_list[i]['model_type']
+        seed =  str(config_list[i]['seed'])
+        
+
+
         group_name = config_list[i]['group']
 
         summary_list.append(run.summary._json_dict)
         
         #updated path which includes the group of the dataset
         path_list = runs[i].path
-        path_list.insert(-1, group_name) # insert the group name in the location one before the last value (rather than the last value which is peculiar)
-        run_path = '/'.join(path_list)
 
+        path_list.insert(-1, group_name) # insert the group name in the location one before the last value (rather than the last value which is peculiar)
+        path_list.insert(-1,model_type)
+        path_list.insert(-1,ID_dataset)
+        path_list.insert(-1,seed)
+        
+
+        #path_list.insert(-1,ID_dataset)
+        #path_list.insert(-1,model_type)
+        #path_list.insert(-1,seed)
+
+        run_path = '/'.join(path_list)
+        
         #run_path = '/'.join(runs[i].path)
         # .name is the human-readable name of the run.dir
         name_list.append(run.name)
+        
         keys = [key for key, value in summary_list[i].items() if desired_key in key.lower()]
-        keys = [key for key in keys if 'table' not in key.lower()]
+        #keys = [key for key in keys if 'table' not in key.lower()]
         for key in keys:
             data_dir = summary_list[i][key]['path'] 
-            run_dir = root_dir + run_path
+            run_dir = root_dir + run_path  
 
             total_dir = os.path.join(run_dir, data_dir)
             # Checks if the file is already present
@@ -512,11 +527,26 @@ if __name__ =='__main__':
     #desired_key = 'Centroid Distances Average vector_table'
     #desired_key = 'KL Divergence(Total||Class)'
     #desired_key = 'Different K Normalized One Dim Class Typicality KNN'
-    desired_key = 'Different K Normalized Quadratic One Dim Class Typicality KNN'
+    #desired_key = 'Different K Normalized Quadratic One Dim Class Typicality KNN'
     #run_filter={"config.group":"Baselines Repeats"}
     #run_filter={"config.group":"OOD hierarchy baselines","config.model_type": "SupCon", 'state':'finished'}
-    run_filter={"config.group":"OOD hierarchy baselines","config.model_type": "SupCon","config.dataset": "CIFAR100"}
+    #run_filter={"config.group":"OOD hierarchy baselines","config.model_type": "SupCon","config.dataset": "CIFAR100"}
     #run_filter={"config.group":"OOD hierarchy baselines","config.model_type": "SupCon"}
     #run_filter={"config.group":"New Model Testing","config.epochs":300}
     #run_filter={"config.group":"Baselines Repeats","$or": [{"config.model_type":"Moco"}, {"config.model_type": "SupCon"}]}
+
+    '''
+    desired_key = 'Different K Normalized Quadratic One Dim Class Typicality KNN'
+    run_filter={"config.group":"OOD hierarchy baselines","config.model_type": "SupCon","config.dataset": "CIFAR100"}
     generic_saving(desired_key,run_filter)
+    '''
+
+    
+    #desired_key = 'Class Wise Mahalanobis instance fine OOD'
+    desired_key = 'Centroid Distances Average vector_table'
+    all_ID = ['MNIST','FashionMNIST','KMNIST', 'CIFAR10','CIFAR100']
+    for ID in all_ID:
+        run_filter={"config.group":"OOD hierarchy baselines","config.dataset": ID, 'config.seed':42,'config.epochs':300}
+        #run_filter={"config.group":"OOD hierarchy baselines","config.model_type": "SupCon","config.dataset": ID, 'config.seed':42}
+        generic_saving(desired_key,run_filter)
+    
