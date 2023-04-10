@@ -535,13 +535,22 @@ if __name__ =='__main__':
     #run_filter={"config.group":"New Model Testing","config.epochs":300}
     #run_filter={"config.group":"Baselines Repeats","$or": [{"config.model_type":"Moco"}, {"config.model_type": "SupCon"}]}
 
+    all_ID = ['CIFAR10','CIFAR100','TinyImageNet','Caltech256']
+    #desired_key = 'Different K Normalized Quadratic One Dim Class Typicality KNN'
+    #desired_key = 'K:10 NN Outlier Percentage OOD'
+    desired_key = 'K:10 NN Class Fraction'
+    for ID in all_ID:
+        run_filter={"config.group":"OOD hierarchy baselines","config.model_type": "SupCon","config.dataset": ID}
+        generic_saving(desired_key,run_filter)
+    
+    
     '''
     desired_key = 'Different K Normalized Quadratic One Dim Class Typicality KNN'
     run_filter={"config.group":"OOD hierarchy baselines","config.model_type": "SupCon","config.dataset": "CIFAR100"}
     generic_saving(desired_key,run_filter)
     '''
 
-    
+    '''
     #desired_key = 'Class Wise Mahalanobis instance fine OOD'
     desired_key = 'Centroid Distances Average vector_table'
     all_ID = ['MNIST','FashionMNIST','KMNIST', 'CIFAR10','CIFAR100']
@@ -549,4 +558,4 @@ if __name__ =='__main__':
         run_filter={"config.group":"OOD hierarchy baselines","config.dataset": ID, 'config.seed':42,'config.epochs':300}
         #run_filter={"config.group":"OOD hierarchy baselines","config.model_type": "SupCon","config.dataset": ID, 'config.seed':42}
         generic_saving(desired_key,run_filter)
-    
+    '''

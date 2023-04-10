@@ -397,12 +397,12 @@ def collated_multiple_baseline_post_process_latex_table_insignificance(df_auroc,
     latex_table_fpr = join_multiple_columns(latex_table_fpr,'FPR')
 
     
-    '''
+    # Controls whether to combine the AUROC, AUPR and FPR or to only join 2 tables
     latex_table = join_different_columns(latex_table_auroc,latex_table_aupr) # joins the auroc and aupr table together
     latex_table = join_different_columns(latex_table, latex_table_fpr) # joins the auroc+aupr table with the fpr table
     '''
-    
     latex_table = join_different_columns(latex_table_auroc,latex_table_fpr) # joins the auroc and aupr table together    
+    '''
     latex_table = replace_headings_collated_table(latex_table) # replaces the heading to take into account the collated readings
     
     latex_table = post_process_latex_table(latex_table)

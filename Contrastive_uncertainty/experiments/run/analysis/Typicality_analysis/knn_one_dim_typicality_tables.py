@@ -634,6 +634,8 @@ def knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desir
 
                 '1D Single Typicality':{'AUROC':'Normalized One Dim Class Quadratic Typicality KNN - 1 OOD -'.lower(),'AUPR':'Normalized One Dim Class Quadratic Typicality KNN - 1 AUPR OOD -'.lower(),'FPR':'Normalized One Dim Class Quadratic Typicality KNN - 1 FPR OOD -'.lower()},
 
+                'Linear Typicality':{'AUROC':'Normalized One Dim Class Typicality KNN - 10 OOD -'.lower(),'AUPR':'Normalized One Dim Class Typicality KNN - 10 AUPR OOD -'.lower(),'FPR':'Normalized One Dim Class Typicality KNN - 10 FPR OOD -'.lower()},
+
                 'Typicality All Dim':{'AUROC':'Normalized All Dim Class Typicality KNN - 10 OOD -'.lower(),'AUPR':'Normalized All Dim Class Typicality KNN - 10 AUPR OOD -'.lower(),'FPR':'Normalized All Dim Class Typicality KNN - 10 FPR OOD -'.lower()},
 
                 }
@@ -768,7 +770,7 @@ def knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desir
                     baseline_FPR_values = update_metric_array(baseline_FPR_values,i,data_index,baseline_function,baseline_strings_FPR[i], baseline_model_types[i], model_type,run_summary,OOD_dataset,run_config['seed'])
 
         ####### Calculates p-values #############################
-
+        #import ipdb; ipdb.set_trace()
         for i in range(num_baselines):
             #
             difference_auroc = np.array(baseline_AUROC_values[i]) - np.array(desired_AUROC_values[0]) # shape (num ood, repeats)
@@ -947,7 +949,9 @@ def obtain_baseline(desired_string, summary,OOD_dataset):
     desired_string = desired_string.lower() # double check that it has been lowered 
     #print('desired string', desired_string)
     #print('OOD dataset',OOD_dataset)
+    print('desired string',desired_string)
     keys = [key for key, value in summary.items() if desired_string in key.lower()]
+    print('keys',keys)
     # get the specific mahalanobis keys for the specific OOD dataset
     OOD_dataset_specific_key = [key for key in keys if OOD_dataset.lower() in str.split(key.lower())]
     
@@ -997,8 +1001,8 @@ def update_metric_list(metric_list,data_index,metric_function, metric_string, me
 # Used to calculate the metric when using a numpy array instead of a list
 def update_metric_array(metric_array,baseline_index,data_index,metric_function, metric_string, metric_model_type,run_model_type, summary, OOD_dataset,run_seed):
     #print('metric model type:',metric_model_type)
-    #seeds = [25,50,75,100,125,150,175,200]
-    seeds = [25,50,125,150,175,200]
+    seeds = [25,50,75,100,125,150,175,200]
+    #seeds = [25,50,125,150,175,200]
     #seeds = [25,50,125]
     if metric_model_type == run_model_type and run_seed in seeds:
         metric_value = metric_function(metric_string,summary,OOD_dataset) # calculates the value
@@ -1055,5 +1059,10 @@ if __name__== '__main__':
     #knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['Softmax','ODIN','Mahalanobis'], baseline_model_types = ['CE','CE','CE'],dataset_type ='RGB',t_test='less',rounding=rounding_value)
     #knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desired_model_type = 'CE', baseline_approaches = ['Mahalanobis'], baseline_model_types = ['CE'],dataset_type ='RGB',t_test='two-sided')
     #knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['Mahalanobis'], baseline_model_types = ['SupCon'],dataset_type ='RGB',t_test='two-sided')
-    #knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['1D Marginal Typicality','1D Single Typicality'], baseline_model_types = ['SupCon','SupCon'],dataset_type ='RGB',t_test='less')   
-    knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['Typicality All Dim'], baseline_model_types = ['SupCon'],dataset_type ='RGB',t_test='two-sided')
+    #knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['1D Marginal Typicality'], baseline_model_types = ['SupCon'],dataset_type ='RGB',t_test='two-sided')
+    #knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['1D Single Typicality'], baseline_model_types = ['SupCon'],dataset_type ='RGB',t_test='two-sided')   
+    #knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['Typicality All Dim'], baseline_model_types = ['SupCon'],dataset_type ='RGB',t_test='two-sided')
+    knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['Linear Typicality'], baseline_model_types = ['SupCon'],dataset_type ='RGB',t_test='two-sided')
+
+
+    #knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['1D Marginal Typicality','1D Single Typicality'], baseline_model_types = ['SupCon','SupCon'],dataset_type ='RGB',t_test='less')

@@ -304,7 +304,6 @@ class NearestNeighbours1DTypicality(NearestNeighbours):
         perturbation = (np.sign(eigvalues)*1e-10)
         perturbation[perturbation==0] = 1e-10 # Replace any zero values with 1e-10 (this is done as np.sign is zero when the specific class eigvalue is zero)
 
-
         dtrain = np.matmul(eigvectors.T,(ftrain - mean).T)**2/(eigvalues + perturbation)
         
         # calculate the mean and the standard deviations of the different values

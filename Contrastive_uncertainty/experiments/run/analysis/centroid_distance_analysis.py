@@ -15,8 +15,9 @@ import json
 
 def centroid_distance_plot():
     # Desired ID,OOD and Model
-    Models = ['Moco']
-    Models = ['CE','Moco','SupCon']
+    #Models = ['Moco']
+    #Models = ['CE','Moco','SupCon']
+    Models = ['CE']
     desired_group = "OOD hierarchy baselines"
     desired_key = 'Centroid Distances Average vector_table'
     desired_key = desired_key.lower()
@@ -100,7 +101,8 @@ def centroid_distance_plot():
                     columns = ['Class', 'Centroid Distance']
                     df.columns = columns
                     #plt.ylim(bottom=0)  # adjust the bottom leaving top unchanged)
-                    plt.ylim(0,7.5)
+                    #plt.ylim(0,7.5)
+                    plt.ylim(0,15)
                     plt.title(f'Class Centroid Distance for {ID} using {model_name}')
                     sns.scatterplot(data=df, x="Class", y="Centroid Distance")
 
