@@ -144,8 +144,6 @@ def thesis_outlier_fraction_plot():
                         g.fig.set_figwidth(7.27)
                         g.fig.set_figheight(7.27)
                         
-
-
                         '''
                         #sns.factorplot("Value", "Counts", col="Category", data=collated_df, kind="bar")
                         
@@ -165,10 +163,10 @@ def thesis_outlier_fraction_plot():
                         ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
                         ax.legend(loc='center left',handles=[blue_patch,red_patch], bbox_to_anchor=(1, 0.5))
                         '''
-                        plt.xlabel('Outlier Fraction')
+                        plt.xlabel('Outlier Percentage (%)')
                         #plt.xlim((0,100))
                         plt.ylim((0,10000))
-                        plt.title(f'KNN Outlier Fraction for the {ID_dataset}-{OOD_dataset} pair')
+                        plt.title(f'KNN Outlier Percentage for the {ID_dataset}-{OOD_dataset} pair')
                         #plt.tight_layout()
                         
                         # Make a line plot for the data
@@ -242,7 +240,19 @@ def thesis_class_fraction_plot():
                     data = json.load(f)
                 
                 class_fraction_values = fraction_vector(data)
-                
+                # Nawid -Hack array is concantenated to the actual data just to ensure that all the different values are populated
+                hack_array = np.array([0.0,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0])
+                hack_array = hack_array.reshape(-1,1)
+                class_fraction_values = np.concatenate((class_fraction_values, hack_array))
+                percentage_values, percentage_counts = np.unique(class_fraction_values*100, return_counts=True)
+
+                percentage_values = np.asarray(percentage_values, dtype = 'int')
+                class_percentage_data = {'Value': percentage_values, 'Counts': percentage_counts}
+                data_df = pd.DataFrame(data=class_percentage_data)
+                sns.barplot(data=data_df, x="Value", y="Counts",color='blue')
+
+                '''
+                print('Class fraction values:',class_fraction_values)
                 sns.histplot(class_fraction_values,binwidth=0.1,kde=False,alpha=0.5,color='b')
                                 
                 plt.xlabel('Class Fraction')
@@ -251,7 +261,11 @@ def thesis_class_fraction_plot():
                 plt.title(f'KNN Class Fraction for {ID_dataset}')
                 # Removing legend based on https://stackoverflow.com/questions/5735208/remove-the-legend-on-a-matplotlib-figure
                 plt.legend().set_visible(False)
-                
+                '''
+                plt.xlabel('Class Percentage (%)')
+                #plt.xlim((0,100))
+                plt.ylim((0,10000))
+                plt.title(f'KNN Class Percentage for {ID_dataset}')
                 # Make a line plot for the data
                 #plt.text(3.2, -7.12, 'y={:.2f}+{:.2f}*x'.format(fit[1], fit[0]), color='darkblue', size=12)
                 folder = f'Scatter_Plots/Thesis_v2/Class_Fraction/{Model_name}/{ID_dataset}/{approach}'
@@ -263,7 +277,7 @@ def thesis_class_fraction_plot():
 if __name__ =='__main__':
     #knn_auroc_plot_v4()
     #thesis_knn_auroc_plot()
-    #thesis_class_fraction_plot()
-    thesis_outlier_fraction_plot()
+    thesis_class_fraction_plot()
+    #thesis_outlier_fraction_plot()
     
     

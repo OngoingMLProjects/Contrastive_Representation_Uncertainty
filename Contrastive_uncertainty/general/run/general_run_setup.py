@@ -102,8 +102,10 @@ def callback_dictionary(Datamodule,config,data_dict):
                 f'KL Distance OOD {ood_dataset}': KLDistanceOOD(Datamodule,OOD_Datamodule,quick_callback=quick_callback),
                 f'Confusion Log Probability': ConfusionLogProbability(Datamodule,quick_callback),
 
+                '''
                 f'Different K Nearest Neighbours Class 1D Typicality {ood_dataset}':DifferentKNNClass1DTypicality(Datamodule,OOD_Datamodule,quick_callback=quick_callback),
                 f'Different K Nearest Neighbours Quadratic Class 1D Typicality {ood_dataset}':DifferentKNNQuadraticClass1DTypicality(Datamodule,OOD_Datamodule,quick_callback=quick_callback),
+                '''
                 f'Gram OOD Detection {ood_dataset}': Gram_OOD(Datamodule,OOD_Datamodule,quick_callback=quick_callback)}
                 
                 # Ablation studies
