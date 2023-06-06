@@ -19,7 +19,10 @@ callback_names = {'MD':'Mahalanobis Distance',
 'NN Quadratic 1D Scores':'Nearest 10 Neighbours Class 1D Scores Typicality',
 'Analysis NN Quadratic 1D Scores':'Nearest 10 Neighbours Analysis Class 1D Scores Typicality',
 'KL Distance':'KL Distance OOD',
-'Metrics':'Metrics'}
+'Metrics':'Metrics',
+
+'NN Outlier Fraction':'Nearest Neighbours',
+'NN Class Fraction':'Nearest Class Neighbours'}
 
 
 # format of Mahalanobis distance: Repeat MD, used to choose whether to repeat a callback or not
@@ -38,12 +41,16 @@ callback_names['NN Quadratic Single']:['Normalized One Dim Class Quadratic Typic
 callback_names['NN Quadratic 1D Scores']:['Normalized One Dim Scores Class Quadratic Typicality KNN - 10 OOD -'],
 callback_names['Analysis NN Quadratic 1D Scores']:['Analysis Normalized One Dim Scores Class Quadratic Typicality KNN - 10 OOD -'],
 callback_names['KL Distance']:['KL Distance OOD'],
+callback_names['NN Outlier Fraction']:['K:10 NN Outlier Percentage OOD']
 } # Callback information for ablation
+
+
 
 # Key dict only for the ID data
 desired_ID_key_dict = {callback_names['CAM']:['GradCam Heatmaps'],
 callback_names['Total Centroid KL']:['KL Divergence(Total||Class)'],
 callback_names['Feature Entropy']:['Marginal Feature Entropy','Class Conditional Feature Entropy'],
-callback_names['Metrics']:['rho_spectrum@']}
+callback_names['Metrics']:['rho_spectrum@'],
+callback_names['NN Class Fraction']:['K:10 NN Class Fraction']}
 
 # could potentially make a separate callback dict for the case of the ablations

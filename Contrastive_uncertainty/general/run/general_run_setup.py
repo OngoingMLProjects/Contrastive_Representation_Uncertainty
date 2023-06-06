@@ -53,7 +53,7 @@ def callback_dictionary(Datamodule,config,data_dict):
     callback_dict = {'Model_saving':ModelSaving(config['model_saving'],'Models'),
                     'Metrics':MetricLogger(evaluation_metrics,Datamodule,evaltypes, quick_callback=quick_callback),
                     'Visualisation': Visualisation(Datamodule, quick_callback=quick_callback),
-                    'Nearest 10 Class Neighbours':NearestClassNeighbours(Datamodule, quick_callback=quick_callback,K=10),
+                    'Nearest Class Neighbours':NearestClassNeighbours(Datamodule, quick_callback=quick_callback,K=10),
                     'Nearest 5 Class Neighbours':NearestClassNeighbours(Datamodule, quick_callback=quick_callback,K=5),
                     'CAM':Cam_Visualization(Datamodule,quick_callback),
                     f'Total Centroid KL': Total_Centroid_KL(Datamodule, quick_callback=quick_callback),

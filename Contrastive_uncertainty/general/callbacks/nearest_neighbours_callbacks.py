@@ -1037,8 +1037,7 @@ class DifferentKNNClass1DTypicality(NearestNeighboursClass1DTypicality):
 
     def forward_callback(self, trainer, pl_module):
          return super().forward_callback(trainer, pl_module)
-    
-        
+            
     def get_features(self, pl_module, dataloader):
         return super().get_features(pl_module, dataloader)
     
@@ -1234,8 +1233,6 @@ class DifferentKNNMarginal1DTypicality(NearestNeighbours1DTypicality):
         # Currently goes through a single data point at a time which is not very efficient
         for i in range(num_batches):
             fdata_batch = fdata[(i*K):((i+1)*K)]
-
-            
 
             ddata = np.matmul(eigvectors.T,(fdata_batch - mean).T)**2/(eigvalues + perturbation)  # shape (dim, batch size)
             # Normalise the data
@@ -1511,3 +1508,92 @@ class DifferentKNNMarginalTypicality(DifferentKNNMarginal1DTypicality):
         table_df = pd.DataFrame(table_data)
         table = wandb.Table(dataframe=table_df)
         wandb.log({wandb_name:table})
+
+class DeepNN(pl.Callback):
+    '''
+    Callback for the implementation of the deep nearest neighbour baseline
+    '''
+    def __init__(self, Datamodule,OOD_Datamodule,
+        quick_callback:bool = True, K:int=50):
+
+        super().__init__()
+        self.Datamodule = Datamodule
+        self.OOD_Datamodule = OOD_Datamodule
+        self.OOD_Datamodule.test_transforms = self.Datamodule.test_transforms #  Make the transform of the OOD data the same as the actual data
+        self.quick_callback = quick_callback # Quick callback used to make dataloaders only use a single batch of the data in order to make the testing process occur quickly
+              
+        self.OOD_dataname = self.OOD_Datamodule.name
+        self.K = K
+
+        self.summary_key = f'Deep Nearest Neighbour - {self.K} AUROC OOD - {self.OOD_Datamodule.name}'
+        self.summary_aupr = f'Deep Nearest Neighbour - {self.K} AUPR OOD - {self.OOD_Datamodule.name}'
+        self.summary_fpr = f'Deep Nearest Neighbour - {self.K} FPR OOD - {self.OOD_Datamodule.name}'
+
+    def on_test_epoch_end(self, trainer, pl_module):
+        self.forward_callback(trainer=trainer, pl_module=pl_module) 
+
+    def forward_callback(self,trainer,pl_module):
+        self.OOD_Datamodule.setup() # SETUP AGAIN TO RESET AFTER PROVIDING THE TRANSFORM FOR THE DATA
+
+        train_loader = self.Datamodule.deterministic_train_dataloader()
+        test_loader = self.Datamodule.test_dataloader()
+        ood_loader = self.OOD_Datamodule.test_dataloader()
+
+        features_train, labels_train = self.get_features(pl_module, train_loader)
+        features_test, labels_test = self.get_features(pl_module, test_loader)
+        features_ood, labels_ood = self.get_features(pl_module, ood_loader)
+
+        self.get_eval_results(
+            np.copy(features_train),
+            np.copy(features_test),
+            np.copy(features_ood))
+
+    def get_features(self, pl_module, dataloader):
+        features, labels = [], []
+        
+        loader = quickloading(self.quick_callback, dataloader)
+        for index, (img, *label, indices) in enumerate(loader):
+            assert len(loader)>0, 'loader is empty'
+            if isinstance(img, tuple) or isinstance(img, list):
+                    img, *aug_img = img # Used to take into accoutn whether the data is a tuple of the different augmentations
+
+            # Selects the correct label based on the desired label level
+            if len(label) > 1:
+                label_index = 0
+                label = label[label_index]
+            else: # Used for the case of the OOD data
+                label = label[0]
+
+            img = img.to(pl_module.device)
+            
+            # Compute feature vector and place in list, 
+            # Vector needs to be normalized (which is the case when using the callback vector with the supcon model)
+            feature_vector = pl_module.callback_vector(img) 
+            
+            features += list(feature_vector.data.cpu().numpy())
+            labels += list(label.data.cpu().numpy())            
+
+        return np.array(features), np.array(labels)  
+
+    def get_score(self,ftrain, ftest):
+        # Makes a distance matrix for the data, each entry has the distance for the between the ith value of ftrain and jth entry of ftest
+        distance_matrix = scipy.spatial.distance.cdist(ftrain, ftest)
+        # I want to get the distance for all the test data points, therefore I want the columns 
+        bottom_k_distances = np.sort(distance_matrix,axis=1)[:,:self.K] # shape (num samples,k) , each row has the k indices with the smallest values, use 1 :k as 0th value is the distance to itself which is zero
+        # Use the distance to the kth neighbour as the score (do not change the sign due to the way I am calculating the metrics)
+        scores = bottom_k_distances[:,-1]
+        return scores
+    
+    
+    def get_eval_results(self,ftrain, ftest, food):
+        """
+            None.
+        """
+        din = self.get_score(ftrain,ftest)
+        dood = self.get_score(ftrain, food)
+
+        auroc, aupr, fpr = get_measures(dood,din)
+
+        wandb.run.summary[self.summary_key] = auroc
+        wandb.run.summary[self.summary_aupr] = aupr
+        wandb.run.summary[self.summary_fpr] = fpr

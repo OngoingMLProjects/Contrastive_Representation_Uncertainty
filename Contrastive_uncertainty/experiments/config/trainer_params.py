@@ -48,7 +48,7 @@ val_check = 1,  # evaluation, Moco_training
 #callbacks = ['KDE'],
 #callbacks = ['Metrics'],
 
-callbacks = ['Nearest 10 Class Neighbours','Nearest Neighbours'],
+callbacks = ['Nearest Class Neighbours','Nearest Neighbours'],
 
 #callbacks = ['KL Distance OOD'],
 #callbacks = ['Nearest 10 Neighbours Class Quadratic 1D Typicality'],

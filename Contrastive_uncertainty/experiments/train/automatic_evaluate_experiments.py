@@ -52,7 +52,6 @@ def evaluate(run_paths,update_dict):
 
 def callback_filter(summary_info,evaluation_dict):
     callbacks = evaluation_dict['callbacks']
-    
     # NEED TO MAKE A CALLBACK DICT WHICH DOES NOT TAKE INTO ACCOUNT OOD DATASETS
     # Need to check the summary information for GRADCAM heatmaps
     # 
@@ -68,7 +67,6 @@ def callback_filter(summary_info,evaluation_dict):
     updated_desired_ID_key_dict = {key:[] for key in desired_ID_key_dict}
     # add the keys of the ID case to the total keys
     updated_desired_key_dict.update(updated_desired_ID_key_dict)
-
     for key in updated_desired_ID_key_dict:
         # add the value of the ID case into the updated desired key dict which holds all the different keys
         for value in desired_ID_key_dict[key]:

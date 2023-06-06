@@ -67,7 +67,7 @@ def fpr_and_fdr_at_recall(y_true, y_score, recall_level=recall_level_default, po
     return fps[cutoff] / (np.sum(np.logical_not(y_true)))   # , fps[cutoff]/(fps[cutoff] + tps[cutoff])
 
 # Pos is the OOD scores for the OOD data, _neg is the OOD scores for the ID samples and recall level is 95%. 
-#the less OOD something is, the higher the confidence, and the more negative the value is (lower the value)
+#the less OOD something is, the higher the confidence, and the more negative the value is (when using the negative softmax) (lower the value)
 #Therefore, the less OOD something is, the lower the value, which agrees with the mahalanobis distance
 
 def get_measures(_pos, _neg, recall_level=recall_level_default):
