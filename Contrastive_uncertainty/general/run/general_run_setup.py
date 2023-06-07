@@ -10,7 +10,9 @@ from Contrastive_uncertainty.general.callbacks.odin_callbacks import ODIN
 from Contrastive_uncertainty.general.callbacks.nearest_neighbours_callbacks import NearestNeighbours, NearestClassNeighbours,\
 NearestNeighbours1DTypicality, NearestNeighboursClass1DTypicality,NearestNeighboursQuadraticClass1DTypicality, OracleNearestNeighboursClass1DTypicality, DifferentKNNClass1DTypicality,\
 DifferentKNNMarginal1DTypicality, DifferentKNNMarginalTypicality, DifferentKNNClassTypicality, DifferentKNNQuadraticClass1DTypicality, KNNClassTypicality,\
-NearestNeighboursQuadraticMarginal1DTypicality, NearestNeighboursQuadraticClass1DScoresTypicality
+NearestNeighboursQuadraticMarginal1DTypicality, NearestNeighboursQuadraticClass1DScoresTypicality,\
+DeepNN
+
 from Contrastive_uncertainty.general.callbacks.nearest_neighbours_analysis_callbacks import AnalysisQuadraticClass1DScoresTypicality
 
 from Contrastive_uncertainty.general.callbacks.softmax_probability_callbacks import Max_Softmax_Probability
@@ -96,7 +98,8 @@ def callback_dictionary(Datamodule,config,data_dict):
                 f'Nearest 10 Neighbours Class 1D Scores Typicality {ood_dataset}':NearestNeighboursQuadraticClass1DScoresTypicality(Datamodule,OOD_Datamodule,quick_callback=quick_callback,K=10),
                 # Used to obtain the scores for indivudal classes fpr the 1D Typicality approach
                 f'Nearest 10 Neighbours Analysis Class 1D Scores Typicality {ood_dataset}':AnalysisQuadraticClass1DScoresTypicality(Datamodule,OOD_Datamodule,quick_callback=quick_callback,K=10),
-                
+                f'Deep Nearest 10 Neighbours {ood_dataset}':DeepNN(Datamodule,OOD_Datamodule,quick_callback=quick_callback,K=10),
+                f'Deep Nearest 50 Neighbours {ood_dataset}':DeepNN(Datamodule,OOD_Datamodule,quick_callback=quick_callback,K=50),
                 #f'Nearest 10 Neighbours Analysis Worst Class 1D Scores Typicality {ood_dataset}':AnalysisQuadraticWorstClass1DScoresTypicality(Datamodule,OOD_Datamodule,quick_callback=quick_callback,K=10),
 
                 f'KL Distance OOD {ood_dataset}': KLDistanceOOD(Datamodule,OOD_Datamodule,quick_callback=quick_callback),

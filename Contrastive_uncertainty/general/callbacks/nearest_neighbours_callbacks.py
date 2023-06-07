@@ -1576,14 +1576,23 @@ class DeepNN(pl.Callback):
         return np.array(features), np.array(labels)  
 
     def get_score(self,ftrain, ftest):
+        index = faiss.IndexFlatL2(ftrain.shape[1])
+        index.add(ftrain)
+        D, _ = index.search(ftest, self.K)
+        # Nawid - obtain the score from the 50th neighbour
+        # Nawid - The score should be the distance between the test example and the 50th closest neighbour of the data point
+        scores = D[:,-1]
+        return scores
+    '''
+    def get_score(self,ftrain, ftest):
         # Makes a distance matrix for the data, each entry has the distance for the between the ith value of ftrain and jth entry of ftest
-        distance_matrix = scipy.spatial.distance.cdist(ftrain, ftest)
+        distance_matrix = scipy.spatial.distance.cdist(ftest, ftrain)
         # I want to get the distance for all the test data points, therefore I want the columns 
         bottom_k_distances = np.sort(distance_matrix,axis=1)[:,:self.K] # shape (num samples,k) , each row has the k indices with the smallest values, use 1 :k as 0th value is the distance to itself which is zero
         # Use the distance to the kth neighbour as the score (do not change the sign due to the way I am calculating the metrics)
         scores = bottom_k_distances[:,-1]
         return scores
-    
+    '''
     
     def get_eval_results(self,ftrain, ftest, food):
         """
@@ -1593,7 +1602,6 @@ class DeepNN(pl.Callback):
         dood = self.get_score(ftrain, food)
 
         auroc, aupr, fpr = get_measures(dood,din)
-
         wandb.run.summary[self.summary_key] = auroc
         wandb.run.summary[self.summary_aupr] = aupr
         wandb.run.summary[self.summary_fpr] = fpr
