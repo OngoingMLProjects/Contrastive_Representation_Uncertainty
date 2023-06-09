@@ -42,6 +42,7 @@ class Gram_OOD(pl.Callback):
         self.summary_aupr = self.summary_key.replace("AUROC", "AUPR")
         self.summary_fpr = self.summary_key.replace("AUROC", "FPR") 
     
+    '''
     def on_test_epoch_end(self, trainer, pl_module):
         self.forward_callback(trainer=trainer, pl_module=pl_module) 
 
@@ -341,7 +342,8 @@ class Gram_OOD(pl.Callback):
         wandb.run.summary[self.summary_key] = auroc
         wandb.run.summary[self.summary_aupr] = aupr
         wandb.run.summary[self.summary_fpr] = fpr
-        
+    
+    '''
     
     
     '''
