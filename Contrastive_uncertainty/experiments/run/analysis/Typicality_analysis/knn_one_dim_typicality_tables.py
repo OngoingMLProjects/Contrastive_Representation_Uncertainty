@@ -677,7 +677,7 @@ def knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desir
     '''
     all_ID = ['MNIST','FashionMNIST','KMNIST'] if dataset_type =='grayscale' else ['CIFAR10','CIFAR100','Caltech256','TinyImageNet']
     '''
-    all_ID = ['MNIST','FashionMNIST','KMNIST'] if dataset_type =='grayscale' else ['CIFAR10'] 
+    all_ID = ['MNIST','FashionMNIST','KMNIST'] if dataset_type =='grayscale' else ['CIFAR10','CIFAR100','Caltech256','TinyImageNet']
     #all_ID = ['MNIST','FashionMNIST','KMNIST', 'CIFAR10','CIFAR100','Caltech101','Caltech256','TinyImageNet','Cub200','Dogs']
     #all_ID = ['MNIST','FashionMNIST','KMNIST']
     for ID_dataset in all_ID: # Go through the different ID dataset                
@@ -953,9 +953,9 @@ def obtain_baseline(desired_string, summary,OOD_dataset):
     desired_string = desired_string.lower() # double check that it has been lowered 
     #print('desired string', desired_string)
     #print('OOD dataset',OOD_dataset)
-    print('desired string',desired_string)
+    #print('desired string',desired_string)
     keys = [key for key, value in summary.items() if desired_string in key.lower()]
-    print('keys',keys)
+    #print('keys',keys)
     # get the specific mahalanobis keys for the specific OOD dataset
     OOD_dataset_specific_key = [key for key in keys if OOD_dataset.lower() in str.split(key.lower())]
     
@@ -1071,6 +1071,6 @@ if __name__== '__main__':
     '''
     knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['Linear Typicality'], baseline_model_types = ['SupCon'],dataset_type ='RGB',t_test='two-sided')
     '''
-    knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['Deep Nearest Neighbours'], baseline_model_types = ['SupCon'],dataset_type ='RGB',t_test='two-sided')
+    knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['Deep Nearest Neighbours','Mahalanobis'], baseline_model_types = ['SupCon','SupCon'],dataset_type ='RGB',t_test='two-sided')
 
     #knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['1D Marginal Typicality','1D Single Typicality'], baseline_model_types = ['SupCon','SupCon'],dataset_type ='RGB',t_test='less')
