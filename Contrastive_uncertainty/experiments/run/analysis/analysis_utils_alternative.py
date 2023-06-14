@@ -535,12 +535,15 @@ if __name__ =='__main__':
     #run_filter={"config.group":"New Model Testing","config.epochs":300}
     #run_filter={"config.group":"Baselines Repeats","$or": [{"config.model_type":"Moco"}, {"config.model_type": "SupCon"}]}
 
-    all_ID = ['CIFAR10','CIFAR100','TinyImageNet','Caltech256']
+    #all_ID = ['CIFAR10','CIFAR100','TinyImageNet','Caltech256']
+    all_ID = ['CIFAR10','CIFAR100']
     #desired_key = 'Different K Normalized Quadratic One Dim Class Typicality KNN'
-    #desired_key = 'K:10 NN Outlier Percentage OOD'
-    desired_key = 'K:10 NN Class Fraction'
+    desired_key = 'K:10 NN Outlier Percentage OOD'
+
+    #desired_key = 'K:10 NN Class Fraction'
     for ID in all_ID:
-        run_filter={"config.group":"OOD hierarchy baselines","config.model_type": "SupCon","config.dataset": ID}
+        run_filter={"config.group":"OOD hierarchy baselines","config.model_type": "CE","config.dataset": ID}
+        #run_filter={"config.group":"OOD hierarchy baselines","config.model_type": "SupCon","config.dataset": ID}
         generic_saving(desired_key,run_filter)
     
     

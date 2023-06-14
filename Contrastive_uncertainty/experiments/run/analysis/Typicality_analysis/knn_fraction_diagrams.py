@@ -36,13 +36,18 @@ def thesis_outlier_fraction_plot():
     api = wandb.Api()
     # Gets the runs corresponding to a specific filter
     # https://github.com/wandb/client/blob/v0.10.31/wandb/apis/public.py
+    '''
     runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"OOD hierarchy baselines","config.model_type": "SupCon","config.epochs": 300})
-
+    key_dict = {'dataset':{'CIFAR10':0, 'CIFAR100':1,'Caltech256':2,'TinyImageNet':3},
+                'model_type':{'SupCon':0}}
+    '''
+    runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"OOD hierarchy baselines","config.model_type": "CE","config.epochs": 300})
+    key_dict = {'dataset':{'CIFAR10':0, 'CIFAR100':1,'Caltech256':2,'TinyImageNet':3},
+                'model_type':{'CE':0}}
     summary_list, config_list, name_list = [], [], []
     
     
-    key_dict = {'dataset':{'CIFAR10':0, 'CIFAR100':1,'Caltech256':2,'TinyImageNet':3},
-                'model_type':{'SupCon':0}}
+    
     
     for i, run in enumerate(runs): 
         # .summary contains the output keys/values for metrics like accuracy.
@@ -177,6 +182,125 @@ def thesis_outlier_fraction_plot():
                         plt.savefig(f'{folder}/Outlier_Fraction_{ID_dataset}_{OOD_dataset}.png')
                         plt.close()
 
+
+def thesis_outlier_fraction_table():
+    approach = 'Quadratic_Typicality'
+    # Desired ID,OOD and Model  
+    root_dir = 'run_data/'
+
+    api = wandb.Api()
+    # Gets the runs corresponding to a specific filter
+    # https://github.com/wandb/client/blob/v0.10.31/wandb/apis/public.py
+    '''
+    runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"OOD hierarchy baselines","config.model_type": "SupCon","config.epochs": 300})
+    key_dict = {'dataset':{'CIFAR10':0, 'CIFAR100':1,'Caltech256':2,'TinyImageNet':3},
+                'model_type':{'SupCon':0}}
+    '''
+    runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"OOD hierarchy baselines","config.model_type": "SupCon","config.epochs": 300})
+    key_dict = {'dataset':{'CIFAR10':0, 'CIFAR100':1,'Caltech256':2,'TinyImageNet':3},
+                'model_type':{'CE':0}}
+    summary_list, config_list, name_list = [], [], []
+
+    
+    for i, run in enumerate(runs): 
+        # .summary contains the output keys/values for metrics like accuracy.
+        #  We call ._json_dict to omit large files 
+        config_list.append(
+            {k: v for k,v in run.config.items()
+             if not k.startswith('_')})
+
+
+        ID_dataset = config_list[i]['dataset']
+        model_type = config_list[i]['model_type']
+        group_name = config_list[i]['group']
+        seed_value = str(config_list[i]['seed'])
+        summary_list.append(run.summary._json_dict)
+        # .config contains the hyperparameters.
+        #  We remove special values that start with _.
+        
+
+
+        #updated path which includes the group of the dataset
+        path_list = runs[i].path
+        path_list.insert(-1, group_name) # insert the group name in the location one before the last value (rather than the last value which is peculiar)
+        # Additional lines added compared to the previous file
+        path_list.insert(-1,model_type)
+        path_list.insert(-1,ID_dataset)
+        path_list.insert(-1,seed_value)
+        ###################################################
+        run_path = '/'.join(path_list)
+        
+        #run_path = '/'.join(runs[i].path)
+        # .name is the human-readable name of the run.dir
+        name_list.append(run.name)
+
+        Model_name = 'SupCLR' if model_type=='SupCon' else model_type
+        # .name is the human-readable name of the run.dir
+        desired_string = 'K:10 NN Outlier Percentage OOD'.lower()
+        knn_keys = [key for key, value in summary_list[i].items() if desired_string in key.lower()]
+        
+        
+        # go through the different knn keys
+        for key in knn_keys:
+            OOD_dataset = ood_dataset_string(key, dataset_dict, ID_dataset)
+            if OOD_dataset is None:
+                pass
+            else:
+                # get the specific mahalanobis keys for the specific OOD dataset  
+                print(f'ID: {ID_dataset}, OOD {OOD_dataset}')
+                data_dir = summary_list[i][key]['path']                    
+                run_dir = root_dir + run_path
+                read_dir = run_dir + '/' + data_dir
+                #print('read dir:',read_dir)
+                isFile = os.path.isfile(read_dir)
+                #print('Is file:',isFile)
+                    
+                if isFile:
+                    with open(read_dir) as f: 
+                        data = json.load(f)
+                        outlier_values = fraction_vector(data)
+                        
+
+                        df = pd.DataFrame(outlier_values)
+                        columns = ['ID', 'OOD']
+                        df.columns = columns
+                        fig = plt.figure()
+                        ax = plt.subplot(111)
+                        # Hack - seems to be an issue with the values being below zero (remove)
+                        
+                        ID_values = outlier_values[:,0]
+                        ID_values = ID_values[ID_values>=0]
+                        
+                        OOD_values = outlier_values[:,1]
+                        OOD_values = OOD_values[OOD_values>=0]
+        
+                        ID_values, ID_counts = np.unique(ID_values*100, return_counts=True)
+                        ID_values = np.asarray(ID_values, dtype = 'int')
+                        OOD_values, OOD_counts = np.unique(OOD_values*100, return_counts=True)
+                        OOD_values = np.asarray(OOD_values, dtype = 'int')
+
+                        ID_data = {'Value': ID_values, 'Counts': ID_counts}
+                        ID_df = pd.DataFrame(data=ID_data)
+                        ID_df['Category']='ID'
+                        OOD_data = {'Value': OOD_values, 'Counts': OOD_counts}
+                        OOD_df = pd.DataFrame(data=OOD_data)
+                        OOD_df['Category']='OOD'
+                        
+                        collated_df = pd.concat((ID_df,OOD_df))
+                        #print('ID dataset',ID_dataset)
+                        #print('OOD dataset',OOD_dataset)
+                        ID_weighted_average = weighted_average(ID_df,'Value','Counts')
+                        OOD_weighted_average = weighted_average(OOD_df,'Value','Counts')
+                        print('ID weighted average',ID_weighted_average)
+                        print('OOD weighted average',OOD_weighted_average)
+                        #print('collated df:',collated_df)
+
+def weighted_average(df, values, weights):
+    return sum(df[weights] * df[values]) / df[weights].sum()
+
+     
+
+
 def thesis_class_fraction_plot():
     approach = 'Quadratic_Typicality'
     # Desired ID,OOD and Model  
@@ -185,7 +309,7 @@ def thesis_class_fraction_plot():
     api = wandb.Api()
     # Gets the runs corresponding to a specific filter
     # https://github.com/wandb/client/blob/v0.10.31/wandb/apis/public.py
-    runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"OOD hierarchy baselines","config.model_type": "SupCon","config.epochs": 300})
+    runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"OOD hierarchy baselines","config.model_type": "CE","config.epochs": 300})
 
     summary_list, config_list, name_list = [], [], []
 
@@ -277,7 +401,7 @@ def thesis_class_fraction_plot():
 if __name__ =='__main__':
     #knn_auroc_plot_v4()
     #thesis_knn_auroc_plot()
-    thesis_class_fraction_plot()
+    #thesis_class_fraction_plot()
     #thesis_outlier_fraction_plot()
-    
+    thesis_outlier_fraction_table()
     
