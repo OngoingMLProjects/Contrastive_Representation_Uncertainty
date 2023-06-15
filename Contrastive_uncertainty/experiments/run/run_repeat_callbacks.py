@@ -22,7 +22,7 @@ for key in repeat_bool:
 #repeat_callbacks=[]
 #repeat_callbacks=['KDE']
 #repeat_callbacks=['NN Class Fraction','NN Outlier Fraction']
-repeat_callbacks = ['Deep Nearest 10 Neighbours']
+repeat_callbacks = ['Deep Nearest 50 Neighbours']
 if len(repeat_callbacks)>0:
     for repeat_callback in repeat_callbacks:
         assert repeat_callback in callback_names, 'not in callback names'
@@ -48,7 +48,7 @@ api = wandb.Api()
 #runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.epochs":300,"config.dataset":"TinyImageNet" })
 #runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.epochs":300,"config.dataset":"Caltech256" })
 
-runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.epochs":300,"config.model_type": "SupCon","config.dataset": "CIFAR10"})
+runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.epochs":300,"config.model_type": "SupCon","config.dataset": "TinyImageNet"})
 #runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"Baselines Repeats","config.epochs":300,"$or": [{"config.dataset":"CIFAR100" }, {"config.dataset": "CIFAR10"}]})
 
 

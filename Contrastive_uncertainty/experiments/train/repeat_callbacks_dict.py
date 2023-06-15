@@ -24,6 +24,7 @@ callback_names = {'MD':'Mahalanobis Distance',
 'NN Outlier Fraction':'Nearest Neighbours',
 'NN Class Fraction':'Nearest Class Neighbours',
 'Deep Nearest 10 Neighbours':'Deep Nearest 10 Neighbours',
+'Deep Nearest 50 Neighbours':'Deep Nearest 50 Neighbours',
 }
 
 
@@ -44,7 +45,8 @@ callback_names['NN Quadratic 1D Scores']:['Normalized One Dim Scores Class Quadr
 callback_names['Analysis NN Quadratic 1D Scores']:['Analysis Normalized One Dim Scores Class Quadratic Typicality KNN - 10 OOD -'],
 callback_names['KL Distance']:['KL Distance OOD'],
 callback_names['NN Outlier Fraction']:['K:10 NN Outlier Percentage OOD'],
-callback_names['Deep Nearest 10 Neighbours']:['Deep Nearest Neighbour - 10 AUROC OOD','Deep Nearest Neighbour - 10 AUPR OOD','Deep Nearest Neighbour - 10 FPR OOD']
+callback_names['Deep Nearest 10 Neighbours']:['Deep Nearest Neighbour - 10 AUROC OOD','Deep Nearest Neighbour - 10 AUPR OOD','Deep Nearest Neighbour - 10 FPR OOD'],
+callback_names['Deep Nearest 50 Neighbours']:['Deep Nearest Neighbour - 50 AUROC OOD','Deep Nearest Neighbour - 50 AUPR OOD','Deep Nearest Neighbour - 50 FPR OOD']
 } # Callback information for ablation
 
 

@@ -9,8 +9,8 @@ bsz = 128, #32,#64,
 #OOD_dataset = ['MNIST', 'FashionMNIST', 'KMNIST'],
 
 
-#OOD_dataset = ['MNIST', 'FashionMNIST', 'KMNIST','SVHN','Caltech256','CIFAR10','CIFAR100','TinyImageNet'],
-OOD_dataset = ['MNIST', 'FashionMNIST', 'KMNIST','SVHN'],
+OOD_dataset = ['MNIST', 'FashionMNIST', 'KMNIST','SVHN','Caltech256','CIFAR10','CIFAR100','TinyImageNet'],
+#OOD_dataset = ['MNIST', 'FashionMNIST', 'KMNIST','SVHN'],
 #OOD_dataset = ['MNIST', 'FashionMNIST', 'KMNIST','Caltech256','CIFAR10','CIFAR100','TinyImageNet','SVHN','STL10','Caltech101', 'Cub200','Dogs'],
 #OOD_dataset = ['Caltech256','CIFAR10','CIFAR100','TinyImageNet'],
 #OOD_dataset = ['STL10', 'CelebA','WIDERFace','SVHN', 'Caltech101','Caltech256','CIFAR10','CIFAR100', 'VOC', 'Places365','TinyImageNet','Cub200','Dogs', 'MNIST', 'FashionMNIST', 'KMNIST', 'EMNIST'],
@@ -52,8 +52,8 @@ val_check = 1,  # evaluation, Moco_training
 
 
 #callbacks = ['Nearest Class Neighbours','Nearest Neighbours'],
-callbacks = ['Nearest Neighbours'],
-#callbacks = ['Deep Nearest 10 Neighbours'],
+#callbacks = ['Nearest Neighbours'],
+callbacks = ['Deep Nearest 50 Neighbours'],
 
 
 #callbacks = ['KL Distance OOD'],

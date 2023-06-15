@@ -184,6 +184,9 @@ def thesis_outlier_fraction_plot():
 
 
 def thesis_outlier_fraction_table():
+    '''
+    Function used to make a table for the outlier fraction of the data
+    '''
     approach = 'Quadratic_Typicality'
     # Desired ID,OOD and Model  
     root_dir = 'run_data/'
