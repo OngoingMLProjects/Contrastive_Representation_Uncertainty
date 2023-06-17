@@ -638,7 +638,9 @@ def knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desir
 
                 'Typicality All Dim':{'AUROC':'Normalized All Dim Class Typicality KNN - 10 OOD -'.lower(),'AUPR':'Normalized All Dim Class Typicality KNN - 10 AUPR OOD -'.lower(),'FPR':'Normalized All Dim Class Typicality KNN - 10 FPR OOD -'.lower()},
 
-                'Deep Nearest Neighbours':{'AUROC':'Deep Nearest Neighbour - 10 AUROC OOD -'.lower(),'AUPR':'Deep Nearest Neighbour - 10 AUPR OOD -'.lower(),'FPR':'Deep Nearest Neighbour - 10 FPR OOD -'.lower()},
+                'Deep Nearest 10 Neighbours':{'AUROC':'Deep Nearest Neighbour - 10 AUROC OOD -'.lower(),'AUPR':'Deep Nearest Neighbour - 10 AUPR OOD -'.lower(),'FPR':'Deep Nearest Neighbour - 10 FPR OOD -'.lower()},
+
+                'Deep Nearest 50 Neighbours':{'AUROC':'Deep Nearest Neighbour - 50 AUROC OOD -'.lower(),'AUPR':'Deep Nearest Neighbour - 50 AUPR OOD -'.lower(),'FPR':'Deep Nearest Neighbour - 50 FPR OOD -'.lower()},
                 }
 
 
@@ -1071,6 +1073,7 @@ if __name__== '__main__':
     '''
     knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['Linear Typicality'], baseline_model_types = ['SupCon'],dataset_type ='RGB',t_test='two-sided')
     '''
-    knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['Deep Nearest Neighbours','Mahalanobis'], baseline_model_types = ['SupCon','SupCon'],dataset_type ='RGB',t_test='two-sided')
+    #knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['Deep Nearest Neighbours','Mahalanobis'], baseline_model_types = ['SupCon','SupCon'],dataset_type ='RGB',t_test='two-sided')
+    knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['Deep Nearest 10 Neighbours','Mahalanobis'], baseline_model_types = ['SupCon','SupCon'],dataset_type ='RGB',t_test='two-sided')
 
     #knn_table_collated_wilcoxon(desired_approach = 'Quadratic_typicality', desired_model_type = 'SupCon', baseline_approaches = ['1D Marginal Typicality','1D Single Typicality'], baseline_model_types = ['SupCon','SupCon'],dataset_type ='RGB',t_test='less')
