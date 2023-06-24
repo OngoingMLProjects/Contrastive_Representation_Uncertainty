@@ -46,8 +46,8 @@ dataset_dict = {'MNIST':['FashionMNIST','KMNIST','EMNIST'],
 dataset_dict = {'MNIST':['FashionMNIST','KMNIST'],
             'FashionMNIST':['MNIST','KMNIST'],
             'KMNIST':['MNIST','FashionMNIST'],
-            'CIFAR10':['SVHN', 'CIFAR100','TinyImageNet','MNIST','FashionMNIST','KMNIST'],
-            'CIFAR100':['SVHN', 'CIFAR10','TinyImageNet','MNIST','FashionMNIST','KMNIST'],
+            'CIFAR10':['SVHN', 'CIFAR100','TinyImageNet','Caltech256','MNIST','FashionMNIST','KMNIST'],
+            'CIFAR100':['SVHN', 'CIFAR10','TinyImageNet','Caltech256','MNIST','FashionMNIST','KMNIST'],
             'TinyImageNet':['SVHN', 'CIFAR10','CIFAR100','Caltech256','MNIST','FashionMNIST','KMNIST'],
             'Caltech256':['SVHN','CIFAR10','CIFAR100','TinyImageNet','MNIST','FashionMNIST','KMNIST'],
             
@@ -1116,5 +1116,8 @@ if __name__ =='__main__':
     run_filter={"config.group":"Baselines Repeats", "config.model_type": "SupCon"}
     #run_filter={"config.group":"OOD hierarchy baselines", "config.model_type": "SupCon"}
     
+
+    desired_key = 'K:10 NN Class Fraction'.lower()
+    run_filter={"config.group":"OOD hierarchy baselines", "config.model_type": "CE"}
     #generic_saving(desired_key,run_filter)
     generic_saving(desired_key,run_filter)

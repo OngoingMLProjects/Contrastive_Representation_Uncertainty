@@ -53,7 +53,7 @@ val_check = 1,  # evaluation, Moco_training
 
 #callbacks = ['Nearest Class Neighbours','Nearest Neighbours'],
 #callbacks = ['Nearest Neighbours'],
-callbacks = ['Deep Nearest 50 Neighbours'],
+#callbacks = ['Deep Nearest 50 Neighbours'],
 
 
 #callbacks = ['KL Distance OOD'],
@@ -63,7 +63,7 @@ callbacks = ['Deep Nearest 50 Neighbours'],
 
 #callbacks = ['Nearest Neighbours Class 1D Typicality'],
 
-#callbacks = ['Nearest Class Neighbours'],
+callbacks = ['Nearest Class Neighbours'],
 #callbacks = ['Nearest Neighbours 1D Typicality'],
 #callbacks = ['Class Mahalanobis','Mahalanobis OOD Fractions', 'Nearest Neighbours'],
 #callbacks = ['Model_saving']

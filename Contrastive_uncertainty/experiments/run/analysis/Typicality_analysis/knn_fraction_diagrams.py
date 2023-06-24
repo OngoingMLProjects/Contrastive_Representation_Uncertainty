@@ -2,6 +2,7 @@
 
 
 from asyncore import read
+from fractions import Fraction
 from numpy.core.numeric import full
 from torch.utils.data import dataset
 import wandb
@@ -195,12 +196,17 @@ def thesis_outlier_fraction_table():
     # Gets the runs corresponding to a specific filter
     # https://github.com/wandb/client/blob/v0.10.31/wandb/apis/public.py
     
-    model_list = ['CE']
-    dataset_list = ['CIFAR10','CIFAR100']
-    OOD_dataset_list = ['MNIST','KMNIST','FashionMNIST','SVHN']
+    model_list = ['SupCon']
+    dataset_list = ['CIFAR100']
+    OOD_dataset_list = ['MNIST','FashionMNIST','KMNIST','SVHN']
     for model in model_list:
         for dataset in dataset_list:
-            fraction_table = {'OOD Dataset': [None] * 4, 'ID-ID':[None] * 4, 'ID-OOD':[None] * 4,'OOD-ID':[None] * 4,'OOD-OOD':[None] * 4}
+            full_table = False
+            if full_table:
+                fraction_table = {'OOD Dataset': [None] * 4, 'ID-ID':[None] * 4, 'ID-OOD':[None] * 4,'OOD-ID':[None] * 4,'OOD-OOD':[None] * 4}
+            else:
+                fraction_table = {'OOD Dataset': [None] * 4, 'ID-OOD':[None] * 4,'OOD-OOD':[None] * 4}
+
             runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"OOD hierarchy baselines","config.dataset":dataset,"config.model_type": model,"config.epochs": 300})           
             summary_list, config_list, name_list = [], [], []
 
@@ -288,6 +294,7 @@ def thesis_outlier_fraction_table():
                                 collated_df = pd.concat((ID_df,OOD_df))
                                 #print('ID dataset',ID_dataset)
                                 #print('OOD dataset',OOD_dataset)
+                                '''
                                 ID_weighted_average = round(weighted_average(ID_df,'Value','Counts'),2)
                                 OOD_weighted_average = round(weighted_average(OOD_df,'Value','Counts'),2)
                                 ID_ID_weighted_average = round(100 -ID_weighted_average,2)
@@ -295,15 +302,9 @@ def thesis_outlier_fraction_table():
                                 print('ID weighted average',ID_weighted_average)
                                 print('OOD weighted average',OOD_weighted_average)
                                 # Nawid - only put in the values for the OOD dataset of interest
-                                
-                                if OOD_dataset in OOD_dataset_list:
-                                    index = OOD_dataset_list.index(OOD_dataset)
-                                    fraction_table['OOD Dataset'][index] = OOD_dataset
-                                    fraction_table['ID-ID'][index] = ID_ID_weighted_average
-                                    fraction_table['ID-OOD'][index]= ID_weighted_average
-                                    fraction_table['OOD-ID'][index]=OOD_ID_weighted_average
-                                    fraction_table['OOD-OOD'][index] = OOD_weighted_average
-                                 
+                                '''
+                                fraction_table = update_OOD_fraction_table(fraction_table,ID_df,OOD_df,OOD_dataset,OOD_dataset_list,full=full_table)
+
             fraction_table_df = pd.DataFrame(fraction_table)
             latex_fraction_table = fraction_table_df.to_latex(index=False) # Nawid - 
                                     #print('collated df:',collated_df)
@@ -315,8 +316,26 @@ def thesis_outlier_fraction_table():
 def weighted_average(df, values, weights):
     return sum(df[weights] * df[values]) / df[weights].sum()
 
-     
-
+    
+def update_OOD_fraction_table(fraction_table,ID_df, OOD_df,OOD_dataset, OOD_dataset_list,full=False):
+    '''
+    Function to obtain the table for the outlier fraction of the different OOD classes
+    '''
+    ID_weighted_average = round(weighted_average(ID_df,'Value','Counts'),2)
+    OOD_weighted_average = round(weighted_average(OOD_df,'Value','Counts'),2)
+    ID_ID_weighted_average = round(100 -ID_weighted_average,2)
+    OOD_ID_weighted_average = round(100 - OOD_weighted_average,2) 
+    
+    if OOD_dataset in OOD_dataset_list:
+        index = OOD_dataset_list.index(OOD_dataset)
+        fraction_table['OOD Dataset'][index] = OOD_dataset
+        fraction_table['ID-OOD'][index]= ID_weighted_average
+        fraction_table['OOD-OOD'][index]=OOD_weighted_average
+        if full:                        
+            fraction_table['ID-ID'][index] = ID_ID_weighted_average
+            fraction_table['OOD-ID'][index] = OOD_ID_weighted_average
+    
+    return fraction_table
 
 def thesis_class_fraction_plot():
     approach = 'Quadratic_Typicality'
@@ -415,10 +434,115 @@ def thesis_class_fraction_plot():
                 plt.savefig(f'{folder}/Class_Fraction_{ID_dataset}.png')
                 plt.close()
 
+
+
+def thesis_class_fraction_table():
+    '''
+    Function used to make a table for the class fraction of the data (related to the nearest neighbours in the ID dataset)
+    '''
+    approach = 'Quadratic_Typicality'
+    # Desired ID,OOD and Model  
+    root_dir = 'run_data/'
+
+    api = wandb.Api()
+    # Gets the runs corresponding to a specific filter
+    # https://github.com/wandb/client/blob/v0.10.31/wandb/apis/public.py
+    
+    model_list = ['SupCon','CE']
+    dataset_list = ['CIFAR10']
+    fraction_table = {'Model': [None] * len(model_list), 'Class Percentage':[None] * len(model_list)}
+    for model in model_list:
+        for dataset in dataset_list:
+            runs = api.runs(path="nerdk312/evaluation", filters={"config.group":"OOD hierarchy baselines","config.dataset":dataset,"config.model_type": model,"config.epochs": 300})           
+            summary_list, config_list, name_list = [], [], []
+            
+            for i, run in enumerate(runs): 
+                # .summary contains the output keys/values for metrics like accuracy.
+                #  We call ._json_dict to omit large files 
+                config_list.append(
+                    {k: v for k,v in run.config.items()
+                     if not k.startswith('_')})
+
+
+                ID_dataset = config_list[i]['dataset']
+                model_type = config_list[i]['model_type']
+                group_name = config_list[i]['group']
+                seed_value = str(config_list[i]['seed'])
+                summary_list.append(run.summary._json_dict)
+                # .config contains the hyperparameters.
+                #  We remove special values that start with _.
+
+
+
+                #updated path which includes the group of the dataset
+                path_list = runs[i].path
+                path_list.insert(-1, group_name) # insert the group name in the location one before the last value (rather than the last value which is peculiar)
+                # Additional lines added compared to the previous file
+                path_list.insert(-1,model_type)
+                path_list.insert(-1,ID_dataset)
+                path_list.insert(-1,seed_value)
+                ###################################################
+                run_path = '/'.join(path_list)
+
+                #run_path = '/'.join(runs[i].path)
+                # .name is the human-readable name of the run.dir
+                name_list.append(run.name)
+
+                Model_name = 'SupCLR' if model_type=='SupCon' else model_type
+                # .name is the human-readable name of the run.dir
+                desired_string = 'K:10 NN Class Fraction'.lower()
+                knn_keys = [key for key, value in summary_list[i].items() if desired_string in key.lower()]
+                # go through the different knn keys
+                for key in knn_keys:
+                    # get the specific mahalanobis keys for the specific OOD dataset  
+                    print(f'ID: {ID_dataset}')
+                    data_dir = summary_list[i][key]['path']                    
+                    run_dir = root_dir + run_path
+                    read_dir = run_dir + '/' + data_dir
+                    print('read dir:',read_dir)
+                    isFile = os.path.isfile(read_dir)
+                    print('Is file:',isFile)
+                    
+                    if isFile:
+                        with open(read_dir) as f: 
+                            data = json.load(f)
+                            class_fraction_data = fraction_vector(data)
+                            class_fraction_values, class_fraction_counts = np.unique(class_fraction_data*100, return_counts=True)
+                            class_fraction_dict = {'Value': class_fraction_values, 'Counts': class_fraction_counts}
+                            class_fraction_df = pd.DataFrame(data=class_fraction_dict)
+                            fraction_table = update_class_fraction_table(fraction_table,class_fraction_df,model,model_list)
+
+    fraction_table_df = pd.DataFrame(fraction_table)
+    latex_fraction_table = fraction_table_df.to_latex(index=False) # Nawid - 
+
+    #print('ID dataset',ID_dataset)
+    #print('Model',Model_name)
+    #import ipdb; ipdb.set_trace()
+    print(latex_fraction_table)
+    #print('We suffer because of the bonds we have')
+
+
+
+def update_class_fraction_table(fraction_table,class_df, model, model_list):
+    '''
+    Function to obtain the table for the outlier fraction of the different OOD classes
+    '''
+    # NEED TO UPDATE TO TAKE INTO DIFFERENT DATASETS
+    class_weighted_average = round(weighted_average(class_df,'Value','Counts'),2) 
+    #import ipdb; ipdb.set_trace()
+    if model in model_list:
+        index = model_list.index(model)
+        fraction_table['Model'][index] = model
+        fraction_table['Class Percentage'][index]= class_weighted_average
+    
+    return fraction_table
+
+
 if __name__ =='__main__':
     #knn_auroc_plot_v4()
     #thesis_knn_auroc_plot()
     #thesis_class_fraction_plot()
     #thesis_outlier_fraction_plot()
     thesis_outlier_fraction_table()
+    #thesis_class_fraction_table()
     

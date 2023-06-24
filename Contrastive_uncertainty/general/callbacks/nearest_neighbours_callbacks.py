@@ -162,7 +162,7 @@ class NearestClassNeighbours(pl.Callback):
         self.forward_callback(trainer=trainer, pl_module=pl_module) 
 
     def forward_callback(self,trainer,pl_module):
-        self.OOD_Datamodule.setup() # SETUP AGAIN TO RESET AFTER PROVIDING THE TRANSFORM FOR THE DATA
+        #self.OOD_Datamodule.setup() # SETUP AGAIN TO RESET AFTER PROVIDING THE TRANSFORM FOR THE DATA
 
         train_loader = self.Datamodule.deterministic_train_dataloader()
         test_loader = self.Datamodule.test_dataloader()
