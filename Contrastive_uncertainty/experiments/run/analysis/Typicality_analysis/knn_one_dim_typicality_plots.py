@@ -15,7 +15,8 @@ from scipy.stats import wilcoxon
 
 import json
 import re
-
+#https://stackoverflow.com/questions/29188757/specify-format-of-floats-for-tick-labels
+from matplotlib.ticker import FormatStrFormatter
 
 from Contrastive_uncertainty.experiments.run.analysis.analysis_utils import dataset_dict, key_dict, ood_dataset_string
 
@@ -603,8 +604,14 @@ def thesis_knn_auroc_plot_v2():
                         fig = plt.figure(figsize=(10, 7))
                         # Make a line plot for the data
                         plt.plot(df['K'],df['AUROC'],linestyle='--', marker='o')
+                        # Controls the size of the font for the text
+                        #https://stackoverflow.com/questions/3899980/how-to-change-the-font-size-on-a-matplotlib-plot
+                        plt.rc('font', size=16)
+                        #plt.rc('axes', titlesize=14)  # fontsize of the figure title
+                        #plt.gca().yaxis.set_major_formatter(FormatStrFormatter('%.2f'))
                         #plt.text(3.2, -7.12, 'y={:.2f}+{:.2f}*x'.format(fit[1], fit[0]), color='darkblue', size=12)
-                        plt.title(f'AUROC for different K values on the {ID_dataset}-{OOD_dataset} pair using {Model_name} model', size=12)
+                        #plt.title(f'AUROC for different K values on the {ID_dataset}-{OOD_dataset} pair using {Model_name} model', size=14)
+                        plt.title(f'AUROC for different K values on the {ID_dataset}-{OOD_dataset} pair', size=16)
                         plt.xlabel('Number of neighbours, K')
                         plt.ylabel('AUROC')
                         #import ipdb; ipdb.set_trace()
