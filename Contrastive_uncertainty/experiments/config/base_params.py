@@ -15,7 +15,8 @@ weight_decay = 1e-4,
 # Training parameters in common
 emb_dim = 128,
 instance_encoder = 'resnet50', # Use resnet 18 for confusion log probability 
-dataset = 'CIFAR100',
+dataset = 'MNIST',#'CIFAR100',
+OOD_dataset = ['FashionMNIST'],
 #OOD_dataset = ['CIFAR10'],
 #dataset = 'CIFAR100',
 #OOD_dataset = ['SVHN'],
@@ -56,7 +57,7 @@ trainer_hparams = dict(
 # Miscellaneous arguments in common
 seed = 42,
 epochs = 500, #300,
-bsz = 256, #512,
+bsz = 32,#256, #512,
 
 # Trainer configurations in common
 fast_run = False,

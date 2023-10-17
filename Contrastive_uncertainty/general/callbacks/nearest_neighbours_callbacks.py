@@ -246,6 +246,10 @@ class NearestClassNeighbours(pl.Callback):
         name = f'K:{self.K} NN Class Fraction'
         self.datasaving(normalized_count,name)
 
+    
+
+
+
 
 
 # Performs 1D typicality using the nearest neighbours as the batch for the data
@@ -404,6 +408,8 @@ class NearestNeighbours1DTypicality(NearestNeighbours):
         AUROC = get_roc_sklearn(din, dood)
         wandb.run.summary[self.summary_key] = AUROC
         '''
+
+
 
 
 # Performs 1D typicality using the nearest neighbours as the batch for the data, and obtaining specific classes for the data

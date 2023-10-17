@@ -197,7 +197,7 @@ def thesis_outlier_fraction_table():
     # https://github.com/wandb/client/blob/v0.10.31/wandb/apis/public.py
     
     model_list = ['SupCon']
-    dataset_list = ['CIFAR100']
+    dataset_list = ['CIFAR10']
     OOD_dataset_list = ['MNIST','FashionMNIST','KMNIST','SVHN']
     for model in model_list:
         for dataset in dataset_list:
@@ -449,7 +449,7 @@ def thesis_class_fraction_table():
     # https://github.com/wandb/client/blob/v0.10.31/wandb/apis/public.py
     
     model_list = ['SupCon','CE']
-    dataset_list = ['CIFAR10']
+    dataset_list = ['CIFAR100']
     fraction_table = {'Model': [None] * len(model_list), 'Class Percentage':[None] * len(model_list)}
     for model in model_list:
         for dataset in dataset_list:
@@ -543,6 +543,6 @@ if __name__ =='__main__':
     #thesis_knn_auroc_plot()
     #thesis_class_fraction_plot()
     #thesis_outlier_fraction_plot()
-    thesis_outlier_fraction_table()
-    #thesis_class_fraction_table()
+    #thesis_outlier_fraction_table()
+    thesis_class_fraction_table()
     
